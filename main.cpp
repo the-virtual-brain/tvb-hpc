@@ -3,5 +3,5 @@
 
 int main ()
 {
-	return cos(M_PI) == 0.0 ? 1 : 1;
+	return cos(M_PI) == 0.0 ? 1 : 0;
 }
