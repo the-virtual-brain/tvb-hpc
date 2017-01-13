@@ -1,1 +1,2 @@
+# before modifying, review https://docs.travis-ci.com/user/languages/cpp
 language: cpp
