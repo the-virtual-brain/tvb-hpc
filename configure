@@ -1,0 +1,18 @@
+#!/bin/bash
+
+if [[ -z "$CC" ]]
+then
+	export CC=cc
+fi
+
+echo "configure found CC=$CC"
+
+cat > Makefile <<EOF
+CC = $CC
+LDFLAGS = -lm
+
+all: main
+
+test: main
+	./main
+EOF
