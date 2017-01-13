@@ -7,4 +7,3 @@ Rewrites of TVB algorithms for HPC environments.
 - handful of model kernels
 - BOLD & tavg monitors
 - running simulations
-

@@ -1,6 +1,2 @@
-*.o
-*.so
-*.dll
-*.dylib
 *.swp
-Makefile
+build
