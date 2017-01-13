@@ -15,4 +15,7 @@ all: main
 
 test: main
 	./main
+
+clean:
+	rm -f main
 EOF
