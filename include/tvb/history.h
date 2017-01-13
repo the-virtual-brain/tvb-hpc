@@ -24,11 +24,12 @@
 
 namespace tvb {
 
-    template <typename T> class DRing
+    template <typename T> class ring_buffer
     {
     public:
-        DRing(T 
-
+        DRing(size_t size) buf(size) { }
+    private:
+        std::vector<T> buf;
     }
 
     template <typename Tx=float, typename Ty=Tx> class CRing // {{{
@@ -61,5 +62,3 @@ namespace tvb {
 
 }; // namespace tvb
 #endif // TVB_history
-
-// vim: foldmethod=marker rnu sw=4 sts=4 et ai
