@@ -12,31 +12,18 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
-/** \file history.hpp
+/** \file interp.hpp
  * A brief description.
  * A longer description.
  */
  
-#ifndef TVB_history
-#define TVB_history
+#ifndef TVB_interp
+#define TVB_interp
 
 #include <vector>
 #include <cmath>
 
 namespace tvb {
-
-    template <typename I> I wrap(I idx, I len) { return idx % len + (idx < 0) * len; };
-
-    template <typename value_type> class ring_buffer
-    {
-    public:
-        using value_type = typename value_type;
-        DRing(size_t size) : buf(size) { }
-        template <typename I> T& operator[](const I idx) { return buf[wrap(idx, buf.size())]; }
-        size_t size() { return buf.size(); }
-    private:
-        std::vector<value_type> buf;
-    };
 
     template <typename container_type, typename query_type> class interp_zero/*{{{*/
     {
@@ -79,43 +66,5 @@ namespace tvb {
         const query_type _step;
     };/*}}}*/
 
-    void test()
-    {
-        using rb_t = ring_buffer<float>;
-        using interp_t = interp_linear<rb, float>;
-        
-        rb_t rb(32);
-        interp_t interp(0.1f);
-        interp(rb, 234.024);
-    }
-
-    template <typename Tx=float, typename Ty=Tx> class CRing // {{{
-    {
-    public:
-        CRing(Tx length, Tx step) : _origin(0), _length(length), _step(step), _buf((length / step) + 2) { }
-        Tx origin() { return _origin; }
-        Tx length() { return _length; }
-        Tx step() { return _step; }
-        void move(Tx dx) { _origin += dx; };
-        Ty & at(Tx x) { return buf_at((_origin + x) / _step); }
-
-    private:
-        Tx _origin, _length, _step;
-        std::vector<Ty> _buf;
-
-        Ty & buf_at(const int idx_)
-        {
-            int idx = idx_;
-
-            if (idx < 0)
-                idx = _buf.size() - ( (-idx) % _buf.size());
-
-            else if (idx > _buf.size())
-                idx %= _buf.size();
-
-            return _buf[idx];
-        }
-    }; // }}}
-
 }; // namespace tvb
-#endif // TVB_history
+#endif // TVB_interp
