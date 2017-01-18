@@ -5,6 +5,9 @@
 all: build
 	pushd build && cmake .. ; make
 
+test:
+	python -m unittest discover
+
 ccmake:
 	pushd build && ccmake ..
 

@@ -25,7 +25,11 @@ namespace tvb {
     /** wraps integer values within range.
      *
      */
-    template <typename I> I wrap(I idx, I len) { return idx % len + (idx < 0) * len; };
+    template <typename I> I wrap(I idx, I len)
+    {
+        I idx_ = idx % len + (idx < 0) * len;
+        return idx_ * (idx_ != len);
+    }
 
 }; // namespace tvb
 #endif // TVB_util
