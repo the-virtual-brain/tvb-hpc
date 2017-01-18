@@ -23,16 +23,11 @@
 #include <vector>
 #include <cmath>
 
+#include "tvb/util.h"
 #include "tvb/coupling.h"
 #include "tvb/connectome.h"
 
 namespace tvb {
-
-    /** wraps integer values within range.
-     *
-     */
-    template <typename I> I wrap(I idx, I len) { return idx % len + (idx < 0) * len; };
-
 
     /** model of white matter, induces time delays
      *
