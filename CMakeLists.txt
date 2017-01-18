@@ -1,16 +1,11 @@
-cmake_minimum_required(VERSION 2.8.2)
+cmake_minimum_required(VERSION 3.1.0)
 project(tvb-hpc)
 
 enable_testing()
 
-# Python
-if (NOT DEFINED "python_config")
-    message(STATUS "python_config not provided, assuming 'python-config'")
-    set(python_config "python-config")
-endif()
+add_subdirectory(extern/pybind11)
+include_directories("${CMAKE_CURRENT_LIST_DIR}/include")
 
-execute_process(COMMAND "${python_config}" "--prefix"
-    OUTPUT_VARIABLE python_prefix
-    OUTPUT_STRIP_TRAILING_WHITESPACE)
-message(STATUS "Python prefix is '${python_prefix}'")
-
+add_subdirectory("src")
+add_subdirectory("test")
+add_subdirectory("bench")
