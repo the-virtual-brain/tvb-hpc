@@ -1,0 +1,8 @@
+*.swp
+build
+*.pyc
+__pycache__
+*.swo
+*.o
+test_main
+*.S
