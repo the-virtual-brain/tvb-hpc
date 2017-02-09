@@ -24,7 +24,7 @@ matrix:
 before_install:
     - sudo apt-get update -qq
 script:
-    - CXX=MY_CXX make test
+    - CXX=$MY_CXX make test
 
 notifications:
     slack:
