@@ -12,15 +12,6 @@ matrix:
           packages:
             - g++-5
       env: MY_CXX=g++-5
-    - compiler: clang
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.7
-          packages:
-            - clang-3.7
-      env: MY_CXX=clang++-3.7
 before_install:
     - sudo apt-get update -qq
 script:

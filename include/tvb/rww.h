@@ -45,16 +45,20 @@ namespace tvb {
             _io = 0.33;
         }
 
-        void eval(chunk_type state, chunk_type deriv)
+        void eval(chunk_type state,
+                  chunk_type deriv,
+                  chunk_type coupling
+                  )
         {
-            value_type S, x, h, dS;
+            value_type S, c, x, h, dS, above_one, below_zero;
             for (size_t i=0; i<_chunk_size; i++)
             {
                 S = state.at(0, i);
-                x = w()*j()*S + io() + j()*c();
+                c = coupling.at(0, i);
+                x = w()*j()*S + io() + j()*c;
                 h = (a()*x - b()) / (1 - exp(-d()*(a()*x - b())));
                 dS = - (S / ts()) + (1 - S) * h * g();
-                deriv.at(0, i) = dS;
+                deriv.at(0, i) = (1 - S) * (S > 1) + (0 - S) * (S < 0) + (S > 0) * (S < 1) * dS;
             }
         }
 
@@ -62,14 +66,14 @@ namespace tvb {
         value_type& w() { return _w; }
         value_type& j() { return _j; }
         value_type& io() { return _io; }
-        value_type& c() { return _c; }
         value_type& b() { return _b; }
         value_type& d() { return _d; }
         value_type& ts() { return _ts; }
         value_type& g() { return _g; }
 
     private:
-        value_type _a, _w, _j, _io, _c, _b, _d, _g, _ts;
+        value_type _a, _w, _j, _io, _b, _d, _g, _ts;
+
     };
 
 }; // namespace tvb

@@ -8,10 +8,8 @@ test: test_main
 	./test_main
 
 test_main: $(test_objects)
+	echo $(test_objects)
 	$(CXX) $(CXXFLAGS) $(test_objects) -o $@
 
-%.S: %.o
-	objdump -S $< > $@
-
 clean:
-	rm -f test_main src/*.S src/*.o
+	rm -f test_main src/*.o
