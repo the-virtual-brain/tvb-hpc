@@ -15,7 +15,9 @@ matrix:
 before_install:
     - sudo apt-get update -qq
 script:
-    - CXX=$MY_CXX make test
+    - cmake -DCMAKE_CXX_COMPILER=$MY_CXX .
+    - make
+    - ./tests
 
 notifications:
     slack:

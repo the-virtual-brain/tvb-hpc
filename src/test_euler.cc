@@ -19,5 +19,5 @@ TEST_CASE("euler model", "[euler]")
     model_type::state_type state;
     model_type::coupling_type coupling;
 
-
+    scheme.eval(state, coupling, model);
 }
