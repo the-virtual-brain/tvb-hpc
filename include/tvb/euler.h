@@ -16,6 +16,8 @@
 #ifndef TVB_euler
 #define TVB_euler
 
+#include "util.h"
+
 namespace tvb {
 
     /** Euler time stepping integration scheme
@@ -37,7 +39,7 @@ namespace tvb {
 
             for (size_t i=0; i<state_type::length(); i++)
                 for (size_t j=0; j<state_type::width(); j++)
-                    state.at(i, j) += _dt * _deriv.at(i, j);
+                    state(i, j) += _dt * _deriv(i, j);
         }
 
         value_type& dt() { return _dt; }

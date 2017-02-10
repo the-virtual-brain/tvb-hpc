@@ -9,4 +9,18 @@ TEST_CASE("utility functions", "[util]")
         for (int i=0; i<20; i++)
             REQUIRE(tvb::wrap<>(results[i][0], 7) == results[i][1]);
     }
+
+    SECTION("chunk api") {
+
+        tvb::chunk<4, 4, float> chunk;
+
+        for (size_t i=0; i<chunk.length(); i++)
+            for (size_t j=0; j<chunk.width(); j++)
+                chunk(i, j) = ((float) i * 4 + j);
+
+        for (size_t i=0; i<chunk.length(); i++)
+            for (size_t j=0; j<chunk.width(); j++)
+                REQUIRE(chunk(i, j) == ((float) i * 4 + j));
+
+    }
 }

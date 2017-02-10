@@ -63,15 +63,15 @@ namespace tvb {
 
             for (size_t i=0; i<_chunk_size; i++)
             {
-                x1 = state.at(0, i);
-                y1 = state.at(1, i);
-                z = state.at(2, i);
-                x2 = state.at(3, i);
-                y2 = state.at(4, i);
-                g = state.at(5, i);
+                x1 = state(0, i);
+                y1 = state(1, i);
+                z = state(2, i);
+                x2 = state(3, i);
+                y2 = state(4, i);
+                g = state(5, i);
 
-                c1 = coupling.at(0, i);
-                c2 = coupling.at(1, i);
+                c1 = coupling(0, i);
+                c2 = coupling(1, i);
 
                 // faster oscillator
                 if_x1_neg = (x1 <  0) * (-a() * x1 * x1 + b() * x1);
@@ -93,12 +93,12 @@ namespace tvb {
                 // low pass filter
                 dg = tt() * (-0.01 * (g - 0.1 * x1));
 
-                deriv.at(0, i) = dx1;
-                deriv.at(1, i) = dy1;
-                deriv.at(2, i) = dz;
-                deriv.at(3, i) = dx2;
-                deriv.at(4, i) = dy2;
-                deriv.at(5, i) = dg;
+                deriv(0, i) = dx1;
+                deriv(1, i) = dy1;
+                deriv(2, i) = dz;
+                deriv(3, i) = dx2;
+                deriv(4, i) = dy2;
+                deriv(5, i) = dg;
             }
         }
 
@@ -122,6 +122,13 @@ namespace tvb {
 
     private:
         value_type _x0, _Iext, _Iext2, _a, _b, _slope, _tt, _Kvf, _c, _d, _r, _Ks, _Kf, _aa, _tau;
+        /* consider also storing parameters as a chunk; then, the choice
+         * is whether to have per-lane values or not. accessors can map
+         * chunks to values with internal indices.. but how would they get
+         * the lane index..? seems like there's some iterator pattern lurking
+         * about, but we haven't figured it out yet.
+         */
+
     };
 
 }; // namespace tvb

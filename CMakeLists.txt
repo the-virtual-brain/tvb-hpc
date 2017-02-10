@@ -11,4 +11,3 @@ add_executable(tests
     src/test_rww.cc
     src/test_util.cc
     )
-

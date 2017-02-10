@@ -51,8 +51,23 @@ namespace tvb {
         static size_t width() { return _chunk_size; }
         static size_t length() { return _n_svar; }
 
-        value_type& at(size_t var_idx, size_t lane_idx) {
-            return _data[var_idx*_chunk_size * lane_idx];
+        value_type& operator()(size_t var_idx, size_t lane_idx) {
+            return _data[var_idx*_chunk_size + lane_idx];
+        }
+
+        void fill_var(size_t var_idx, value_type value) {
+            for (size_t lane_idx=0; lane_idx<_chunk_size; lane_idx++)
+                (*this)(var_idx, lane_idx) = value;
+        }
+
+        void fill_lane(size_t lane_idx, value_type value) {
+            for (size_t var_idx=0; var_idx<_chunk_size; var_idx++)
+                (*this)(var_idx, lane_idx) = value;
+        }
+
+        void fill(value_type value) {
+            for (size_t var_idx=0; var_idx<_n_svar; var_idx++)
+                fill_var(var_idx, value);
         }
 
     private:

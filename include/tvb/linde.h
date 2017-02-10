@@ -12,12 +12,8 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
-/** \file rww.h
- * Reduced Wong-Wang model
- */
- 
-#ifndef TVB_rww
-#define TVB_rww
+#ifndef TVB_linde
+#define TVB_linde
 
 #include <array>
 #include <cmath>
@@ -25,8 +21,11 @@
 
 namespace tvb {
 
+    /** Linear differential equation model
+     *
+     */
     template <size_t _chunk_size=4, typename _value_type=float>
-    class rww
+    class linde
     {
 
     public:
@@ -34,16 +33,8 @@ namespace tvb {
         using state_type = tvb::chunk<_chunk_size, 1, value_type>;
         using coupling_type = tvb::chunk<_chunk_size, 1, value_type>;
 
-        rww() {
-            // default values as provided in TVB
-            _a = 0.270;
-            _b = 0.108;
-            _d = 154.0;
-            _g = 0.641;
-            _ts = 100.0;
-            _w = 0.6;
-            _j = 0.2609;
-            _io = 0.33;
+        linde() {
+            _lambda = -1;
         }
 
         void eval(state_type state,
@@ -51,33 +42,23 @@ namespace tvb {
                   coupling_type coupling
                   )
         {
-            value_type S, c, x, h, dS, above_one, below_zero;
+            value_type x, c;
             for (size_t i=0; i<_chunk_size; i++)
             {
-                S = state(0, i);
+                x = state(0, i);
                 c = coupling(0, i);
-                x = w()*j()*S + io() + j()*c;
-                h = (a()*x - b()) / (1 - exp(-d()*(a()*x - b())));
-                dS = - (S / ts()) + (1 - S) * h * g();
-                deriv(0, i) = (1 - S) * (S > 1) + (0 - S) * (S < 0) + (S > 0) * (S < 1) * dS;
+                deriv(0, i) = lambda() * x + c;
             }
         }
 
-        value_type& a() { return _a; }
-        value_type& w() { return _w; }
-        value_type& j() { return _j; }
-        value_type& io() { return _io; }
-        value_type& b() { return _b; }
-        value_type& d() { return _d; }
-        value_type& ts() { return _ts; }
-        value_type& g() { return _g; }
+        value_type& lambda() { return _lambda; }
 
-        static size_t n_param() { return 8; }
+        static size_t n_param() { return 1; }
 
     private:
-        value_type _a, _w, _j, _io, _b, _d, _g, _ts;
+        value_type _lambda;
 
     };
 
 }; // namespace tvb
-#endif // TVB_rww
+#endif // TVB_linde
