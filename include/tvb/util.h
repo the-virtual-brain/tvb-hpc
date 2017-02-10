@@ -20,6 +20,8 @@
 #ifndef TVB_util
 #define TVB_util
 
+#include <vector>
+
 namespace tvb {
 
     /** wraps integer values within range.
@@ -34,16 +36,28 @@ namespace tvb {
     /** wrapper for SIMD-friendly chunk of data
      *
      */
-    template <size_t _chunk_size, size_t _n_svar, typename value_type=float>
+    template <size_t _chunk_size, size_t _n_svar, typename _value_type=float>
     class chunk
     {
     public:
+        using value_type = _value_type;
+
+        chunk(value_type *data) : _data(data) { }
+
+        chunk() : _vector(_chunk_size * _n_svar) {
+            _data = _vector.data();
+        }
+
         static size_t width() { return _chunk_size; }
         static size_t length() { return _n_svar; }
-        value_type& at(size_t var_idx, size_t lane_idx) { return vars[var_idx][lane_idx]; }
+
+        value_type& at(size_t var_idx, size_t lane_idx) {
+            return _data[var_idx*_chunk_size * lane_idx];
+        }
+
     private:
-        using lane = std::array<value_type, _chunk_size>;
-        std::array<lane, _n_svar> vars;
+        value_type *_data;
+        std::vector<value_type> _vector;
     };
 
 }; // namespace tvb

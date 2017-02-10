@@ -15,6 +15,6 @@ TEST_CASE("rww model", "[rww]")
     model.a() = a_value;
 
     REQUIRE(model.a() == a_value);
-    REQUIRE(model_type::chunk_type::width() == 4);
-    REQUIRE(model_type::chunk_type::length() == 1);
+    REQUIRE(model_type::state_type::width() == 4);
+    REQUIRE(model_type::state_type::length() == 1);
 }

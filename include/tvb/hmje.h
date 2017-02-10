@@ -118,6 +118,8 @@ namespace tvb {
         value_type& aa() { return _aa; }
         value_type& tau() { return _tau; }
 
+        static size_t n_param() { return 15; }
+
     private:
         value_type _x0, _Iext, _Iext2, _a, _b, _slope, _tt, _Kvf, _c, _d, _r, _Ks, _Kf, _aa, _tau;
     };

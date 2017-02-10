@@ -20,7 +20,11 @@ TEST_CASE("hmje model", "[hmje]")
     REQUIRE(model_type::coupling_type::width() == 4);
     REQUIRE(model_type::coupling_type::length() == 2);
 
+    REQUIRE(sizeof(model_type) == (model_type::n_param() * sizeof(model_type::value_type)));
+
     model_type::state_type state, deriv;
     model_type::coupling_type coupling;
     model.eval(state, deriv, coupling);
+
+    // TODO run with different x0 ensure seizure
 }

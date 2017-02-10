@@ -25,9 +25,9 @@ namespace tvb {
     class euler {
     public:
         using model_type = _model_type;
-        using value_type = _model_type::value_type;
-        using state_type = _model_type::state_type;
-        using coupling_type = _model_type::coupling_type;
+        using value_type = typename _model_type::value_type;
+        using state_type = typename _model_type::state_type;
+        using coupling_type = typename _model_type::coupling_type;
         
         euler() { }
 
@@ -44,7 +44,7 @@ namespace tvb {
 
     private:
         value_type _dt;
-        model_type::state_type _deriv;
+        typename model_type::state_type _deriv;
     };
 }; // namespace tvb
 #endif // TVB_euler

@@ -31,7 +31,8 @@ namespace tvb {
 
     public:
         using value_type = _value_type;
-        using chunk_type = tvb::chunk<_chunk_size, 1, value_type>;
+        using state_type = tvb::chunk<_chunk_size, 1, value_type>;
+        using coupling_type = tvb::chunk<_chunk_size, 1, value_type>;
 
         rww() {
             // default values as provided in TVB
@@ -45,9 +46,9 @@ namespace tvb {
             _io = 0.33;
         }
 
-        void eval(chunk_type state,
-                  chunk_type deriv,
-                  chunk_type coupling
+        void eval(state_type state,
+                  state_type deriv,
+                  coupling_type coupling
                   )
         {
             value_type S, c, x, h, dS, above_one, below_zero;
@@ -70,6 +71,8 @@ namespace tvb {
         value_type& d() { return _d; }
         value_type& ts() { return _ts; }
         value_type& g() { return _g; }
+
+        static size_t n_param() { return 8; }
 
     private:
         value_type _a, _w, _j, _io, _b, _d, _g, _ts;
