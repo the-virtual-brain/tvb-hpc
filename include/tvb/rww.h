@@ -52,6 +52,7 @@ namespace tvb {
                   )
         {
             value_type S, c, x, h, dS, above_one, below_zero;
+#pragma omp simd
             for (size_t i=0; i<_chunk_size; i++)
             {
                 S = state(0, i);

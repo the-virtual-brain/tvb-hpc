@@ -61,6 +61,7 @@ namespace tvb {
             value_type dx1, dy1, dz, dx2, dy2, dg;
             value_type if_x1_pos, if_x1_neg, if_z_neg, if_x2_gt;
 
+#pragma omp simd
             for (size_t i=0; i<_chunk_size; i++)
             {
                 x1 = state(0, i);

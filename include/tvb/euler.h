@@ -33,11 +33,12 @@ namespace tvb {
         
         euler() { }
 
-        void eval(state_type state, coupling_type coupling, model_type model)
+        void eval(state_type& state, coupling_type& coupling, model_type& model)
         {
             model.eval(state, _deriv, coupling);
 
             for (size_t i=0; i<state_type::length(); i++)
+#pragma omp simd
                 for (size_t j=0; j<state_type::width(); j++)
                     state(i, j) += _dt * _deriv(i, j);
         }

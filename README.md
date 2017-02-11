@@ -1,3 +1,3 @@
 # TVB-HPC
 
-Rewrites of TVB algorithms with OpenMP, OpenACC to improve performance.
+Rewrites of TVB algorithms to improve performance.
