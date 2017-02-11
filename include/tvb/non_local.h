@@ -12,13 +12,13 @@
 //     See the License for the specific language governing permissions and
 //     limitations under the License.
 
-/** \file white_matter.hpp
+/** \file non_local.hpp
  * A brief description.
  * A longer description.
  */
  
-#ifndef TVB_white_matter
-#define TVB_white_matter
+#ifndef TVB_non_local
+#define TVB_non_local
 
 #include <vector>
 #include <cmath>
@@ -29,27 +29,31 @@
 
 namespace tvb {
 
-    /** model of white matter, induces time delays
+    /** non-local / long-range projection model w/ time delays
      *
      */
-    template <typename value_type=float,
-              typename coupling_type=linear_coupling<value_type> >
-    class white_matter
+    template <typename _coupling_type=linear_coupling<_value_type> >
+    class non_local
     {
     public:
-        white_matter(value_type time_step,
+        using coupling_type = _coupling_type;
+        using value_type = typename coupling_type::value_type;
+        using connectome_type = tvb::connectome<value_type>;
+
+        non_local(value_type time_step,
                 value_type speed,
+                size_t decim,
                 coupling_type& coupling,
-                connectome<value_type>& connectome
+                connectome_type& connectome
                 )
             : _coupling(coupling), _connectome(connectome), _time_step(time_step)
-              , _recip_speed_step(1.0 / speed / time_step)
+              , _recip_speed_step(1.0 / speed / time_step), _decim(decim)
         {
             buf.resize(n_node());
             buf_pos.assign(n_node(), 0);
             for (size_t i = 0; i < n_node(); i++)
             {
-                size_t horizon = connectome.max_delay(i) / _time_step;
+                size_t horizon = connectome.max_length(i) / _speed / _time_step / decim;
                 buf.at(i).resize(horizon + 2);
             }
         }
@@ -59,15 +63,19 @@ namespace tvb {
         void step(std::vector<value_type> efferent,
                   std::vector<value_type> afferent)
         {
+            if (_step_count % _decim)
+            {
+                _step_count += 1;
+                return;
+            }
             for (size_t i = 0; i < n_node(); i++)
             {
-                _update_node(i, efferent[i])
+                _update_node(i, efferent[i]);
                 afferent[i] = _query_node(i, efferent[i]);
             }
         }
 
     private:
-
         value_type _get_delayed(size_t i, size_t j)
         {
             value_type delay = _connectome.length(i, j) * _recip_speed_step;
@@ -90,7 +98,7 @@ namespace tvb {
                 value_type w_ij = _connectome.weight(i, j);
                 if (w_ij != 0)
                 {
-                    value_type post_syn = get_delayed(i, j);
+                    value_type post_syn = _get_delayed(i, j);
                     value_type pre_syn = current;
                     acc += _coupling.pre_sum(pre_syn, post_syn);
                 }
@@ -101,6 +109,8 @@ namespace tvb {
         const value_type _speed;
         const value_type _time_step;
         const value_type _recip_speed_step;
+        const size_t _decim;
+        size_t _step_count;
         coupling_type& _coupling;
         connectome<value_type>& _connectome;
         std::vector<size_t> buf_pos;
@@ -109,4 +119,4 @@ namespace tvb {
     };
 
 }; // namespace tvb
-#endif // TVB_white_matter
+#endif // TVB_non_local

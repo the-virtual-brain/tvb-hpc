@@ -20,6 +20,7 @@
 #ifndef TVB_connectome
 #define TVB_connectome
 
+#include <stddef.h>
 #include <vector>
 #include <cmath>
 
@@ -35,14 +36,26 @@ namespace tvb {
             _lengths.assign(n_node*n_node, 0);
         }
         size_t n_node() { return _n_node; }
-        value_type max_delay(size_t idx) { }
+
+        value_type max_length(size_t idx) {
+            value_type max = 0;
+            for (size_t i=0; i < _n_node; i++)
+            {
+                value_type el = _lengths[_n_node * idx + i];
+                max = el > max ? el : max;
+            }
+            return max;
+        }
+
         value_type& weight(size_t i, size_t j) { return _weights[_n_node * i + j]; }
+
         value_type& length(size_t i, size_t j) { return _lengths[_n_node * i + j]; }
+
     private:
         const size_t _n_node;
         std::vector<value_type> _weights;
         std::vector<value_type> _lengths;
-    }
+    };
 
 }; // namespace tvb
 #endif // TVB_connectome

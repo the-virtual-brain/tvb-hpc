@@ -20,6 +20,7 @@
 #ifndef TVB_util
 #define TVB_util
 
+#include <stddef.h>
 #include <vector>
 
 namespace tvb {

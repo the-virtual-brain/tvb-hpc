@@ -28,16 +28,24 @@ namespace tvb {
     /** example linear coupling
      *
      */
-    template <typename value_type=float> class linear_coupling
+    template <typename _value_type=float> class linear_coupling
     {
     public:
+        using value_type = _value_type;
+
         linear_coupling(value_type slope, value_type offset)
             : _slope(slope), _offset(offset) { }
-        value_type pre_sum(value_type pre_syn, value_type post_syn) { return pre; }
+
+        value_type pre_sum(value_type pre_syn, value_type post_syn) {
+            (void) post_syn;
+            return pre_syn;
+        }
+
         value_type post_sum(value_type sum) { return _slope * sum + _offset; }
+
     private:
         const value_type _slope, _offset;
-    }
+    };
 
 }; // namespace tvb
 #endif // TVB_coupling
