@@ -32,7 +32,7 @@ namespace tvb {
     /** non-local / long-range projection model w/ time delays
      *
      */
-    template <typename _coupling_type=linear_coupling<_value_type> >
+    template <typename _coupling_type>
     class non_local
     {
     public:
@@ -47,7 +47,7 @@ namespace tvb {
                 connectome_type& connectome
                 )
             : _coupling(coupling), _connectome(connectome), _time_step(time_step)
-              , _recip_speed_step(1.0 / speed / time_step), _decim(decim)
+              , _recip_speed_step(1.0 / speed / time_step), _decim(decim), _speed(speed)
         {
             buf.resize(n_node());
             buf_pos.assign(n_node(), 0);
