@@ -1,9 +1,3 @@
-[submodule "extern/gtest"]
-	path = extern/gtest
-	url = https://github.com/google/googletest
-[submodule "extern/gbench"]
-	path = extern/gbench
-	url = https://github.com/google/benchmark
 [submodule "extern/geodesic"]
 	path = extern/geodesic
 	url = https://github.com/the-virtual-brain/tvb-geodesic
