@@ -1,5 +1,5 @@
 import ctypes
-from .compiler import Compiler
+from tvb_hpc.compiler import Compiler
 
 code = """
 #include <stdlib.h>

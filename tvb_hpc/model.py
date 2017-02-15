@@ -2,7 +2,7 @@ import numpy as np
 import pymbolic as pm
 from pymbolic.mapper.c_code import CCodeMapper
 from pymbolic.mapper.differentiator import DifferentiationMapper
-from .utils import simplify
+from tvb_hpc.utils import simplify
 
 
 

@@ -2,10 +2,11 @@
 from unittest import TestCase
 import ctypes as ct
 
-from .compiler import Compiler
-from .model import test_model
-from .schemes import euler_maruyama_logp
-from .codegen import generate_code
+from tvb_hpc.compiler import Compiler
+from tvb_hpc.model import test_model
+from tvb_hpc.bold import BalloonWindkessel
+from tvb_hpc.schemes import euler_maruyama_logp
+from tvb_hpc.codegen import generate_code
 
 
 class TestLogProb(TestCase):
@@ -26,7 +27,13 @@ class TestLogProb(TestCase):
 class TestCodeGen(TestCase):
 
     def setUp(self):
-        self.model = test_model()
+        self.spec = {
+            'float': 'float',
+            'width': 8,
+            'align': 64,
+            'cc': '/usr/local/bin/gcc-6',
+            'cflags': '-mavx2 -O3 -ffast-math -fopenmp'.split()
+        }
 
     def _build_func(self, model, spec):
         comp = Compiler(cc=spec['cc'], cflags=spec['cflags'])
@@ -46,16 +53,14 @@ class TestCodeGen(TestCase):
         args = [a.ctypes.data_as(fp) for a in args]
         fn(nn, *args)
 
-    def test_model_code_gen(self):
-        spec = {
-            'float': 'float',
-            'width': 8,
-            'align': 64,
-            'cc': '/usr/local/bin/gcc-6',
-            'cflags': '-mavx2 -O3 -ffast-math -fopenmp'.split()
-        }
-        fn = self._build_func(self.model, spec)
-        arrs = self.model.prep_arrays(1024, spec)
+    def test_test_model_code_gen(self):
+        model = test_model()
+        fn = self._build_func(model, self.spec)
+        arrs = model.prep_arrays(1024, self.spec)
         self._call(fn, *arrs)
         # TODO timing
         # TODO allclose against TVB
+
+    def test_balloon_model(self):
+        model = BalloonWindkessel()
+        fn = self._build_func(model, self.spec)
