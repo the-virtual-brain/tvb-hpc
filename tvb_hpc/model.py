@@ -36,6 +36,7 @@ class BaseModel:
     diffs = '',
     obsrv = '',
     const = {}
+    auxex = []
 
     def __init__(self):
         self.state_sym = vars(self.state)
@@ -81,6 +82,11 @@ class BaseModel:
                 line = fmt.format(
                     kind=kind, var=var.name, isvar=i, **common)
                 lines.append(line)
+        # do aux exprs
+        fmt = '{float} {lhs} = {rhs};'
+        for lhs, rhs in self.auxex:
+            line = fmt.format(lhs=lhs, rhs=rhs, **common)
+            lines.append(line)
         # store drift / diffs / obsrv
         fmt = '{kind}[i * {nsvar_width} + {isvar} * {width} + j] = {expr};'
         for kind in 'drift diffs obsrv'.split():
@@ -123,7 +129,7 @@ class Kuramoto(BaseModel):
     input = 'I'
     param = 'omega'
     drift = 'omega + I'
-    obsrv = 'sin(theta)'
+    obsrv = 'sin(theta)',
 
 
 # TODO finish drift expressions, rest is ok
@@ -145,4 +151,21 @@ class HMJE(BaseModel):
     diffs = 0, 0, 0, 0.0003, 0.0003, 0
     obsrv = '-x1 + x2', 'z'
     const = {'Iext2': 0.45, 'a': 1, 'b': 3, 'slope': 0, 'tt': 1, 'c': 1,
-             'd': 5, 'Kvf': 0, 'Ks': 0, 'Kf': 0, 'aa': 6, 'tau': 10}
+             'd': 5, 'Kvf': 0, 'Ks': 0, 'Kf': 0, 'aa': 6, 'tau': 10,
+             'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}
+
+
+class RWW(BaseModel):
+    state = 'S'
+    state_limits = {'S': (0, 1, 'clip')}
+    input = 'c'
+    param = 'w io'
+    const = {'a': 0.270, 'b': 0.108, 'd': 154.0, 'g': 0.641,
+             'ts': 100.0, 'j': 0.2609, 'w': 0.6, 'io': 0.33}
+    auxex = [
+        ('x', 'w * j * S + io + j * c'),
+        ('h', '(a * x - b) / (1 - exp(-d*(a*x - b)))')
+    ]
+    drift = '- (S / ts) + (1 - S) * h * g',
+    diffs = 0.01,
+    obsrv = 'S',

@@ -3,7 +3,7 @@ from unittest import TestCase
 import ctypes as ct
 
 from tvb_hpc.compiler import Compiler
-from tvb_hpc.model import test_model, HMJE
+from tvb_hpc.model import test_model, HMJE, RWW
 from tvb_hpc.bold import BalloonWindkessel
 from tvb_hpc.schemes import euler_maruyama_logp
 from tvb_hpc.codegen import generate_code
@@ -67,4 +67,9 @@ class TestCodeGen(TestCase):
 
     def test_hmje(self):
         model = HMJE()
+        fn = self._build_func(model, self.spec)
+
+    def test_rww(self):
+        model = RWW()
+        print(generate_code(model, self.spec))
         fn = self._build_func(model, self.spec)
