@@ -3,7 +3,7 @@ from unittest import TestCase
 import ctypes as ct
 
 from tvb_hpc.compiler import Compiler
-from tvb_hpc.model import test_model, HMJE, RWW
+from tvb_hpc.model import _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from tvb_hpc.bold import BalloonWindkessel
 from tvb_hpc.schemes import euler_maruyama_logp
 from tvb_hpc.codegen import generate_code
@@ -12,7 +12,7 @@ from tvb_hpc.codegen import generate_code
 class TestLogProb(TestCase):
 
     def setUp(self):
-        self.model = test_model()
+        self.model = _TestModel()
 
     def test_partials(self):
         logp = euler_maruyama_logp(
@@ -54,7 +54,7 @@ class TestCodeGen(TestCase):
         fn(nn, *args)
 
     def test_test_model_code_gen(self):
-        model = test_model()
+        model = _TestModel()
         fn = self._build_func(model, self.spec)
         arrs = model.prep_arrays(1024, self.spec)
         self._call(fn, *arrs)
@@ -71,5 +71,16 @@ class TestCodeGen(TestCase):
 
     def test_rww(self):
         model = RWW()
-        print(generate_code(model, self.spec))
+        fn = self._build_func(model, self.spec)
+
+    def test_jr(self):
+        model = JansenRit()
+        fn = self._build_func(model, self.spec)
+
+    def test_linear(self):
+        model = Linear()
+        fn = self._build_func(model, self.spec)
+
+    def test_g2do(self):
+        model = G2DO()
         fn = self._build_func(model, self.spec)
