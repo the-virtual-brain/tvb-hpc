@@ -37,6 +37,9 @@ namespace tvb {
     {
     public:
         using coupling_type = _coupling_type;
+
+        // if value_type is a chunk, we amortize lookup over par sweep
+        // points. but have so far assumed value_type has arithmetic.
         using value_type = typename coupling_type::value_type;
         using connectome_type = tvb::connectome<value_type>;
 
@@ -46,8 +49,12 @@ namespace tvb {
                 coupling_type& coupling,
                 connectome_type& connectome
                 )
-            : _coupling(coupling), _connectome(connectome), _time_step(time_step)
-              , _recip_speed_step(1.0 / speed / time_step), _decim(decim), _speed(speed)
+            : _coupling(coupling)
+              , _connectome(connectome)
+              , _time_step(time_step)
+              , _recip_speed_step(1.0 / speed / time_step / decim)
+              , _decim(decim)
+              , _speed(speed)
         {
             buf.resize(n_node());
             buf_pos.assign(n_node(), 0);
@@ -60,6 +67,7 @@ namespace tvb {
 
         size_t n_node() { return _connectome.n_node(); }
 
+        // unify eff and aff as a single in/out vec<chunk>
         void step(std::vector<value_type> efferent,
                   std::vector<value_type> afferent)
         {
