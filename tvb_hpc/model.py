@@ -132,7 +132,6 @@ class Kuramoto(BaseModel):
     obsrv = 'sin(theta)',
 
 
-# TODO finish drift expressions, rest is ok
 class HMJE(BaseModel):
     state = 'x1 y1 z x2 y2 g'
     input = 'c1 c2'
