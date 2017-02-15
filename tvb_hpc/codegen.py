@@ -37,7 +37,7 @@ def generate_alignments(names, spec):
         lines.append(line)
     return lines
 
-def generate_code(model, spec):
+def generate_model_code(model, spec):
     decls = generate_alignments(
         'state input param drift diffs obsrv'.split(), spec)
     decls += model.declarations(spec)

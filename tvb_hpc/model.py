@@ -1,26 +1,8 @@
 import numpy as np
-import pymbolic as pm
 from pymbolic.mapper.c_code import CCodeMapper
 from pymbolic.mapper.differentiator import DifferentiationMapper
-from tvb_hpc.utils import simplify
 
-
-
-def vars(svars):
-    return np.array([pm.var(var) for var in svars.split()])
-
-
-def exprs(sexprs):
-    exprs = []
-    for expr in sexprs:
-        if isinstance(expr, (int, float)):
-            exprs.append(expr)
-        else:
-            try:
-                exprs.append(pm.parse(expr))
-            except Exception as exc:
-                raise Exception(repr(expr))
-    return np.array(exprs)
+from tvb_hpc.utils import simplify, vars, exprs
 
 
 class BaseModel:
@@ -131,7 +113,7 @@ class Kuramoto(BaseModel):
     input = 'I'
     param = 'omega'
     drift = 'omega + I'
-    obsrv = 'sin(theta)',
+    obsrv = 'theta', 'sin(theta)'
 
 
 class HMJE(BaseModel):
@@ -151,7 +133,7 @@ class HMJE(BaseModel):
         'tt * (-0.01 * (g - 0.1 * x1))'
     )
     diffs = 0, 0, 0, 0.0003, 0.0003, 0
-    obsrv = '-x1 + x2', 'z'
+    obsrv = 'x1', 'x2', 'z', '-x1 + x2'
     const = {'Iext2': 0.45, 'a': 1, 'b': 3, 'slope': 0, 'tt': 1, 'c': 1,
              'd': 5, 'Kvf': 0, 'Ks': 0, 'Kf': 0, 'aa': 6, 'tau': 10,
              'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}
@@ -194,7 +176,7 @@ class JansenRit(BaseModel):
         'B * b * (a_4 * J * sigm_y0_3) - 2 * b * y5 - b**2 * y2'
      )
     diffs = 0, 0, 0, 0, 0, 0
-    obsrv = 'y1 - y2',  # TODO check w/ Andreas
+    obsrv = 'y0 - y1',  # TODO check w/ Andreas
 
 
 class Linear(BaseModel):

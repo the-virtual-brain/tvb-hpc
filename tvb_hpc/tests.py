@@ -6,7 +6,7 @@ from tvb_hpc.compiler import Compiler
 from tvb_hpc.model import _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from tvb_hpc.bold import BalloonWindkessel
 from tvb_hpc.schemes import euler_maruyama_logp
-from tvb_hpc.codegen import generate_code
+from tvb_hpc.codegen import generate_model_code
 
 
 class TestLogProb(TestCase):
@@ -37,7 +37,7 @@ class TestCodeGen(TestCase):
 
     def _build_func(self, model, spec):
         comp = Compiler(cc=spec['cc'], cflags=spec['cflags'])
-        lib = comp(generate_code(model, spec))
+        lib = comp(generate_model_code(model, spec))
         fn = getattr(lib, model.kernel_name)
         fn.restype = None  # equiv. C void return type
         ui = ct.c_uint
