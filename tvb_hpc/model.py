@@ -11,8 +11,16 @@ def vars(svars):
 
 
 def exprs(sexprs):
-    return np.array([expr if isinstance(expr, (int, float)) else pm.parse(expr)
-                     for expr in sexprs])
+    exprs = []
+    for expr in sexprs:
+        if isinstance(expr, (int, float)):
+            exprs.append(expr)
+        else:
+            try:
+                exprs.append(pm.parse(expr))
+            except Exception as exc:
+                raise Exception(repr(expr))
+    return np.array(exprs)
 
 
 class BaseModel:
@@ -109,12 +117,29 @@ class test_model(BaseModel):
     const = {'d': 3.0, 'e': -12.23904e-2}
 
 
+class Kuramoto(BaseModel):
+    state = 'theta'
+    state_limits = {'theta': (-np.pi, np.pi, 'wrap')}
+    input = 'I'
+    param = 'omega'
+    drift = 'omega + I'
+    obsrv = 'sin(theta)'
+
+
 # TODO finish drift expressions, rest is ok
-class hmje(BaseModel):
+class HMJE(BaseModel):
     state = 'x1 y1 z x2 y2 g'
     input = 'c1 c2'
     param = 'x0 Iext r'
     drift = (
+        'tt * (y1 - z + Iext + Kvf * c1 + ('
+                '  (x1 <  0)*(-a * x1 * x1 + b * x1)'
+                '+ (x1 >= 0)*(slope - x2 + 0.6 * (z - 4)**2)'
+            ') * x1)',
+        'tt * (c - d * x1 * x1 - y1)',
+        'tt * (r * (4 * (x1 - x0) - z + (z < 0) * (-0.1 * pow(z, 7)) + Ks * c1))',
+        'tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)',
+        'tt * ((-y2 + (x2 >= (-3.5)) * (aa * (x2 + 0.25))) / tau)',
         'tt * (-0.01 * (g - 0.1 * x1))'
     )
     diffs = 0, 0, 0, 0.0003, 0.0003, 0

@@ -1,0 +1,4 @@
+numpy==1.12.0
+pymbolic==2016.2.3
+six==1.10.0
+sympy==1.0

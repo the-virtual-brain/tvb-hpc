@@ -20,7 +20,7 @@ void {name}(
 {{
   {decls}
   {loop_pragma}
-  for (unsigned int j=0; j < {width}; j++)
+  for (unsigned int j=0; j < nnode; j++)
   {{
     unsigned int i = j / {width};
     {body}
