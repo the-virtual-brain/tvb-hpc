@@ -125,7 +125,7 @@ class TestCoupling(TestCase):
 
     def setUp(self):
         # GCC 6 is generating AVX-512 instructions for functions declared SIMD
-        # despite march=native.
+        # despite march=native... encouraging but not testable locally.
         self.cflags = '-O3 -march=native'.split()
         self.spec = BaseSpec('float', 8, 64)
 
@@ -158,3 +158,27 @@ class TestCoupling(TestCase):
         from tvb_hpc.model import Kuramoto
         model = Kuramoto()
         self._test_cfun_code(KCf(model))
+
+
+class TestNetwork(TestCase):
+
+    def setUp(self):
+        # GCC 6 is generating AVX-512 instructions for functions declared SIMD
+        # despite march=native... encouraging but not testable locally.
+        self.cflags = '-O3 -march=native'.split()
+        self.spec = BaseSpec('float', 8, 64)
+        self.comp = Compiler(cflags=self.cflags)
+
+        from tvb_hpc.coupling import Sigmoidal
+        from tvb_hpc.model import JansenRit
+        self.model = JansenRit()
+        self.cfun = Sigmoidal(self.model)
+
+
+    def test_dense(self):
+        from tvb_hpc.network import DenseNetwork
+        net = DenseNetwork(self.model, self.cfun)
+        code = net.generate_code(self.spec)
+        print(code)
+        dll = self.comp(code)
+        getattr(dll, net.kernel_name)

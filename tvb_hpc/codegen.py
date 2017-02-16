@@ -26,6 +26,9 @@ class BaseCodeGen:
         return CCodeMapper()(expr)
 
 
+    # TODO common interface? kernel_name, decls, innerloop, pragma etc
+
+
 class BaseSpec:
     """
     Spec handles details dtype, vectorization, alignment, etc which affect
@@ -57,3 +60,14 @@ class BaseSpec:
             'width': self.width,
             'align': self.align
         }
+
+
+class BaseLayout:
+    """
+    Handle layout of data in memory, generating indexing expressions, etc.
+
+    For now, kernels manually / hard code data chunking.
+
+    """
+
+    # TODO

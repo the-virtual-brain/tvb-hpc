@@ -32,7 +32,7 @@ class BaseCoupling(BaseCodeGen):
 }}
 
 #pragma omp declare simd
-{float} {post_sum_name}({float} {stat}, {float} * __restrict param)
+{float} {post_sum_name}({float} {stat})
 {{
     {post_decls}
     return {post_sum};
@@ -57,13 +57,13 @@ class BaseCoupling(BaseCodeGen):
             post_sum=post_sum,
             pre_decls=self.declarations(self.pre_sum_sym[0], spec),
             post_decls=self.declarations(self.post_sum_sym[0], spec),
-            stat=self._stat,
+            stat=self.stat,
             **spec.dict
         )
         return code
 
     @property
-    def _stat(self):
+    def stat(self):
         # TODO replace by dep analysis
         if 'mean' in self.post_sum[0]:
             return 'mean'
