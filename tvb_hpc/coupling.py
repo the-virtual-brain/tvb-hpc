@@ -1,9 +1,11 @@
 
 """
-Big bug/feature wrt. TVB here: we assume pre_syn is observables, not state vars.
+bug/feature wrt. TVB here: we assume pre_syn is observables, not state vars.
 
 If single expression given, applied to all observables. Otherwise,
 empty expressions stop evaluation of coupling on one or more observables.
+
+A connection is specified node to node, so applies to all cvars.
 
 """
 
