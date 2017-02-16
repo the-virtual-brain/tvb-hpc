@@ -2,11 +2,12 @@ import logging
 from unittest import TestCase
 import ctypes as ct
 
+from tvb_hpc.codegen import BaseSpec
 from tvb_hpc.compiler import Compiler
-from tvb_hpc.model import _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
+from tvb_hpc.model import (BaseModel, _TestModel, HMJE, RWW, JansenRit,
+                           Linear, G2DO)
 from tvb_hpc.bold import BalloonWindkessel
 from tvb_hpc.schemes import euler_maruyama_logp
-from tvb_hpc.codegen import generate_model_code
 
 
 LOG = logging.getLogger(__name__)
@@ -31,17 +32,12 @@ class TestLogProb(TestCase):
 class TestCodeGen(TestCase):
 
     def setUp(self):
-        self.spec = {
-            'float': 'float',
-            'width': 8,
-            'align': 64,
-            'cc': '/usr/local/bin/gcc-6',
-            'cflags': '-mavx2 -O3 -ffast-math -fopenmp'.split()
-        }
+        self.cflags = '-mavx2 -O3 -ffast-math -fopenmp'.split()
+        self.spec = BaseSpec('float', 8, 64).dict
 
-    def _build_func(self, model, spec):
-        comp = Compiler(cc=spec['cc'], cflags=spec['cflags'])
-        lib = comp(generate_model_code(model, spec))
+    def _build_func(self, model: BaseModel, spec):
+        comp = Compiler()
+        lib = comp(model.generate_code(spec))
         fn = getattr(lib, model.kernel_name)
         fn.restype = None  # equiv. C void return type
         ui = ct.c_uint
@@ -92,34 +88,17 @@ class TestCodeGen(TestCase):
 
 class TestRNG(TestCase):
 
-    def test_pyopencl(self):
-
-        import numpy as np
-        import pyopencl as cl
-        import pyopencl.clrandom as clr
-        import pyopencl.array as cla
-
-        context = cl.create_some_context()
-        queue = cl.CommandQueue(context)
-
-        array = cla.Array(queue, (1024, 1024), np.float32)
-
-        rng = clr.PhiloxGenerator(context)
-
-        rng.fill_normal(array)
-        data = array.get(queue)
-
-        self.assertTrue(data.mean()**2 < 1e-4)
-        self.assertTrue((data.std() - 1)**2 < 1e-4)
-
     def test_r123_unifrom(self):
         import numpy as np
         from tvb_hpc.rng import RNG
         from scipy.stats import kstest
         import time
-        rng = RNG()
-        rng.comp.cflags += '-O3 -fopenmp'.split()
+        from tvb_hpc.compiler import CppCompiler
+        comp = CppCompiler(gen_asm=True)
+        comp.cflags += '-O3 -fopenmp'.split()
+        rng = RNG(comp)
         rng.build()
+        # LOG.debug(list(comp.cache.values())[0]['asm'])
         array = np.zeros((1024 * 1024, ), np.float32)
         rng.fill(array)
         d, p = kstest(array, 'norm')
@@ -140,3 +119,37 @@ class TestRNG(TestCase):
         et2 = time.time() - tic
         self.assertLess(et1, et2)
         LOG.info('r123 %0.3fs, np %0.3fs' % (et1, et2))
+
+
+class TestCoupling(TestCase):
+
+    def setUp(self):
+        self.cflags = '-mavx2 -O3 -ffast-math -fopenmp'.split()
+        self.spec = BaseSpec('float', 8, 64)
+
+    def _test_cfun_code(self, cf):
+        print(cf.generate_code(self.spec))
+
+    def test_linear(self):
+        from tvb_hpc.coupling import Linear
+        from tvb_hpc.model import G2DO
+        model = G2DO()
+        self._test_cfun_code(Linear(model))
+
+    def test_diff(self):
+        from tvb_hpc.coupling import Diff
+        from tvb_hpc.model import G2DO
+        model = G2DO()
+        self._test_cfun_code(Diff(model))
+
+    def test_sigm(self):
+        from tvb_hpc.coupling import Sigmoidal
+        from tvb_hpc.model import JansenRit
+        model = JansenRit()
+        self._test_cfun_code(Sigmoidal(model))
+
+    def test_kura(self):
+        from tvb_hpc.coupling import Kuramoto as KCf
+        from tvb_hpc.model import Kuramoto
+        model = Kuramoto()
+        self._test_cfun_code(KCf(model))

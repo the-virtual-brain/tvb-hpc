@@ -5,52 +5,55 @@ task specific modules.
 
 """
 
-template = """
-#include <math.h>
+import numpy as np
+import ctypes as ct
+from pymbolic.mapper.c_code import CCodeMapper
+from typing import List, Dict
 
-void {name}(
-    unsigned int nnode,
-    {float} * __restrict state,
-    {float} * __restrict input,
-    {float} * __restrict param,
-    {float} * __restrict drift,
-    {float} * __restrict diffs,
-    {float} * __restrict obsrv
-)
-{{
-  {decls}
-  {loop_pragma}
-  for (unsigned int j=0; j < nnode; j++)
-  {{
-    unsigned int i = j / {width};
-    {body}
-  }}
-}}
-"""
 
-def generate_alignments(names, spec):
-    value = spec['align']
-    lines = []
-    for name in names:
-        fmt = '{name} = __builtin_assume_aligned({name}, {value});'
-        line = fmt.format(name=name, value=value)
-        lines.append(line)
-    return lines
+class BaseCodeGen:
 
-def generate_model_code(model, spec):
-    decls = generate_alignments(
-        'state input param drift diffs obsrv'.split(), spec)
-    decls += model.declarations(spec)
-    body = model.inner_loop_lines(spec)
-    code = template.format(
-        decls='\n  '.join(decls),
-        body='\n    '.join(body),
-        name=model.kernel_name,
-        nsvar=len(model.state_sym),
-        loop_pragma='#pragma omp simd safelen(%d)' % (spec['width'], ),
-        **spec
-    )
-    if spec['float'] == 'float':
-        code = code.replace('pow', 'powf')
-    return code
+    def generate_alignments(self, names: List[str], spec: Dict[str, str]):
+        value = spec['align']
+        lines = []
+        for name in names:
+            fmt = '{name} = __builtin_assume_aligned({name}, {value});'
+            line = fmt.format(name=name, value=value)
+            lines.append(line)
+        return lines
 
+    def generate_c(self, expr):
+        return CCodeMapper()(expr)
+
+
+class BaseSpec:
+    """
+    Spec handles details dtype, vectorization, alignment, etc which affect
+    code generation but not the math.
+
+    """
+
+    def __init__(self, float='float', width=8, align=64):
+        self.float = float
+        self.width = width
+        self.align = align
+
+    @property
+    def dtype(self):
+        return self.float
+
+    @property
+    def np_dtype(self):
+        return {'float': np.float32}[self.dtype]
+
+    @property
+    def ct_dtype(self):
+        return {'float': ct.c_float}[self.dtype]
+
+    @property
+    def dict(self):
+        return {
+            'float': self.float,
+            'width': self.width,
+            'align': self.align
+        }

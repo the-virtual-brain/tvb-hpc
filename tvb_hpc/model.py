@@ -1,11 +1,11 @@
 import numpy as np
-from pymbolic.mapper.c_code import CCodeMapper
+import pymbolic as pm
 from pymbolic.mapper.differentiator import DifferentiationMapper
-
+from tvb_hpc.codegen import BaseCodeGen
 from tvb_hpc.utils import simplify, vars, exprs
 
 
-class BaseModel:
+class BaseModel(BaseCodeGen):
     """
     BaseModel parses attributes on subclasses, defining a networked SDE.
 
@@ -38,6 +38,46 @@ class BaseModel:
             exprs.append(simplify(DifferentiationMapper(var)(expr)))
         return np.array(exprs)
 
+    template = """
+#include <math.h>
+
+void {name}(
+    unsigned int nnode,
+    {float} * __restrict state,
+    {float} * __restrict input,
+    {float} * __restrict param,
+    {float} * __restrict drift,
+    {float} * __restrict diffs,
+    {float} * __restrict obsrv
+)
+{{
+  {decls}
+  {loop_pragma}
+  for (unsigned int j=0; j < nnode; j++)
+  {{
+    unsigned int i = j / {width};
+    {body}
+  }}
+}}
+"""
+
+    def generate_code(self, spec):
+        decls = self.generate_alignments(
+            'state input param drift diffs obsrv'.split(), spec)
+        decls += self.declarations(spec)
+        body = self.inner_loop_lines(spec)
+        code = self.template.format(
+            decls='\n  '.join(decls),
+            body='\n    '.join(body),
+            name=self.kernel_name,
+            nsvar=len(self.state_sym),
+            loop_pragma='#pragma omp simd safelen(%d)' % (spec['width'], ),
+            **spec
+        )
+        if spec['float'] == 'float':
+            code = code.replace('pow', 'powf')
+        return code
+
     def declarations(self, spec):
         common = {'nsvar': len(self.state_sym), }
         common.update(spec)
@@ -67,6 +107,7 @@ class BaseModel:
         # do aux exprs
         fmt = '{float} {lhs} = {rhs};'
         for lhs, rhs in self.auxex:
+            rhs = self.generate_c(pm.parse(rhs))
             line = fmt.format(lhs=lhs, rhs=rhs, **common)
             lines.append(line)
         # store drift / diffs / obsrv
@@ -75,16 +116,13 @@ class BaseModel:
             exprs = getattr(self, kind + '_sym')
             for i, expr in enumerate(exprs):
                 line = fmt.format(
-                    kind=kind, expr=self._cc(expr), isvar=i, **common)
+                    kind=kind, expr=self.generate_c(expr), isvar=i, **common)
                 lines.append(line)
         return lines
 
     @property
     def kernel_name(self):
         return 'tvb_' + self.__class__.__name__
-
-    def _cc(self, expr):
-        return CCodeMapper()(expr)
 
     def prep_arrays(self, nnode, spec):
         dtype = {'float': np.float32, 'double': np.float64}[spec['float']]
@@ -112,7 +150,8 @@ class Kuramoto(BaseModel):
     state_limits = {'theta': (-np.pi, np.pi, 'wrap')}
     input = 'I'
     param = 'omega'
-    drift = 'omega + I'
+    drift = 'omega + I',
+    diffs = 0,
     obsrv = 'theta', 'sin(theta)'
 
 

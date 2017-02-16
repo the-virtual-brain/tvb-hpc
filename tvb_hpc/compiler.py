@@ -51,9 +51,8 @@ class Compiler:
         self.cache = {}
         self.gen_asm = gen_asm
 
-
     def __call__(self, code: str) -> ctypes.CDLL:
-        key = code, tuple(self.cflags), tuple(self.ldflags)
+        key = code
         if key not in self.cache:
             self.cache[key] = self._build(code)
         return self.cache[key]['dll']
@@ -70,7 +69,8 @@ class Compiler:
             fd.write(code)
         self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname], tempdir.name)
         if self.gen_asm:
-            self._run([self.cc] + self.cflags + ['-fPIC', '-S', c_fname], tempdir.name)
+            self._run([self.cc] + self.cflags
+                      + ['-fverbose-asm', '-S', c_fname], tempdir.name)
             with open(S_fname, 'r') as fd:
                 asm = fd.read()
         self._run([self.cc] + self.cflags + self.ldflags +

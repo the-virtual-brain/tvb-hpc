@@ -21,6 +21,8 @@ extern "C" {
 void tvb_rng(long long int seed, unsigned int nout,
              float * __restrict out) {
 
+    out = (float *) __builtin_assume_aligned(out, 64);
+
     // TODO other variants might vectorize better?
     %(loop_pragma)s
     for(int i=0; i<(nout/4); ++i) {
