@@ -124,11 +124,16 @@ class TestRNG(TestCase):
 class TestCoupling(TestCase):
 
     def setUp(self):
-        self.cflags = '-mavx2 -O3 -ffast-math -fopenmp'.split()
+        # GCC 6 is generating AVX-512 instructions for functions declared SIMD
+        # despite march=native.
+        self.cflags = '-O3 -march=native'.split()
         self.spec = BaseSpec('float', 8, 64)
 
     def _test_cfun_code(self, cf):
-        print(cf.generate_code(self.spec))
+        comp = Compiler(cflags=self.cflags)
+        dll = comp(cf.generate_code(self.spec))
+        getattr(dll, cf._post_sum_name)
+        getattr(dll, cf._pre_sum_name)
 
     def test_linear(self):
         from tvb_hpc.coupling import Linear

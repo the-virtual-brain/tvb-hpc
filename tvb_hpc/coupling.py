@@ -25,14 +25,14 @@ class BaseCoupling(BaseCodeGen):
 #include <math.h>
 
 #pragma omp declare simd
-void {pre_sum_name}({float} pre_syn, {float} post_syn)
+{float} {pre_sum_name}({float} pre_syn, {float} post_syn)
 {{
     {pre_decls}
     return {pre_sum};
 }}
 
 #pragma omp declare simd
-void {post_sum_name}({float} {stat}, {float} * __restrict param)
+{float} {post_sum_name}({float} {stat}, {float} * __restrict param)
 {{
     {post_decls}
     return {post_sum};
