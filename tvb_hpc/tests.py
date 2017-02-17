@@ -101,7 +101,7 @@ class TestModel(TestCase):
 class TestRNG(TestCase):
 
     def test_r123_unifrom(self):
-        comp = CppCompiler(gen_asm=True)
+        comp = CppCompiler()
         rng = RNG(comp)
         rng.build(BaseSpec())
         # LOG.debug(list(comp.cache.values())[0]['asm'])
