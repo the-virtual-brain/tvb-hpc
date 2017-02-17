@@ -42,6 +42,8 @@ class BaseCodeGen:
         """
         value = spec['align']
         lines = []
+        if value is None:
+            return lines
         for name in names:
             fmt = '{name} = __builtin_assume_aligned({name}, {value});'
             line = fmt.format(name=name, value=value)
@@ -65,7 +67,7 @@ class BaseSpec:
 
     """
 
-    def __init__(self, float='float', width=8, align=64, openmp=False):
+    def __init__(self, float='float', width=8, align=None, openmp=False):
         self.float = float
         self.width = width
         self.align = align
