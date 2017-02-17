@@ -54,6 +54,25 @@ class Storage(enum.Enum):
     extern = 'extern'
 
 
+class Unit(GeneratesC):
+
+    template = """
+{includes}
+
+{body}
+"""
+
+    def __init__(self, body, *includes):
+        self.includes = '\n'.join(
+            ['#include "%s"' % (inc, ) for inc in includes])
+        if isinstance(body, GeneratesC):
+            body = body.generate_c()
+        self.body = body
+
+    def generate_c(self):
+        return self.template.format(**self.__dict__)
+
+
 class Block(GeneratesC):
 
     template = """
@@ -86,7 +105,8 @@ class Func(GeneratesC):
     def __init__(self, name, body, args,
                  restype='void',
                  pragma='',
-                 storage=Storage.none):
+                 storage=Storage.none,
+                 ):
         self.name = name
         if not isinstance(body, Block):
             body = Block(body)
@@ -259,6 +279,29 @@ class BaseCodeGen:
         return mapper(expr)
 
     # TODO common interface? kernel_name, decls, innerloop, pragma etc
+    # see GeneratesC
+
+
+class BaseLayout:
+    """
+    Handle layout of data in memory, generating indexing expressions, etc.
+
+    For now, kernels manually / hard code data chunking.
+
+    """
+
+    idx_expr_template = (
+            "{i}/{width}*{width}*{nvar} + {j}*{width} + {i}%{width}")
+
+    def __init__(self, width, nvar=None):
+        self.width = width
+        self.nvar = nvar
+
+    def generate_idx_expr(self, ivar: str, jvar: str, nvar=None):
+        nvar = nvar or self.nvar
+        assert nvar is not None
+        return self.idx_expr_template.format(
+            i=ivar, j=jvar, nvar=nvar, width=self.width)
 
 
 class BaseSpec:
@@ -268,11 +311,13 @@ class BaseSpec:
 
     """
 
-    def __init__(self, float='float', width=8, align=None, openmp=False):
+    def __init__(self, float='float', width=8, align=None, openmp=False,
+                 layout=None):
         self.float = float
         self.width = width
         self.align = align
         self.openmp = False
+        self.layout = layout or BaseLayout(width=width)
 
     @property
     def dtype(self):
@@ -295,26 +340,3 @@ class BaseSpec:
             'align': self.align,
             'openmp': self.openmp
         }
-
-
-class BaseLayout:
-    """
-    Handle layout of data in memory, generating indexing expressions, etc.
-
-    For now, kernels manually / hard code data chunking.
-
-    """
-
-    idx_expr_template = (
-            "{i}/{width}*{width}*{nvar} + {j}*{width} + {i}%{width}")
-
-    def __init__(self, nvar, width):
-        self.nvar = nvar
-        self.width = width
-
-    def generate_idx_expr(self, ivar: str, jvar: str):
-        return self.idx_expr_template.format(
-            i=ivar,
-            j=jvar,
-            nvar=self.nvar,
-            width=self.width)

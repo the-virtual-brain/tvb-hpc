@@ -25,7 +25,7 @@ LOG = logging.getLogger(__name__)
 
 class TestCG(TestCase):
 
-    def test_loop(self):
+    def test_func_loop(self):
         ttable = TypeTable()
         for name in 'float double int'.split():
             ft = ttable.find_type(name)

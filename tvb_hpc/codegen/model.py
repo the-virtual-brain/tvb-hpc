@@ -11,20 +11,18 @@ class ModelGen1(BaseCodeGen):
 
 void {name}(
     unsigned int nnode,
-    {float} * __restrict state,
-    {float} * __restrict input,
-    {float} * __restrict param,
-    {float} * __restrict drift,
-    {float} * __restrict diffs,
-    {float} * __restrict obsrv
+    {float} *state,
+    {float} *input,
+    {float} *param,
+    {float} *drift,
+    {float} *diffs,
+    {float} *obsrv
 )
 {{
   {decls}
   {loop_pragma}
   for (unsigned int j=0; j < nnode; j++)
   {{
-    unsigned int i = j / {width};
-    unsigned int jw = j % {width};
     {body}
   }}
 }}
@@ -72,13 +70,13 @@ void {name}(
         common.update(spec.dict)
         lines = []
         # unpack state, input & parameters
-        fmt = '{float} {var} = {kind}[i*{nvar_width} + {isvar}*{width} + jw];'
+        fmt = '{float} {var} = {kind}[{idx_expr}];'
         for kind in 'state input param'.split():
             vars = getattr(self.model, kind + '_sym')
             for i, var in enumerate(vars):
+                idx_expr = spec.layout.generate_idx_expr('j', i, len(vars))
                 line = fmt.format(
-                    kind=kind, var=var.name, isvar=i,
-                    nvar_width=len(vars)*spec.width,
+                    kind=kind, var=var.name, idx_expr=idx_expr,
                     **common)
                 lines.append(line)
         # do aux exprs
@@ -88,16 +86,16 @@ void {name}(
             line = fmt.format(lhs=lhs, rhs=rhs, **common)
             lines.append(line)
         # store drift / diffs / obsrv
-        fmt = '{kind}[i*{nvar_width} + {isvar}*{width} + jw] = {expr};'
+        fmt = '{kind}[{idx_expr}] = {expr};'
         for kind in 'drift diffs obsrv'.split():
             exprs = getattr(self.model, kind + '_sym')
-            nvar_width = len(getattr(self.model, kind + '_sym'))*spec.width
+            nvar = len(getattr(self.model, kind + '_sym'))
             for i, expr in enumerate(exprs):
+                idx_expr = spec.layout.generate_idx_expr('j', i, nvar)
                 line = fmt.format(
                     kind=kind,
                     expr=self.generate_c(expr, spec),
-                    isvar=i,
-                    nvar_width=nvar_width,
+                    idx_expr=idx_expr,
                     **common)
                 lines.append(line)
         return lines

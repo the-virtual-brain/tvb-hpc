@@ -1,4 +1,4 @@
-from .base import BaseCodeGen, BaseSpec, BaseLayout
+from .base import BaseCodeGen, BaseSpec
 from .cfun import CfunGen1
 from ..network import DenseNetwork
 
@@ -44,9 +44,10 @@ void {name}(unsigned int nnode,
     def kernel_name(self):
         return 'tvb_network'
 
-    def generate_acc(self, layout, input, obsrv, i, fname):
-        from_idx_expr = layout.generate_idx_expr('j', i)
-        to_idx_expr = layout.generate_idx_expr('i', i)
+    def generate_acc(self, spec, input, obsrv, i, fname):
+        nvar = self.net.model.state_sym.size
+        from_idx_expr = spec.layout.generate_idx_expr('j', i, nvar)
+        to_idx_expr = spec.layout.generate_idx_expr('i', i, nvar)
         return self.acc_template.format(
             wij='weights[i*nnode + j]',
             acc='%s[%s]' % (input, to_idx_expr),
@@ -54,8 +55,9 @@ void {name}(unsigned int nnode,
             post_syn='%s[%s]' % (obsrv, to_idx_expr),
             cfun_pre=fname)
 
-    def generate_post(self, layout, input, i, fname):
-        to_idx_expr = layout.generate_idx_expr('i', i)
+    def generate_post(self, spec, input, i, fname):
+        nvar = self.net.model.state_sym.size
+        to_idx_expr = spec.layout.generate_idx_expr('i', i, nvar)
         norm = ''
         if self.net.cfun.stat == 'mean':
             norm = ' / nnode'
@@ -74,19 +76,16 @@ void {name}(unsigned int nnode,
     def generate_code(self, cfcg: CfunGen1, spec: BaseSpec):
         cfun = self.net.cfun
         cfun_code = cfcg.generate_code(spec)
-        layout = BaseLayout(
-                nvar=self.net.model.state_sym.size,
-                width=spec.width)
         accs = []
         posts = []
         for i, (obsrv, pre, post, input) in enumerate(cfun.io):
             accs.append(
                 self.generate_acc(
-                    layout, 'input', 'obsrv', i,
+                    spec, 'input', 'obsrv', i,
                     cfcg.pre_expr_kname[str(pre)]))
             posts.append(
                 self.generate_post(
-                    layout, 'input',  i,
+                    spec, 'input',  i,
                     cfcg.post_expr_kname[str(post)]))
         inner_loop_pragma, outer_loop_pragma = self.loop_pragmas(spec)
         code = self.template.format(
