@@ -89,7 +89,8 @@ class Compiler:
         dll_fname = os.path.join(tempdir.name, name + '.so')
         with open(c_fname, 'w') as fd:
             fd.write(code)
-        self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname], tempdir.name)
+        self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname],
+                  tempdir.name)
         if self.gen_asm:
             self._run([self.cc] + self.cflags
                       + ['-fverbose-asm', '-S', c_fname], tempdir.name)
@@ -105,6 +106,7 @@ class Compiler:
         subprocess.check_call(
             args, cwd=cwd, **kwargs
         )
+
 
 class CppCompiler(Compiler):
     source_suffix = 'c++'

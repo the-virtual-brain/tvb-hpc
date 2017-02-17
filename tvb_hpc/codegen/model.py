@@ -1,7 +1,7 @@
 import pymbolic as pm
 
-from tvb_hpc.codegen import BaseCodeGen
-from tvb_hpc.model import BaseModel
+from .base import BaseCodeGen, BaseSpec
+from ..model import BaseModel
 
 
 class ModelGen1(BaseCodeGen):
@@ -33,13 +33,13 @@ void {name}(
     def __init__(self, model: BaseModel):
         self.model = model
 
-    def generate_code(self, spec):
+    def generate_code(self, spec: BaseSpec):
         decls = self.generate_alignments(
             'state input param drift diffs obsrv'.split(), spec)
         decls += self.declarations(spec)
         body = self.inner_loop_lines(spec)
         loop_pragma = ''
-        if spec['openmp']:
+        if spec.openmp:
             loop_pragma = '#pragma omp simd safelen(%d)' % (spec['width'], )
         code = self.template.format(
             decls='\n  '.join(decls),
@@ -48,15 +48,16 @@ void {name}(
             nsvar=len(self.model.state_sym),
             # icc -> pragma vector simd ivdep, does better
             loop_pragma=loop_pragma,
-            **spec
+            **spec.dict
         )
-        if spec['float'] == 'float':
+        if spec.float == 'float':
+            # TODO improve CCodeMapper
             code = code.replace('pow', 'powf')
         return code
 
     def declarations(self, spec):
         common = {'nsvar': len(self.model.state_sym), }
-        common.update(spec)
+        common.update(spec.dict)
         lines = []
         # add constants
         for name, value in self.model.const.items():
@@ -67,11 +68,11 @@ void {name}(
             lines.append(line)
         return lines
 
-    def inner_loop_lines(self, spec):
+    def inner_loop_lines(self, spec: BaseSpec):
         common = {
             'nsvar': len(self.model.state_sym),
         }
-        common.update(spec)
+        common.update(spec.dict)
         lines = []
         # unpack state, input & parameters
         fmt = '{float} {var} = {kind}[i*{nvar_width} + {isvar}*{width} + jw];'
@@ -80,7 +81,7 @@ void {name}(
             for i, var in enumerate(vars):
                 line = fmt.format(
                     kind=kind, var=var.name, isvar=i,
-                    nvar_width=len(vars)*spec['width'],
+                    nvar_width=len(vars)*spec.width,
                     **common)
                 lines.append(line)
         # do aux exprs
@@ -93,7 +94,7 @@ void {name}(
         fmt = '{kind}[i*{nvar_width} + {isvar}*{width} + jw] = {expr};'
         for kind in 'drift diffs obsrv'.split():
             exprs = getattr(self.model, kind + '_sym')
-            nvar_width = len(getattr(self.model, kind + '_sym'))*spec['width']
+            nvar_width = len(getattr(self.model, kind + '_sym'))*spec.width
             for i, expr in enumerate(exprs):
                 line = fmt.format(
                     kind=kind, expr=self.generate_c(expr), isvar=i,

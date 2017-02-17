@@ -58,4 +58,3 @@ class BalloonWindkessel(BaseModel):
              '       + k2 * (1 - q / v ) '
              '       + k3 * (1 -     v ) )', )
     diffs = 0, 0, 0, 0
-

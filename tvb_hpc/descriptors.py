@@ -22,7 +22,6 @@ class StaticAttr(object):
     "Base class which requires all attributes to be declared at class level."
 
     def __setattr__(self, name, value):
-        attr_exists = hasattr(self, name)
         if not hasattr(self, name):
             raise AttributeError('%r has no attr %r.' % (self, name))
         else:
@@ -40,16 +39,21 @@ class IncorrectTypeAttrError(AttributeError):
 
 
 class NDArray(StaticAttr):
-    "Data descriptor for a NumPy array, with type, mutability and shape checking."
+    """
+    Data descriptor for a NumPy array, with type, mutability and shape
+    checking.
 
-    # Owner can provide array constructor via _array_ctor attr, i.e. NumPy or PyOpenCL, etc. ?
+    """
+
+    # Owner can provide array constructor via _array_ctor attr,
+    # i.e. NumPy or PyOpenCL, etc. ?
 
     State = collections.namedtuple('State', 'array initialized')
 
     shape, dtype, read_only, instance_state = (), None, True, {}
 
     def __init__(self, shape, dtype, read_only=True):
-        self.shape = shape # may have strings which eval in owner ns
+        self.shape = shape  # may have strings which eval in owner ns
         self.dtype = dtype
         self.read_only = read_only
         self.instance_state = weakref.WeakKeyDictionary()
@@ -63,7 +67,8 @@ class NDArray(StaticAttr):
                 if instance in dim.instance_state:
                     dim = dim.instance_state[instance].value
                 else:
-                    raise AttributeError('Dimension referenced before definition.')
+                    raise AttributeError(
+                        'Dimension referenced before definition.')
             else:
                 raise TypeError('expect int, str but found %r' % (type(dim), ))
             shape.append(dim)
@@ -102,7 +107,8 @@ class NDArray(StaticAttr):
 
 
 class Final(object):
-    "A descriptor for an attribute, possibly type-checked, that once initialized, cannot be changed."
+    """A descriptor for an attribute, possibly type-checked, that once
+    initialized, cannot be changed."""
 
     State = collections.namedtuple('State', 'value initialized')
 
@@ -119,7 +125,7 @@ class Final(object):
         return isinstance(value, self.type)
 
     def __set__(self, instance, value):
-        state = self._get_or_create_state(instance) # type: Final.State
+        state = self._get_or_create_state(instance)  # type: Final.State
         if state.initialized:
             raise AttributeError('final attribute cannot be set.')
         else:

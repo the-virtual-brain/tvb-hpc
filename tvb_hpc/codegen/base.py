@@ -1,5 +1,5 @@
 import ctypes as ct
-from typing import List, Dict
+from typing import List
 
 import numpy as np
 from pymbolic.mapper.c_code import CCodeMapper
@@ -19,7 +19,6 @@ class BaseCodeGen:
         'isunordered INFINITY NAN HUGE_VAL HUGE_VALF HUGE_VALL '
     ).split(' ')
 
-
     @property
     def math_names(self):
         """
@@ -31,7 +30,7 @@ class BaseCodeGen:
         """
         return self._math_names
 
-    def generate_alignments(self, names: List[str], spec: Dict[str, str]):
+    def generate_alignments(self, names: List[str], spec: 'BaseSpec'):
         """
         Generates a series of statement lines which declare a pointer to be
         aligned to the alignment given by ``spec``.
@@ -40,7 +39,7 @@ class BaseCodeGen:
         ['a = __builtin_assume_aligned(a, 64);', ...]
 
         """
-        value = spec['align']
+        value = spec.align
         lines = []
         if value is None:
             return lines
@@ -56,8 +55,7 @@ class BaseCodeGen:
         """
         return CCodeMapper()(expr)
 
-
-        # TODO common interface? kernel_name, decls, innerloop, pragma etc
+    # TODO common interface? kernel_name, decls, innerloop, pragma etc
 
 
 class BaseSpec:

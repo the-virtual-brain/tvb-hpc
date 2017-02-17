@@ -13,7 +13,7 @@ A connection is specified node to node, so applies to all cvars.
 
 import numpy as np
 import pymbolic as pm
-from tvb_hpc.utils import exprs, vars
+from tvb_hpc.utils import exprs
 
 
 class BaseCoupling:

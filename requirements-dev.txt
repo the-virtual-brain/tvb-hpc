@@ -4,3 +4,4 @@ six==1.10.0
 sympy==1.0
 scipy
 sphinx
+flake8

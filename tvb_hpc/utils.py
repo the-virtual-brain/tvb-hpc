@@ -11,10 +11,12 @@ include_dir = os.path.normpath(os.path.join(here, '..', 'include'))
 
 
 class NoSuchExecutable(RuntimeError):
+    "Exception raised when ``which`` does not find its argument on $PATH."
     pass
 
 
 def which(exe):
+    "Find exe name on $PATH."
     if os.path.exists(exe):
         return exe
     for path in os.environ['PATH'].split(os.path.pathsep):
@@ -22,7 +24,6 @@ def which(exe):
         if os.path.exists(maybe_path):
             return maybe_path
     raise NoSuchExecutable(exe)
-
 
 
 def simplify(expr):
@@ -34,10 +35,19 @@ def simplify(expr):
 
 
 def vars(svars):
+    """
+    Build array of symbolic variables from string of space-separated variable
+    names.
+
+    """
     return np.array([pm.var(var) for var in svars.split()])
 
 
 def exprs(sexprs):
+    """
+    Build array of symbolic expresssions from sequence of strings.
+
+    """
     exprs = []
     for expr in sexprs:
         if isinstance(expr, (int, float)):

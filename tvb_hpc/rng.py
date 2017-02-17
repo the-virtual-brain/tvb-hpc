@@ -67,6 +67,7 @@ class RNG:
         decls += self.cg.generate_alignments(['out'], spec)
         code = rng_template % {
             'loop_pragma': loop_pragma,
+            'decls': '\n    '.join(decls),
         }
         # TODO move to ffi module?
         self.dll = self.comp('rng', code)

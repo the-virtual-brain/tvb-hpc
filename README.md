@@ -5,7 +5,7 @@ inversion.
 
 Current development is test-driven, run
 ```bash
-TVB_LOG=DEBUG python3 -m unittest discover tvb_hpc
+TVB_LOG=DEBUG python3 -m unittest tvb_hpc.tests
 ```
 Decrease `TVB_LOG` to `INFO` if it's too verbose.
 

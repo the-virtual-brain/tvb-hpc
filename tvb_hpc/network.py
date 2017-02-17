@@ -11,4 +11,3 @@ class DenseNetwork:
     def __init__(self, model: BaseModel, cfun: BaseCoupling):
         self.model = model
         self.cfun = cfun
-

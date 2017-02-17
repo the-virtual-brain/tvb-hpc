@@ -5,11 +5,9 @@ The model module describes neural mass models.
 """
 
 import numpy as np
-import pymbolic as pm
 from pymbolic.mapper.differentiator import DifferentiationMapper
-
-import tvb_hpc.codegen.base
-from tvb_hpc.utils import simplify, vars, exprs
+from .codegen.base import BaseSpec
+from .utils import simplify, vars, exprs
 
 
 class BaseModel:
@@ -47,11 +45,11 @@ class BaseModel:
         return np.array(exprs)
 
     # TODO move to ffi module?
-    def prep_arrays(self, nnode, spec):
-        dtype = {'float': np.float32, 'double': np.float64}[spec['float']]
+    def prep_arrays(self, nnode, spec: BaseSpec):
+        dtype = spec.np_dtype
         arrs = []
         for key in 'state input param drift diffs obsrv'.split():
-            shape = nnode, len(getattr(self, key + '_sym')), spec['width']
+            shape = nnode, len(getattr(self, key + '_sym')), spec.width
             arrs.append(np.zeros(shape, dtype))
         return arrs
 
@@ -84,15 +82,15 @@ class HMJE(BaseModel):
     input = 'c1 c2'
     param = 'x0 Iext r'
     drift = (
-        'tt * (y1 - z + Iext + Kvf * c1 + ('
-                '  (x1 <  0)*(-a * x1 * x1 + b * x1)'
-                '+ (x1 >= 0)*(slope - x2 + 0.6 * (z - 4)**2)'
-            ') * x1)',
-        'tt * (c - d * x1 * x1 - y1)',
-        'tt * (r * (4 * (x1 - x0) - z + (z < 0) * (-0.1 * pow(z, 7)) + Ks * c1))',
-        'tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)',
-        'tt * ((-y2 + (x2 >= (-3.5)) * (aa * (x2 + 0.25))) / tau)',
-        'tt * (-0.01 * (g - 0.1 * x1))'
+    'tt * (y1 - z + Iext + Kvf * c1 + ('
+            '  (x1 <  0)*(-a * x1 * x1 + b * x1)'           # noqa: E131
+            '+ (x1 >= 0)*(slope - x2 + 0.6 * (z - 4)**2)'   # noqa: E131
+        ') * x1)',
+    'tt * (c - d * x1 * x1 - y1)',
+    'tt * (r * (4 * (x1 - x0) - z + (z < 0) * (-0.1 * pow(z, 7)) + Ks * c1))',
+    'tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)',
+    'tt * ((-y2 + (x2 >= (-3.5)) * (aa * (x2 + 0.25))) / tau)',
+    'tt * (-0.01 * (g - 0.1 * x1))'
     )
     diffs = 0, 0, 0, 0.0003, 0.0003, 0
     obsrv = 'x1', 'x2', 'z', '-x1 + x2'
@@ -166,10 +164,3 @@ class G2DO(BaseModel):
     )
     diffs = 1e-3, 1e-3
     obsrv = 'W', 'V'
-
-
-if __name__ == '__main__':
-    import tvb_hpc.codegen as cg
-    model = G2DO()
-    spec = tvb_hpc.codegen.base.BaseSpec()
-    print(model.generate_code(spec.dict))

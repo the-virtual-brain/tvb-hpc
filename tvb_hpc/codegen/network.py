@@ -1,5 +1,6 @@
-from tvb_hpc.codegen import BaseCodeGen, CfunGen1, BaseSpec
-from tvb_hpc.network import DenseNetwork
+from .base import BaseCodeGen, BaseSpec
+from .cfun import CfunGen1
+from ..network import DenseNetwork
 
 
 class NetGen1(BaseCodeGen):
@@ -21,15 +22,18 @@ void {name}(unsigned int nnode,
     for (i=0; i<nnode; i++)
     {{
         {float} acc = 0;
-        {float} post_syn = state[i/{width}*{width}*{nsvar} + {isvar}*{width} + i % {width}];
+        {float} post_syn = state[i/{width}*{width}*{nsvar} \\
+                                 + {isvar}*{width} + i % {width}];
         for (j=0; j<nnode; j++)
         {{
-            {float} pre_syn = state[j/{width}*{width}*{nsvar} + {isvar}*{width} + j % {width}];
+            {float} pre_syn = state[j/{width}*{width}*{nsvar} \\
+                                    + {isvar}*{width} + j % {width}];
             {float} el = {cfun_pre_sum}(pre_syn, post_syn);
             acc += el * weights[i*nnode + j];
         }}
         {maybe_apply_mean}
-        unsigned int idx = i/{width}*{width}*{nsvar} + {isvar}*{width} + i % {width};
+        unsigned int idx = i/{width}*{width}*{nsvar} \\
+                                + {isvar}*{width} + i % {width};
         input[idx] = {cfun_post_sum}(acc);
     }}
 }}
