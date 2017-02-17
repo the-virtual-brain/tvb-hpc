@@ -1,6 +1,6 @@
 import pymbolic as pm
 
-from .base import BaseCodeGen, BaseSpec
+from .base import BaseCodeGen, BaseSpec, Storage
 from ..model import BaseModel
 
 
@@ -9,6 +9,7 @@ class ModelGen1(BaseCodeGen):
     template = """
 #include <math.h>
 
+{storage}
 void {name}(
     unsigned int nnode,
     {float} *state,
@@ -30,15 +31,16 @@ void {name}(
 
     def __init__(self, model: BaseModel):
         self.model = model
+        self.storage = Storage.default
 
-    def generate_code(self, spec: BaseSpec):
+    def generate_code(self, spec: BaseSpec, storage=None):
         decls = self.generate_alignments(
             'state input param drift diffs obsrv'.split(), spec)
         decls += self.declarations(spec)
         body = self.inner_loop_lines(spec)
         loop_pragma = ''
         if spec.openmp:
-            loop_pragma = '#pragma omp simd safelen(%d)' % (spec['width'], )
+            loop_pragma = '#pragma omp simd'
         code = self.template.format(
             decls='\n  '.join(decls),
             body='\n    '.join(body),
@@ -46,6 +48,7 @@ void {name}(
             nsvar=len(self.model.state_sym),
             # icc -> pragma vector simd ivdep, does better
             loop_pragma=loop_pragma,
+            storage=(storage or self.storage).value,
             **spec.dict
         )
         return code

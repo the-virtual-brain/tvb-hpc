@@ -49,6 +49,7 @@ class GeneratesC:
 
 class Storage(enum.Enum):
     none = ''
+    default = ''
     static = 'static'
     inline = 'inline'
     extern = 'extern'
@@ -166,8 +167,9 @@ class Func(GeneratesC):
 
 class Loop(GeneratesC):
     template = """
+{pragma}
 for ({type} {var} = {lo}; {var} < {hi}; {var}++)
-{body}
+{body_code}
 """
 
     def __init__(self, var, hi, body, lo=0, pragma='', type='unsigned int'):
@@ -176,12 +178,13 @@ for ({type} {var} = {lo}; {var} < {hi}; {var}++)
         self.hi = hi
         if not isinstance(body, Block):
             body = Block(body)
-        self.body = indent(body.generate_c())
+        self.body = body
         self.pragma = pragma
         self.type = type
 
     def generate_c(self):
-        return self.template.format(**self.__dict__)
+        body_code = indent(self.body.generate_c())
+        return self.template.format(body_code=body_code, **self.__dict__)
 
 
 class MyCCodeMapper(CCodeMapper):
@@ -316,7 +319,7 @@ class BaseSpec:
         self.float = float
         self.width = width
         self.align = align
-        self.openmp = False
+        self.openmp = openmp
         self.layout = layout or BaseLayout(width=width)
 
     @property

@@ -9,9 +9,14 @@ Sphinx-built docs are [here](https://the-virtual-brain.github.io/tvb-hpc).
 
 ## Development
 
-Current development is test-driven, run
+Current development is test-driven, so they are the best place
+to see how things work and to start hacking. Run
 ```bash
 TVB_LOG=DEBUG python3 -m unittest tvb_hpc.tests
+```
+Or a specific test,
+```bash
+TVB_LOG=DEBUG python3 -m unittest tvb_hpc.tests.TestScheme.test_euler
 ```
 Decrease `TVB_LOG` to `INFO` if it's too verbose. Please also check style with
 ```

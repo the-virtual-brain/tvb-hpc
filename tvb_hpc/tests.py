@@ -10,6 +10,7 @@ from .codegen.base import BaseSpec, Loop, Func, TypeTable
 from .codegen.model import ModelGen1
 from .codegen.cfun import CfunGen1
 from .codegen.network import NetGen1
+from .codegen.scheme import EulerSchemeGen
 from .compiler import Compiler
 from .compiler import CppCompiler
 from .coupling import BaseCoupling
@@ -183,3 +184,18 @@ class TestNetwork(TestCase):
 
     def test_jr(self):
         self._test_dense(JansenRit, Sigmoidal)
+
+
+class TestScheme(TestCase):
+
+    def setUp(self):
+        self.spec = BaseSpec('float', 8, openmp=True)
+        self.comp = Compiler(openmp=True)
+
+    def test_euler(self):
+        model = HMJE()
+        modelcg = ModelGen1(model)
+        eulercg = EulerSchemeGen(modelcg)
+        lib = self.comp('euler', eulercg.generate_c(self.spec))
+        fn = getattr(lib, eulercg.kernel_name)
+        self.assertIsNotNone(fn)
