@@ -37,7 +37,7 @@ class TestLogProb(TestCase):
 class TestModel(TestCase):
 
     def setUp(self):
-        self.spec = BaseSpec('float', 8, 64).dict
+        self.spec = BaseSpec('float', 8).dict
 
     def _build_func(self, model: BaseModel, spec, log_code=False):
         comp = Compiler()
@@ -117,7 +117,7 @@ class TestRNG(TestCase):
 class TestCoupling(TestCase):
 
     def setUp(self):
-        self.spec = BaseSpec('float', 8, 64)
+        self.spec = BaseSpec('float', 8)
 
     def _test_cfun_code(self, cf: BaseCoupling):
         comp = Compiler()
@@ -154,7 +154,7 @@ class TestCoupling(TestCase):
 class TestNetwork(TestCase):
 
     def setUp(self):
-        self.spec = BaseSpec('float', 8, 64)
+        self.spec = BaseSpec('float', 8)
         self.comp = Compiler()
 
         from tvb_hpc.coupling import Sigmoidal

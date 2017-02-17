@@ -81,6 +81,7 @@ class Compiler:
         return self.cache[key]['dll']
 
     def _build(self, name, code):
+        LOG.debug('compiling unit %r with code\n%s' % (name, code))
         tempdir = tempfile.TemporaryDirectory()
         c_fname = os.path.join(tempdir.name, name + '.' + self.source_suffix)
         S_fname = os.path.join(tempdir.name, name + '.S')

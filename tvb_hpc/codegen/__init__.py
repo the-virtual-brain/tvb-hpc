@@ -1,6 +1,5 @@
 """
-Handle code generation tasks. Likely to become a module with
-task specific modules.
+Handle code generation tasks.
 
 """
 

@@ -9,6 +9,7 @@ switch to a 32-bit. See include/Random123/index.html for details.
 
 import numpy as np
 import ctypes
+from tvb_hpc.codegen.base import BaseCodeGen
 from tvb_hpc.compiler import CppCompiler
 from tvb_hpc.utils import include_dir
 
@@ -21,7 +22,7 @@ extern "C" {
 void tvb_rng(long long int seed, unsigned int nout,
              float * __restrict out) {
 
-    out = (float *) __builtin_assume_aligned(out, 64);
+    %(decls)s
 
     // TODO other variants might vectorize better?
     %(loop_pragma)s
@@ -55,15 +56,19 @@ class RNG:
 
     def __init__(self, comp=None):
         self.comp = comp or CppCompiler()  # type: Compiler
+        self.cg = BaseCodeGen()
 
     def build(self, spec):
         self.comp.cflags += ['-I' + include_dir]
         loop_pragma = ''
         if spec.openmp:
             loop_pragma = '#pragma omp parallel for'
+        decls = []
+        decls += self.cg.generate_alignments(['out'], spec)
         code = rng_template % {
             'loop_pragma': loop_pragma,
         }
+        # TODO move to ffi module?
         self.dll = self.comp('rng', code)
         self.fn = self.dll.tvb_rng
         self.fn.restype = None
