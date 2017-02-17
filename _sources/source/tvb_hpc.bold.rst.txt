@@ -1,0 +1,7 @@
+tvb_hpc.bold module
+===================
+
+.. automodule:: tvb_hpc.bold
+    :members:
+    :undoc-members:
+    :show-inheritance:

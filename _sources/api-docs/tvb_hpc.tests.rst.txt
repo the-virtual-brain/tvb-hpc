@@ -1,0 +1,7 @@
+tvb_hpc.tests module
+====================
+
+.. automodule:: tvb_hpc.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:

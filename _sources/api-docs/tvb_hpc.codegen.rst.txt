@@ -1,0 +1,22 @@
+tvb_hpc.codegen package
+=======================
+
+Submodules
+----------
+
+.. toctree::
+
+   tvb_hpc.codegen.base
+   tvb_hpc.codegen.cfun
+   tvb_hpc.codegen.literal
+   tvb_hpc.codegen.metric
+   tvb_hpc.codegen.model
+   tvb_hpc.codegen.network
+
+Module contents
+---------------
+
+.. automodule:: tvb_hpc.codegen
+    :members:
+    :undoc-members:
+    :show-inheritance:

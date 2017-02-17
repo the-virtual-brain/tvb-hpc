@@ -1,0 +1,7 @@
+tvb_hpc.compiler module
+=======================
+
+.. automodule:: tvb_hpc.compiler
+    :members:
+    :undoc-members:
+    :show-inheritance:

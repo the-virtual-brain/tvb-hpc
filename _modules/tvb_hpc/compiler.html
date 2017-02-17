@@ -1,0 +1,201 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.compiler &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.compiler</h1><div class="highlight"><pre>
+<span></span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The compiler module handles invocation of compilers to generate a shared lib</span>
+<span class="sd">which can be loaded via ctypes.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">ctypes</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">tvb_hpc.utils</span> <span class="k">import</span> <span class="n">which</span><span class="p">,</span> <span class="n">NoSuchExecutable</span>
+
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">CC</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CC&#39;</span><span class="p">,</span> <span class="s1">&#39;gcc&#39;</span><span class="p">)</span>
+<span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;defaulting to </span><span class="si">%r</span><span class="s1"> as C compiler, set CC otherwise&#39;</span> <span class="o">%</span> <span class="n">CC</span><span class="p">)</span>
+
+<span class="n">CXX</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CXX&#39;</span><span class="p">,</span> <span class="s1">&#39;g++&#39;</span><span class="p">)</span>
+<span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;defaulting to </span><span class="si">%r</span><span class="s1"> as C compiler, set CXX otherwise&#39;</span> <span class="o">%</span> <span class="n">CXX</span><span class="p">)</span>
+
+<span class="n">CFLAGS</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CFLAGS&#39;</span><span class="p">,</span> <span class="s1">&#39;-std=c99 -Wall -Wextra&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;defaulting to </span><span class="si">%r</span><span class="s1"> as C flags, set CFLAGS otherwise&#39;</span> <span class="o">%</span> <span class="n">CFLAGS</span><span class="p">)</span>
+
+<span class="n">CXXFLAGS</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CXXFLAGS&#39;</span><span class="p">,</span> <span class="s1">&#39;-std=c++11 -Wall -Wextra&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;defaulting to </span><span class="si">%r</span><span class="s1"> as CXX flags, set CXXFLAGS otherwise&#39;</span> <span class="o">%</span> <span class="n">CXXFLAGS</span><span class="p">)</span>
+
+<span class="n">LDFLAGS</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;LDFLAGS&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+<span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;defaulting to </span><span class="si">%r</span><span class="s1"> as linker flags, set LDFLAGS otherwise&#39;</span> <span class="o">%</span> <span class="n">LDFLAGS</span><span class="p">)</span>
+
+
+<span class="n">OPENMP</span> <span class="o">=</span> <span class="kc">False</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span> <span class="o">==</span> <span class="s1">&#39;darwin&#39;</span><span class="p">:</span>
+    <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;/usr/local/bin:&#39;</span> <span class="o">+</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s1">&#39;PATH&#39;</span><span class="p">]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">CC</span> <span class="o">=</span> <span class="n">which</span><span class="p">(</span><span class="s1">&#39;gcc-6&#39;</span><span class="p">)</span>
+        <span class="n">CXX</span> <span class="o">=</span> <span class="n">which</span><span class="p">(</span><span class="s1">&#39;g++-6&#39;</span><span class="p">)</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;switched to CC=</span><span class="si">%r</span><span class="s1">, CXX=</span><span class="si">%r</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">CC</span><span class="p">,</span> <span class="n">CXX</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">NoSuchExecutable</span><span class="p">:</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s1">&#39;Please brew install gcc-6 if you wish to use OpenMP.&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Compiler"><a class="viewcode-back" href="../../api-docs/tvb_hpc.compiler.html#tvb_hpc.compiler.Compiler">[docs]</a><span class="k">class</span> <span class="nc">Compiler</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handles compiler configuration &amp; building code</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">source_suffix</span> <span class="o">=</span> <span class="s1">&#39;c&#39;</span>
+    <span class="n">default_compiler</span> <span class="o">=</span> <span class="n">CC</span>
+    <span class="n">default_compiler_flags</span> <span class="o">=</span> <span class="n">CFLAGS</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cc</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">cflags</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">ldflags</span><span class="o">=</span><span class="n">LDFLAGS</span><span class="p">,</span> <span class="n">gen_asm</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">openmp</span><span class="o">=</span><span class="n">OPENMP</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param cc: compiler to use</span>
+<span class="sd">        :param cflags: list of flags to pass to compiler</span>
+<span class="sd">        :param ldflags: list of linker flags</span>
+<span class="sd">        :param gen_asm: bool, generate and store assembly</span>
+<span class="sd">        :param openmp: bool, use OpenMP</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cc</span> <span class="o">=</span> <span class="n">which</span><span class="p">(</span><span class="n">cc</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_compiler</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cflags</span> <span class="o">=</span> <span class="n">cflags</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_compiler_flags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ldflags</span> <span class="o">=</span> <span class="n">ldflags</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cache</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gen_asm</span> <span class="o">=</span> <span class="n">gen_asm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">openmp</span> <span class="o">=</span> <span class="n">openmp</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">openmp</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cflags</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;-fopenmp&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">CDLL</span><span class="p">:</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cache</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s1">&#39;dll&#39;</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">):</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;compiling unit </span><span class="si">%r</span><span class="s1"> with code</span><span class="se">\n</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">code</span><span class="p">))</span>
+        <span class="n">tempdir</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">TemporaryDirectory</span><span class="p">()</span>
+        <span class="n">c_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_suffix</span><span class="p">)</span>
+        <span class="n">S_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.S&#39;</span><span class="p">)</span>
+        <span class="n">obj_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.o&#39;</span><span class="p">)</span>
+        <span class="n">dll_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">name</span> <span class="o">+</span> <span class="s1">&#39;.so&#39;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">c_fname</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+            <span class="n">fd</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cc</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cflags</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;-fPIC&#39;</span><span class="p">,</span> <span class="s1">&#39;-c&#39;</span><span class="p">,</span> <span class="n">c_fname</span><span class="p">],</span>
+                  <span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gen_asm</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cc</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cflags</span> <span class="o">+</span> <span class="p">[</span><span class="s1">&#39;-S&#39;</span><span class="p">,</span> <span class="n">c_fname</span><span class="p">],</span> <span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">S_fname</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fd</span><span class="p">:</span>
+                <span class="n">asm</span> <span class="o">=</span> <span class="n">fd</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_run</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">cc</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">cflags</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ldflags</span> <span class="o">+</span>
+                  <span class="p">[</span><span class="s1">&#39;-shared&#39;</span><span class="p">,</span> <span class="n">obj_fname</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="n">dll_fname</span><span class="p">],</span> <span class="n">tempdir</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">dll</span> <span class="o">=</span> <span class="n">ctypes</span><span class="o">.</span><span class="n">CDLL</span><span class="p">(</span><span class="n">dll_fname</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">locals</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">cwd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">subprocess</span><span class="o">.</span><span class="n">check_call</span><span class="p">(</span>
+            <span class="n">args</span><span class="p">,</span> <span class="n">cwd</span><span class="o">=</span><span class="n">cwd</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CppCompiler"><a class="viewcode-back" href="../../api-docs/tvb_hpc.compiler.html#tvb_hpc.compiler.CppCompiler">[docs]</a><span class="k">class</span> <span class="nc">CppCompiler</span><span class="p">(</span><span class="n">Compiler</span><span class="p">):</span>
+    <span class="n">source_suffix</span> <span class="o">=</span> <span class="s1">&#39;c++&#39;</span>
+    <span class="n">default_compiler</span> <span class="o">=</span> <span class="n">CXX</span>
+    <span class="n">default_compiler_flags</span> <span class="o">=</span> <span class="n">CXXFLAGS</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

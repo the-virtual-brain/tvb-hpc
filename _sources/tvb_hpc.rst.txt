@@ -1,0 +1,104 @@
+aligned
+-------
+
+.. automodule:: tvb_hpc.aligned
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+bold
+----
+
+.. automodule:: tvb_hpc.bold
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+codegen
+-------
+
+.. automodule:: tvb_hpc.codegen
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+compiler
+--------
+
+.. automodule:: tvb_hpc.compiler
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+coupling
+--------
+
+.. automodule:: tvb_hpc.coupling
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+descriptors
+-----------
+
+.. automodule:: tvb_hpc.descriptors
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+model
+-----
+
+.. automodule:: tvb_hpc.model
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+network
+-------
+
+.. automodule:: tvb_hpc.network
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+rng
+---
+
+.. automodule:: tvb_hpc.rng
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+schemes
+-------
+
+.. automodule:: tvb_hpc.schemes
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+tests
+-----
+
+.. automodule:: tvb_hpc.tests
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+utils
+-----
+
+.. automodule:: tvb_hpc.utils
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+
+Module
+------
+
+.. automodule:: tvb_hpc
+    :members:
+    :undoc-members:
+    :show-inheritance:

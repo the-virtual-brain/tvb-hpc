@@ -1,0 +1,7 @@
+tvb_hpc.codegen.cfun module
+===========================
+
+.. automodule:: tvb_hpc.codegen.cfun
+    :members:
+    :undoc-members:
+    :show-inheritance:

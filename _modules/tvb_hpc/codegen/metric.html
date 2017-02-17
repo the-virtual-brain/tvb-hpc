@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen.metric &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.codegen.metric</h1><div class="highlight"><pre>
+<span></span>
+
+<div class="viewcode-block" id="Covar"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.metric.html#tvb_hpc.codegen.metric.Covar">[docs]</a><span class="k">class</span> <span class="nc">Covar</span><span class="p">:</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">// stable one-pass co-moment algo, cf wikipedia</span>
+<span class="s2">__kernel void update_cov(int i_sample,</span>
+<span class="s2">                         int n_node,</span>
+<span class="s2">                         __global float *cov,</span>
+<span class="s2">                         __global float *means,</span>
+<span class="s2">                         __global float *data)</span>
+<span class="s2">{</span>
+<span class="s2">    int it = get_global_id(0), nt = get_global_size(0);</span>
+
+<span class="s2">    if (i_sample == 0)</span>
+<span class="s2">    {</span>
+<span class="s2">        for (int i_node = 0; i_node &lt; n_node; i_node++)</span>
+<span class="s2">            means[i_node * nt + it] = data[i_node * nt + it];</span>
+<span class="s2">        return;</span>
+<span class="s2">    }</span>
+
+<span class="s2">    float recip_n = 1.0f / i_sample;</span>
+
+<span class="s2">    // double buffer to avoid copying memory</span>
+<span class="s2">    __global float *next_mean = means, *prev_mean = means;</span>
+<span class="s2">    if (i_sample % 2 == 0) {</span>
+<span class="s2">        prev_mean += n_node * nt;</span>
+<span class="s2">    } else {</span>
+<span class="s2">        next_mean += n_node * nt;</span>
+<span class="s2">    }</span>
+
+<span class="s2">    for (int i_node = 0; i_node &lt; n_node; i_node++)</span>
+<span class="s2">    {</span>
+<span class="s2">        int i_idx = i_node * nt + it;</span>
+<span class="s2">        next_mean[i_idx] = prev_mean[i_idx] </span><span class="se">\</span>
+<span class="s2">                + (data[i_idx] - prev_mean[i_idx]) * recip_n;</span>
+<span class="s2">    }</span>
+
+<span class="s2">    for (int i_node = 0; i_node &lt; n_node; i_node++)</span>
+<span class="s2">    {</span>
+<span class="s2">        int i_idx = i_node * nt + it;</span>
+<span class="s2">        float data_mean_i = data[i_idx] - prev_mean[i_idx];</span>
+
+<span class="s2">        for (int j_node = 0; j_node &lt; n_node; j_node++)</span>
+<span class="s2">        {</span>
+<span class="s2">            int j_idx = j_node * nt + it;</span>
+<span class="s2">            float data_mean_j = data[j_idx] - next_mean[j_idx];</span>
+
+<span class="s2">            int cij_idx = (j_node * n_node + i_node) * nt + it;</span>
+<span class="s2">            cov[cij_idx] += data_mean_j * data_mean_i;</span>
+<span class="s2">        }</span>
+<span class="s2">    }</span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span></div>
+
+
+<div class="viewcode-block" id="CovToCorr"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.metric.html#tvb_hpc.codegen.metric.CovToCorr">[docs]</a><span class="k">class</span> <span class="nc">CovToCorr</span><span class="p">:</span>
+    <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">__kernel void cov_to_corr(int n_sample, int n_node,</span>
+<span class="s2">                          __global float *cov,</span>
+<span class="s2">                          __global float *corr)</span>
+<span class="s2">{</span>
+<span class="s2">    int it = get_global_id(0), nt = get_global_size(0);</span>
+
+<span class="s2">    float recip_n_samp = 1.0f / n_sample;</span>
+
+<span class="s2">    // normalize comoment to covariance</span>
+<span class="s2">    for (int ij = 0; ij &lt; (n_node * n_node); ij++)</span>
+<span class="s2">        cov[ij*nt + it] *= recip_n_samp;</span>
+
+<span class="s2">    // compute correlation coefficient</span>
+<span class="s2">#define COV(i, j) cov[(i*n_node + j)*nt + it]</span>
+<span class="s2">#define CORR(i, j) corr[(i*n_node + j)*nt + it]</span>
+
+<span class="s2">    for (int i = 0; i &lt; n_node; i++)</span>
+<span class="s2">    {</span>
+<span class="s2">        float var_i = COV(i, i);</span>
+<span class="s2">        for (int j = 0; j &lt; n_node; j++)</span>
+<span class="s2">        {</span>
+<span class="s2">            float var_j = COV(j, j);</span>
+<span class="s2">            CORR(i, j) = COV(i, j) / sqrt(var_i * var_j);</span>
+<span class="s2">        }</span>
+<span class="s2">    }</span>
+<span class="s2">}</span>
+<span class="s2">&quot;&quot;&quot;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../codegen.html">tvb_hpc.codegen</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

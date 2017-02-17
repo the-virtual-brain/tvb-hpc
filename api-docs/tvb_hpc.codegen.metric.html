@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen.metric module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.codegen.model module" href="tvb_hpc.codegen.model.html" />
+    <link rel="prev" title="tvb_hpc.codegen.literal module" href="tvb_hpc.codegen.literal.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.codegen.metric">
+<span id="tvb-hpc-codegen-metric-module"></span><h1>tvb_hpc.codegen.metric module<a class="headerlink" href="#module-tvb_hpc.codegen.metric" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tvb_hpc.codegen.metric.CovToCorr">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.metric.</code><code class="descname">CovToCorr</code><a class="reference internal" href="../_modules/tvb_hpc/codegen/metric.html#CovToCorr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.metric.CovToCorr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.metric.CovToCorr.template">
+<code class="descname">template</code><em class="property"> = '\n__kernel void cov_to_corr(int n_sample, int n_node,\n                          __global float *cov,\n                          __global float *corr)\n{\n    int it = get_global_id(0), nt = get_global_size(0);\n\n    float recip_n_samp = 1.0f / n_sample;\n\n    // normalize comoment to covariance\n    for (int ij = 0; ij &lt; (n_node * n_node); ij++)\n        cov[ij*nt + it] *= recip_n_samp;\n\n    // compute correlation coefficient\n#define COV(i, j) cov[(i*n_node + j)*nt + it]\n#define CORR(i, j) corr[(i*n_node + j)*nt + it]\n\n    for (int i = 0; i &lt; n_node; i++)\n    {\n        float var_i = COV(i, i);\n        for (int j = 0; j &lt; n_node; j++)\n        {\n            float var_j = COV(j, j);\n            CORR(i, j) = COV(i, j) / sqrt(var_i * var_j);\n        }\n    }\n}\n'</em><a class="headerlink" href="#tvb_hpc.codegen.metric.CovToCorr.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.metric.Covar">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.metric.</code><code class="descname">Covar</code><a class="reference internal" href="../_modules/tvb_hpc/codegen/metric.html#Covar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.metric.Covar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.metric.Covar.template">
+<code class="descname">template</code><em class="property"> = '\n// stable one-pass co-moment algo, cf wikipedia\n__kernel void update_cov(int i_sample,\n                         int n_node,\n                         __global float *cov,\n                         __global float *means,\n                         __global float *data)\n{\n    int it = get_global_id(0), nt = get_global_size(0);\n\n    if (i_sample == 0)\n    {\n        for (int i_node = 0; i_node &lt; n_node; i_node++)\n            means[i_node * nt + it] = data[i_node * nt + it];\n        return;\n    }\n\n    float recip_n = 1.0f / i_sample;\n\n    // double buffer to avoid copying memory\n    __global float *next_mean = means, *prev_mean = means;\n    if (i_sample % 2 == 0) {\n        prev_mean += n_node * nt;\n    } else {\n        next_mean += n_node * nt;\n    }\n\n    for (int i_node = 0; i_node &lt; n_node; i_node++)\n    {\n        int i_idx = i_node * nt + it;\n        next_mean[i_idx] = prev_mean[i_idx]                 + (data[i_idx] - prev_mean[i_idx]) * recip_n;\n    }\n\n    for (int i_node = 0; i_node &lt; n_node; i_node++)\n    {\n        int i_idx = i_node * nt + it;\n        float data_mean_i = data[i_idx] - prev_mean[i_idx];\n\n        for (int j_node = 0; j_node &lt; n_node; j_node++)\n        {\n            int j_idx = j_node * nt + it;\n            float data_mean_j = data[j_idx] - next_mean[j_idx];\n\n            int cij_idx = (j_node * n_node + i_node) * nt + it;\n            cov[cij_idx] += data_mean_j * data_mean_i;\n        }\n    }\n}\n'</em><a class="headerlink" href="#tvb_hpc.codegen.metric.Covar.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api_docs.html">API documentation</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+  <li><a href="tvb_hpc.codegen.html">tvb_hpc.codegen package</a><ul>
+      <li>Previous: <a href="tvb_hpc.codegen.literal.html" title="previous chapter">tvb_hpc.codegen.literal module</a></li>
+      <li>Next: <a href="tvb_hpc.codegen.model.html" title="next chapter">tvb_hpc.codegen.model module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api-docs/tvb_hpc.codegen.metric.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/api-docs/tvb_hpc.codegen.metric.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

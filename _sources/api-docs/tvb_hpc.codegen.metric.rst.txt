@@ -1,0 +1,7 @@
+tvb_hpc.codegen.metric module
+=============================
+
+.. automodule:: tvb_hpc.codegen.metric
+    :members:
+    :undoc-members:
+    :show-inheritance:

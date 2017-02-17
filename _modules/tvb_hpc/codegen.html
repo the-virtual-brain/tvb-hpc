@@ -1,0 +1,351 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.codegen</h1><div class="highlight"><pre>
+<span></span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Handle code generation tasks. Likely to become a module with</span>
+<span class="sd">task specific modules.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">ctypes</span> <span class="k">as</span> <span class="nn">ct</span>
+<span class="kn">import</span> <span class="nn">pymbolic</span> <span class="k">as</span> <span class="nn">pm</span>
+<span class="kn">from</span> <span class="nn">pymbolic.mapper.c_code</span> <span class="k">import</span> <span class="n">CCodeMapper</span>
+<span class="kn">from</span> <span class="nn">pymbolic.mapper.dependency</span> <span class="k">import</span> <span class="n">DependencyMapper</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Dict</span>
+<span class="kn">from</span> <span class="nn">tvb_hpc.model</span> <span class="k">import</span> <span class="n">BaseModel</span>
+
+
+<div class="viewcode-block" id="BaseCodeGen"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.BaseCodeGen">[docs]</a><span class="k">class</span> <span class="nc">BaseCodeGen</span><span class="p">:</span>
+
+    <span class="n">_math_names</span> <span class="o">=</span> <span class="s1">&#39;sin cos exp log tanh&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">math_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A list of names of mathematical functions which can be</span>
+<span class="sd">        expected to be available.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_names</span>
+
+<div class="viewcode-block" id="BaseCodeGen.generate_alignments"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.BaseCodeGen.generate_alignments">[docs]</a>    <span class="k">def</span> <span class="nf">generate_alignments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">spec</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a series of statement lines which declare a pointer to be</span>
+<span class="sd">        aligned to the alignment given by the `spec` argument.</span>
+
+<span class="sd">        &gt;&gt;&gt; cg = BaseCodeGen()</span>
+<span class="sd">        &gt;&gt;&gt; cg.generate_alignments([&#39;a&#39;, &#39;b&#39;], {&#39;align&#39;: 64})</span>
+<span class="sd">        [&#39;a = __builtin_assume_aligned(a, 64);&#39;, ...]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;align&#39;</span><span class="p">]</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{name}</span><span class="s1"> = __builtin_assume_aligned(</span><span class="si">{name}</span><span class="s1">, </span><span class="si">{value}</span><span class="s1">);&#39;</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lines</span></div>
+
+<div class="viewcode-block" id="BaseCodeGen.generate_c"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.BaseCodeGen.generate_c">[docs]</a>    <span class="k">def</span> <span class="nf">generate_c</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate C code for `expr` argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">CCodeMapper</span><span class="p">()(</span><span class="n">expr</span><span class="p">)</span></div></div>
+
+
+    <span class="c1"># TODO common interface? kernel_name, decls, innerloop, pragma etc</span>
+
+
+<div class="viewcode-block" id="BaseSpec"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.BaseSpec">[docs]</a><span class="k">class</span> <span class="nc">BaseSpec</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spec handles details dtype, vectorization, alignment, etc which affect</span>
+<span class="sd">    code generation but not the math.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">float</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="mi">64</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">float</span> <span class="o">=</span> <span class="nb">float</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">align</span> <span class="o">=</span> <span class="n">align</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">float</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">np_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ct_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="n">ct</span><span class="o">.</span><span class="n">c_float</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">,</span>
+            <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+            <span class="s1">&#39;align&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">align</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BaseLayout"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.BaseLayout">[docs]</a><span class="k">class</span> <span class="nc">BaseLayout</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handle layout of data in memory, generating indexing expressions, etc.</span>
+
+<span class="sd">    For now, kernels manually / hard code data chunking.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span></div>
+
+    <span class="c1"># TODO</span>
+
+
+<div class="viewcode-block" id="ModelGen1"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.ModelGen1">[docs]</a><span class="k">class</span> <span class="nc">ModelGen1</span><span class="p">(</span><span class="n">BaseCodeGen</span><span class="p">):</span>
+
+    <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#include &lt;math.h&gt;</span>
+
+<span class="s2">void </span><span class="si">{name}</span><span class="s2">(</span>
+<span class="s2">    unsigned int nnode,</span>
+<span class="s2">    </span><span class="si">{float}</span><span class="s2"> * __restrict state,</span>
+<span class="s2">    </span><span class="si">{float}</span><span class="s2"> * __restrict input,</span>
+<span class="s2">    </span><span class="si">{float}</span><span class="s2"> * __restrict param,</span>
+<span class="s2">    </span><span class="si">{float}</span><span class="s2"> * __restrict drift,</span>
+<span class="s2">    </span><span class="si">{float}</span><span class="s2"> * __restrict diffs,</span>
+<span class="s2">    </span><span class="si">{float}</span><span class="s2"> * __restrict obsrv</span>
+<span class="s2">)</span>
+<span class="s2">{{</span>
+<span class="s2">  </span><span class="si">{decls}</span><span class="s2"></span>
+<span class="s2">  </span><span class="si">{loop_pragma}</span><span class="s2"></span>
+<span class="s2">  for (unsigned int j=0; j &lt; nnode; j++)</span>
+<span class="s2">  {{</span>
+<span class="s2">    unsigned int i = j / </span><span class="si">{width}</span><span class="s2">;</span>
+<span class="s2">    unsigned int jw = j % </span><span class="si">{width}</span><span class="s2">;</span>
+<span class="s2">    </span><span class="si">{body}</span><span class="s2"></span>
+<span class="s2">  }}</span>
+<span class="s2">}}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
+
+<div class="viewcode-block" id="ModelGen1.generate_code"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.ModelGen1.generate_code">[docs]</a>    <span class="k">def</span> <span class="nf">generate_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="n">decls</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_alignments</span><span class="p">(</span>
+            <span class="s1">&#39;state input param drift diffs obsrv&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">(),</span> <span class="n">spec</span><span class="p">)</span>
+        <span class="n">decls</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">declarations</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inner_loop_lines</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">decls</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">  &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">decls</span><span class="p">),</span>
+            <span class="n">body</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">    &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">body</span><span class="p">),</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span><span class="p">,</span>
+            <span class="n">nsvar</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_sym</span><span class="p">),</span>
+            <span class="c1"># icc -&gt; pragma vector simd ivdep, does better</span>
+            <span class="n">loop_pragma</span><span class="o">=</span><span class="s1">&#39;#pragma omp simd safelen(</span><span class="si">%d</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="p">),</span>
+            <span class="o">**</span><span class="n">spec</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="p">[</span><span class="s1">&#39;float&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;float&#39;</span><span class="p">:</span>
+            <span class="n">code</span> <span class="o">=</span> <span class="n">code</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;pow&#39;</span><span class="p">,</span> <span class="s1">&#39;powf&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">code</span></div>
+
+<div class="viewcode-block" id="ModelGen1.declarations"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.ModelGen1.declarations">[docs]</a>    <span class="k">def</span> <span class="nf">declarations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="n">common</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;nsvar&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_sym</span><span class="p">),</span> <span class="p">}</span>
+        <span class="n">common</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># add constants</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">const</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{float}</span><span class="s1"> </span><span class="si">{name}</span><span class="s1"> = ((</span><span class="si">{float}</span><span class="s1">) </span><span class="si">{value}</span><span class="s1">);&#39;</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="o">**</span><span class="n">common</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lines</span></div>
+
+<div class="viewcode-block" id="ModelGen1.inner_loop_lines"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.ModelGen1.inner_loop_lines">[docs]</a>    <span class="k">def</span> <span class="nf">inner_loop_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="n">common</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;nsvar&#39;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_sym</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="n">common</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="c1"># unpack state, input &amp; parameters</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{float}</span><span class="s1"> </span><span class="si">{var}</span><span class="s1"> = </span><span class="si">{kind}</span><span class="s1">[i*</span><span class="si">{nvar_width}</span><span class="s1"> + </span><span class="si">{isvar}</span><span class="s1">*</span><span class="si">{width}</span><span class="s1"> + jw];&#39;</span>
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="s1">&#39;state input param&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="nb">vars</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">kind</span> <span class="o">+</span> <span class="s1">&#39;_sym&#39;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">var</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">vars</span><span class="p">):</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">var</span><span class="o">=</span><span class="n">var</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">isvar</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">nvar_width</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="nb">vars</span><span class="p">)</span><span class="o">*</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span>
+                    <span class="o">**</span><span class="n">common</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="c1"># do aux exprs</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{float}</span><span class="s1"> </span><span class="si">{lhs}</span><span class="s1"> = </span><span class="si">{rhs}</span><span class="s1">;&#39;</span>
+        <span class="k">for</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">auxex</span><span class="p">:</span>
+            <span class="n">rhs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_c</span><span class="p">(</span><span class="n">pm</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">rhs</span><span class="p">))</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">lhs</span><span class="o">=</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="o">=</span><span class="n">rhs</span><span class="p">,</span> <span class="o">**</span><span class="n">common</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="c1"># store drift / diffs / obsrv</span>
+        <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{kind}</span><span class="s1">[i*</span><span class="si">{nvar_width}</span><span class="s1"> + </span><span class="si">{isvar}</span><span class="s1">*</span><span class="si">{width}</span><span class="s1"> + jw] = </span><span class="si">{expr}</span><span class="s1">;&#39;</span>
+        <span class="k">for</span> <span class="n">kind</span> <span class="ow">in</span> <span class="s1">&#39;drift diffs obsrv&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="n">exprs</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">kind</span> <span class="o">+</span> <span class="s1">&#39;_sym&#39;</span><span class="p">)</span>
+            <span class="n">nvar_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">kind</span> <span class="o">+</span> <span class="s1">&#39;_sym&#39;</span><span class="p">))</span><span class="o">*</span><span class="n">spec</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">expr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">exprs</span><span class="p">):</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">kind</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">expr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">generate_c</span><span class="p">(</span><span class="n">expr</span><span class="p">),</span> <span class="n">isvar</span><span class="o">=</span><span class="n">i</span><span class="p">,</span>
+                    <span class="n">nvar_width</span><span class="o">=</span><span class="n">nvar_width</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">common</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lines</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">kernel_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;tvb_&#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span></div>
+
+
+<div class="viewcode-block" id="CfunGen1"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.CfunGen1">[docs]</a><span class="k">class</span> <span class="nc">CfunGen1</span><span class="p">(</span><span class="n">BaseCodeGen</span><span class="p">):</span>
+
+    <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#include &lt;math.h&gt;</span>
+
+<span class="s2">#pragma omp declare simd</span>
+<span class="si">{float}</span><span class="s2"> </span><span class="si">{pre_sum_name}</span><span class="s2">(</span><span class="si">{float}</span><span class="s2"> pre_syn, </span><span class="si">{float}</span><span class="s2"> post_syn)</span>
+<span class="s2">{{</span>
+<span class="s2">    </span><span class="si">{pre_decls}</span><span class="s2"></span>
+<span class="s2">    return </span><span class="si">{pre_sum}</span><span class="s2">;</span>
+<span class="s2">}}</span>
+
+<span class="s2">#pragma omp declare simd</span>
+<span class="si">{float}</span><span class="s2"> </span><span class="si">{post_sum_name}</span><span class="s2">(</span><span class="si">{float}</span><span class="s2"> </span><span class="si">{stat}</span><span class="s2">)</span>
+<span class="s2">{{</span>
+<span class="s2">    </span><span class="si">{post_decls}</span><span class="s2"></span>
+<span class="s2">    return </span><span class="si">{post_sum}</span><span class="s2">;</span>
+<span class="s2">}}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfun</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cfun</span> <span class="o">=</span> <span class="n">cfun</span>
+
+<div class="viewcode-block" id="CfunGen1.generate_code"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.CfunGen1.generate_code">[docs]</a>    <span class="k">def</span> <span class="nf">generate_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">pre_sum_sym</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">post_sum_sym</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">pre_sum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_c</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">pre_sum_sym</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">post_sum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_c</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">post_sum_sym</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">pre_sum_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_pre_sum_name</span><span class="p">,</span>
+            <span class="n">post_sum_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_post_sum_name</span><span class="p">,</span>
+            <span class="n">pre_sum</span><span class="o">=</span><span class="n">pre_sum</span><span class="p">,</span>
+            <span class="n">post_sum</span><span class="o">=</span><span class="n">post_sum</span><span class="p">,</span>
+            <span class="n">pre_decls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">declarations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">pre_sum_sym</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">spec</span><span class="p">),</span>
+            <span class="n">post_decls</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">declarations</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">post_sum_sym</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">spec</span><span class="p">),</span>
+            <span class="n">stat</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">stat</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">spec</span><span class="o">.</span><span class="n">dict</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">code</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_pre_sum_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;tvb_</span><span class="si">%s</span><span class="s1">_pre_sum&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_post_sum_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;tvb_</span><span class="si">%s</span><span class="s1">_post_sum&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="p">)</span>
+
+<div class="viewcode-block" id="CfunGen1.declarations"><a class="viewcode-back" href="../../api-docs/tvb_hpc.codegen.html#tvb_hpc.codegen.CfunGen1.declarations">[docs]</a>    <span class="k">def</span> <span class="nf">declarations</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="n">DependencyMapper</span><span class="p">(</span><span class="n">include_calls</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">skip_names</span> <span class="o">=</span> <span class="s1">&#39;sin cos exp pow tanh&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">dep</span> <span class="ow">in</span> <span class="n">mapper</span><span class="p">(</span><span class="n">expr</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">dep</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;pre_syn&#39;</span><span class="p">,</span> <span class="s1">&#39;post_syn&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="s1">&#39;sum&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="n">dep</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">skip_names</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{float}</span><span class="s1"> </span><span class="si">{name}</span><span class="s1"> = </span><span class="si">{value}</span><span class="s1">;&#39;</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="n">dep</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">param</span><span class="p">[</span><span class="n">dep</span><span class="o">.</span><span class="n">name</span><span class="p">],</span>
+                <span class="o">**</span><span class="n">spec</span><span class="o">.</span><span class="n">dict</span>
+            <span class="p">))</span>
+        <span class="k">return</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">    &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

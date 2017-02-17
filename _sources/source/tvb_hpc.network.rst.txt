@@ -1,0 +1,7 @@
+tvb_hpc.network module
+======================
+
+.. automodule:: tvb_hpc.network
+    :members:
+    :undoc-members:
+    :show-inheritance:

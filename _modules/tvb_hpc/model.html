@@ -1,0 +1,254 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.model &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.model</h1><div class="highlight"><pre>
+<span></span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">The model module describes neural mass models.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pymbolic.mapper.differentiator</span> <span class="k">import</span> <span class="n">DifferentiationMapper</span>
+<span class="kn">from</span> <span class="nn">.codegen.base</span> <span class="k">import</span> <span class="n">BaseSpec</span>
+<span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="n">simplify</span><span class="p">,</span> <span class="nb">vars</span><span class="p">,</span> <span class="n">exprs</span>
+
+
+<div class="viewcode-block" id="BaseModel"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.BaseModel">[docs]</a><span class="k">class</span> <span class="nc">BaseModel</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    BaseModel parses attributes on subclasses, defining a networked SDE.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">auxex</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># TODO check dependencies etc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">state_sym</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_sym</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">param_sym</span> <span class="o">=</span> <span class="nb">vars</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">param</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">drift_sym</span> <span class="o">=</span> <span class="n">exprs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drift</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diffs_sym</span> <span class="o">=</span> <span class="n">exprs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diffs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">obsrv_sym</span> <span class="o">=</span> <span class="n">exprs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">obsrv</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">indvars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">state_sym</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_sym</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_sym</span><span class="p">]</span>
+
+<div class="viewcode-block" id="BaseModel.partial"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.BaseModel.partial">[docs]</a>    <span class="k">def</span> <span class="nf">partial</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">):</span>
+        <span class="n">exprs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">indvars</span><span class="p">:</span>
+            <span class="n">exprs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">simplify</span><span class="p">(</span><span class="n">DifferentiationMapper</span><span class="p">(</span><span class="n">var</span><span class="p">)(</span><span class="n">expr</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">exprs</span><span class="p">)</span></div>
+
+    <span class="c1"># TODO move to ffi module?</span>
+<div class="viewcode-block" id="BaseModel.prep_arrays"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.BaseModel.prep_arrays">[docs]</a>    <span class="k">def</span> <span class="nf">prep_arrays</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nnode</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">BaseSpec</span><span class="p">):</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">np_dtype</span>
+        <span class="n">arrs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="s1">&#39;state input param drift diffs obsrv&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">nnode</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span> <span class="o">+</span> <span class="s1">&#39;_sym&#39;</span><span class="p">)),</span> <span class="n">spec</span><span class="o">.</span><span class="n">width</span>
+            <span class="n">arrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">arrs</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">_TestModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;y1 y2&#39;</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;i1&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;a b c&#39;</span>
+    <span class="n">auxex</span> <span class="o">=</span> <span class="p">[(</span><span class="s1">&#39;y1_3&#39;</span><span class="p">,</span> <span class="s1">&#39;y1 * y1 * y1&#39;</span><span class="p">)]</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="s1">&#39;(y1 - y1_3/3 + y2 + e)*b&#39;</span><span class="p">,</span> <span class="s1">&#39;(a - y1 + i1 + d)/b&#39;</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;y1&#39;</span><span class="p">,</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">12.23904e-2</span><span class="p">}</span>
+
+
+<div class="viewcode-block" id="Kuramoto"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.Kuramoto">[docs]</a><span class="k">class</span> <span class="nc">Kuramoto</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="s2">&quot;Kuramoto model of phase synchronization.&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;theta&#39;</span>
+    <span class="n">state_limits</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;theta&#39;</span><span class="p">:</span> <span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">,</span> <span class="s1">&#39;wrap&#39;</span><span class="p">)}</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;I&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;omega&#39;</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="s1">&#39;omega + I&#39;</span><span class="p">,</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;theta&#39;</span><span class="p">,</span> <span class="s1">&#39;sin(theta)&#39;</span></div>
+
+
+<div class="viewcode-block" id="HMJE"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.HMJE">[docs]</a><span class="k">class</span> <span class="nc">HMJE</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="s2">&quot;Hindmarsh-Rose-Jirsa Epileptor model of seizure dynamics.&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;x1 y1 z x2 y2 g&#39;</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;c1 c2&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;x0 Iext r&#39;</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="s1">&#39;tt * (y1 - z + Iext + Kvf * c1 + (&#39;</span>
+            <span class="s1">&#39;  (x1 &lt;  0)*(-a * x1 * x1 + b * x1)&#39;</span>           <span class="c1"># noqa: E131</span>
+            <span class="s1">&#39;+ (x1 &gt;= 0)*(slope - x2 + 0.6 * (z - 4)**2)&#39;</span>   <span class="c1"># noqa: E131</span>
+        <span class="s1">&#39;) * x1)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tt * (c - d * x1 * x1 - y1)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tt * (r * (4 * (x1 - x0) - z + (z &lt; 0) * (-0.1 * pow(z, 7)) + Ks * c1))&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tt * ((-y2 + (x2 &gt;= (-3.5)) * (aa * (x2 + 0.25))) / tau)&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;tt * (-0.01 * (g - 0.1 * x1))&#39;</span>
+    <span class="p">)</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">0.0003</span><span class="p">,</span> <span class="mf">0.0003</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;x1&#39;</span><span class="p">,</span> <span class="s1">&#39;x2&#39;</span><span class="p">,</span> <span class="s1">&#39;z&#39;</span><span class="p">,</span> <span class="s1">&#39;-x1 + x2&#39;</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Iext2&#39;</span><span class="p">:</span> <span class="mf">0.45</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;slope&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;tt&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+             <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;Kvf&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Ks&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;Kf&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s1">&#39;aa&#39;</span><span class="p">:</span> <span class="mi">6</span><span class="p">,</span> <span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+             <span class="s1">&#39;x0&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">1.6</span><span class="p">,</span> <span class="s1">&#39;Iext&#39;</span><span class="p">:</span> <span class="mf">3.1</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">0.00035</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="RWW"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.RWW">[docs]</a><span class="k">class</span> <span class="nc">RWW</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="s2">&quot;Reduced Wong-Wang firing rate model.&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span>
+    <span class="n">state_limits</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;clip&#39;</span><span class="p">)}</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;c&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;w io&#39;</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mf">0.270</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mf">0.108</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="mf">154.0</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span> <span class="mf">0.641</span><span class="p">,</span>
+             <span class="s1">&#39;ts&#39;</span><span class="p">:</span> <span class="mf">100.0</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mf">0.2609</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span> <span class="s1">&#39;io&#39;</span><span class="p">:</span> <span class="mf">0.33</span><span class="p">}</span>
+    <span class="n">auxex</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s1">&#39;x&#39;</span><span class="p">,</span> <span class="s1">&#39;w * J * S + io + J * c&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;h&#39;</span><span class="p">,</span> <span class="s1">&#39;(a * x - b) / (1 - exp(-d*(a*x - b)))&#39;</span><span class="p">)</span>
+    <span class="p">]</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="s1">&#39;- (S / ts) + (1 - S) * h * g&#39;</span><span class="p">,</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;S&#39;</span><span class="p">,</span></div>
+
+
+<div class="viewcode-block" id="JansenRit"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.JansenRit">[docs]</a><span class="k">class</span> <span class="nc">JansenRit</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="s2">&quot;Jansen-Rit model of visual evoked potentials.&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;y0 y1 y2 y3 y4 y5&#39;</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;A&#39;</span><span class="p">:</span> <span class="mf">3.25</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mf">22.0</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="mf">0.05</span><span class="p">,</span> <span class="s1">&#39;v0&#39;</span><span class="p">:</span> <span class="mf">5.52</span><span class="p">,</span>
+             <span class="s1">&#39;nu_max&#39;</span><span class="p">:</span> <span class="mf">0.0025</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">:</span> <span class="mf">0.56</span><span class="p">,</span> <span class="s1">&#39;J&#39;</span><span class="p">:</span> <span class="mf">135.0</span><span class="p">,</span> <span class="s1">&#39;a_1&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;a_2&#39;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>
+             <span class="s1">&#39;a_3&#39;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s1">&#39;a_4&#39;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span> <span class="s1">&#39;mu&#39;</span><span class="p">:</span> <span class="mf">0.22</span><span class="p">}</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;lrc&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;v0 r&#39;</span>
+    <span class="n">auxex</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">(</span><span class="s1">&#39;sigm_y1_y2&#39;</span><span class="p">,</span> <span class="s1">&#39;2 * nu_max / (1 + exp(r * (v0 - (y1 - y2))))&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;sigm_y0_1&#39;</span><span class="p">,</span> <span class="s1">&#39;2 * nu_max / (1 + exp(r * (v0 - (a_1 * J * y0))))&#39;</span><span class="p">),</span>
+        <span class="p">(</span><span class="s1">&#39;sigm_y0_3&#39;</span><span class="p">,</span> <span class="s1">&#39;2 * nu_max / (1 + exp(r * (v0 - (a_3 * J * y0))))&#39;</span><span class="p">),</span>
+    <span class="p">]</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;y3&#39;</span><span class="p">,</span> <span class="s1">&#39;y4&#39;</span><span class="p">,</span> <span class="s1">&#39;y5&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;A * a * sigm_y1_y2 - 2 * a * y3 - a**2 * y0&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;A * a * (mu + a_2 * J * sigm_y0_1 + lrc) - 2 * a * y4 - a**2 * y1&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;B * b * (a_4 * J * sigm_y0_3) - 2 * b * y5 - b**2 * y2&#39;</span>
+     <span class="p">)</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;y0 - y1&#39;</span><span class="p">,</span>  <span class="c1"># TODO check w/ Andreas</span></div>
+
+
+<div class="viewcode-block" id="Linear"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.Linear">[docs]</a><span class="k">class</span> <span class="nc">Linear</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="s1">&#39;Linear differential equation&#39;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;c&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;lambda&#39;</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;lambda&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">}</span>  <span class="c1"># default value</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="s1">&#39;lambda * x + c&#39;</span><span class="p">,</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;x&#39;</span><span class="p">,</span></div>
+
+
+<div class="viewcode-block" id="G2DO"><a class="viewcode-back" href="../../api-docs/tvb_hpc.model.html#tvb_hpc.model.G2DO">[docs]</a><span class="k">class</span> <span class="nc">G2DO</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="s2">&quot;Generic nonlinear 2-D (phase plane) oscillator.&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="s1">&#39;W V&#39;</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="s1">&#39;c_0&#39;</span>
+    <span class="n">param</span> <span class="o">=</span> <span class="s1">&#39;a&#39;</span>
+    <span class="n">const</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;tau&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;I&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;a&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">2.0</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">:</span> <span class="o">-</span><span class="mf">10.0</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;d&#39;</span><span class="p">:</span> <span class="mf">0.02</span><span class="p">,</span>
+             <span class="s1">&#39;e&#39;</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">,</span> <span class="s1">&#39;f&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s1">&#39;alpha&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s1">&#39;beta&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+             <span class="s1">&#39;gamma&#39;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">}</span>
+    <span class="n">drift</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;d * tau * (alpha*W - f*V**3 + e*V**2 + g*V + gamma*I + gamma*c_0)&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;d * (a + b*V + c*V**2 - beta*W) / tau&#39;</span>
+    <span class="p">)</span>
+    <span class="n">diffs</span> <span class="o">=</span> <span class="mf">1e-3</span><span class="p">,</span> <span class="mf">1e-3</span>
+    <span class="n">obsrv</span> <span class="o">=</span> <span class="s1">&#39;W&#39;</span><span class="p">,</span> <span class="s1">&#39;V&#39;</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

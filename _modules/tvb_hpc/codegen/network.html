@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen.network &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.codegen.network</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">BaseCodeGen</span><span class="p">,</span> <span class="n">BaseSpec</span><span class="p">,</span> <span class="n">BaseLayout</span>
+<span class="kn">from</span> <span class="nn">.cfun</span> <span class="k">import</span> <span class="n">CfunGen1</span>
+<span class="kn">from</span> <span class="nn">..network</span> <span class="k">import</span> <span class="n">DenseNetwork</span>
+
+
+<div class="viewcode-block" id="NetGen1"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.network.html#tvb_hpc.codegen.network.NetGen1">[docs]</a><span class="k">class</span> <span class="nc">NetGen1</span><span class="p">(</span><span class="n">BaseCodeGen</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Provides basic code generation for networks.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="si">{cfun_code}</span><span class="s2"></span>
+
+<span class="s2">void </span><span class="si">{name}</span><span class="s2">(unsigned int nnode,</span>
+<span class="s2">            </span><span class="si">{float}</span><span class="s2"> * __restrict weights,</span>
+<span class="s2">            </span><span class="si">{float}</span><span class="s2"> * __restrict input,</span>
+<span class="s2">            </span><span class="si">{float}</span><span class="s2"> * __restrict obsrv</span>
+<span class="s2">            )</span>
+<span class="s2">{{</span>
+<span class="s2">    unsigned int i, j;</span>
+<span class="s2">    </span><span class="si">{outer_loop_pragma}</span><span class="s2"></span>
+<span class="s2">    for (i=0; i&lt;nnode; i++)</span>
+<span class="s2">    {{</span>
+<span class="s2">        </span><span class="si">{inner_loop_pragma}</span><span class="s2"></span>
+<span class="s2">        for (j=0; j&lt;nnode; j++)</span>
+<span class="s2">        {{</span>
+<span class="s2">            </span><span class="si">{accs}</span><span class="s2"></span>
+<span class="s2">        }}</span>
+<span class="s2">        </span><span class="si">{posts}</span><span class="s2"></span>
+<span class="s2">    }}</span>
+<span class="s2">}}</span>
+<span class="s2">&quot;&quot;&quot;</span>
+
+    <span class="n">acc_template</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{acc}</span><span class="s2"> += </span><span class="si">{wij}</span><span class="s2">*</span><span class="si">{cfun_pre}</span><span class="s2">(</span><span class="si">{pre_syn}</span><span class="s2">, </span><span class="si">{post_syn}</span><span class="s2">);&quot;</span>
+
+    <span class="n">post_template</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{post}</span><span class="s2"> = </span><span class="si">{cfun_post}</span><span class="s2">(</span><span class="si">{post}{norm}</span><span class="s2">);&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">net</span><span class="p">:</span> <span class="n">DenseNetwork</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">net</span> <span class="o">=</span> <span class="n">net</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="p">,</span> <span class="n">DenseNetwork</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">kernel_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s1">&#39;tvb_network&#39;</span>
+
+<div class="viewcode-block" id="NetGen1.generate_acc"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.network.html#tvb_hpc.codegen.network.NetGen1.generate_acc">[docs]</a>    <span class="k">def</span> <span class="nf">generate_acc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">obsrv</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">fname</span><span class="p">):</span>
+        <span class="n">from_idx_expr</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">generate_idx_expr</span><span class="p">(</span><span class="s1">&#39;j&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">to_idx_expr</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">generate_idx_expr</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">acc_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">wij</span><span class="o">=</span><span class="s1">&#39;weights[i*nnode + j]&#39;</span><span class="p">,</span>
+            <span class="n">acc</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">[</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">to_idx_expr</span><span class="p">),</span>
+            <span class="n">pre_syn</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">[</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obsrv</span><span class="p">,</span> <span class="n">from_idx_expr</span><span class="p">),</span>
+            <span class="n">post_syn</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">[</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">obsrv</span><span class="p">,</span> <span class="n">to_idx_expr</span><span class="p">),</span>
+            <span class="n">cfun_pre</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NetGen1.generate_post"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.network.html#tvb_hpc.codegen.network.NetGen1.generate_post">[docs]</a>    <span class="k">def</span> <span class="nf">generate_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">layout</span><span class="p">,</span> <span class="nb">input</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">fname</span><span class="p">):</span>
+        <span class="n">to_idx_expr</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">generate_idx_expr</span><span class="p">(</span><span class="s1">&#39;i&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">cfun</span><span class="o">.</span><span class="n">stat</span> <span class="o">==</span> <span class="s1">&#39;mean&#39;</span><span class="p">:</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="s1">&#39; / nnode&#39;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">post</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1">[</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">to_idx_expr</span><span class="p">),</span>
+            <span class="n">norm</span><span class="o">=</span><span class="n">norm</span><span class="p">,</span>
+            <span class="n">cfun_post</span><span class="o">=</span><span class="n">fname</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="NetGen1.loop_pragmas"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.network.html#tvb_hpc.codegen.network.NetGen1.loop_pragmas">[docs]</a>    <span class="k">def</span> <span class="nf">loop_pragmas</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="n">inner</span><span class="p">,</span> <span class="n">outer</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">openmp</span><span class="p">:</span>
+            <span class="n">inner</span> <span class="o">=</span> <span class="s1">&#39;#pragma omp parallel for&#39;</span>
+            <span class="n">outer</span> <span class="o">=</span> <span class="s1">&#39;#pragma omp simd&#39;</span>
+        <span class="k">return</span> <span class="n">inner</span><span class="p">,</span> <span class="n">outer</span></div>
+
+<div class="viewcode-block" id="NetGen1.generate_code"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.network.html#tvb_hpc.codegen.network.NetGen1.generate_code">[docs]</a>    <span class="k">def</span> <span class="nf">generate_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cfcg</span><span class="p">:</span> <span class="n">CfunGen1</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">BaseSpec</span><span class="p">):</span>
+        <span class="n">cfun</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">cfun</span>
+        <span class="n">cfun_code</span> <span class="o">=</span> <span class="n">cfcg</span><span class="o">.</span><span class="n">generate_code</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">layout</span> <span class="o">=</span> <span class="n">BaseLayout</span><span class="p">(</span>
+                <span class="n">nvar</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">net</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_sym</span><span class="o">.</span><span class="n">size</span><span class="p">,</span>
+                <span class="n">width</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">width</span><span class="p">)</span>
+        <span class="n">accs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">posts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">obsrv</span><span class="p">,</span> <span class="n">pre</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="nb">input</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cfun</span><span class="o">.</span><span class="n">io</span><span class="p">):</span>
+            <span class="n">accs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">generate_acc</span><span class="p">(</span>
+                    <span class="n">layout</span><span class="p">,</span> <span class="s1">&#39;input&#39;</span><span class="p">,</span> <span class="s1">&#39;obsrv&#39;</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span>
+                    <span class="n">cfcg</span><span class="o">.</span><span class="n">pre_expr_kname</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">pre</span><span class="p">)]))</span>
+            <span class="n">posts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">generate_post</span><span class="p">(</span>
+                    <span class="n">layout</span><span class="p">,</span> <span class="s1">&#39;input&#39;</span><span class="p">,</span>  <span class="n">i</span><span class="p">,</span>
+                    <span class="n">cfcg</span><span class="o">.</span><span class="n">post_expr_kname</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">post</span><span class="p">)]))</span>
+        <span class="n">inner_loop_pragma</span><span class="p">,</span> <span class="n">outer_loop_pragma</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loop_pragmas</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">cfun_code</span><span class="o">=</span><span class="n">cfun_code</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel_name</span><span class="p">,</span>
+            <span class="n">accs</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">            &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">accs</span><span class="p">),</span>
+            <span class="n">posts</span><span class="o">=</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">        &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">posts</span><span class="p">),</span>
+            <span class="n">inner_loop_pragma</span><span class="o">=</span><span class="n">inner_loop_pragma</span><span class="p">,</span>
+            <span class="n">outer_loop_pragma</span><span class="o">=</span><span class="n">outer_loop_pragma</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">spec</span><span class="o">.</span><span class="n">dict</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">code</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../codegen.html">tvb_hpc.codegen</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

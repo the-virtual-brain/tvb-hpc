@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen.model module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.codegen.network module" href="tvb_hpc.codegen.network.html" />
+    <link rel="prev" title="tvb_hpc.codegen.metric module" href="tvb_hpc.codegen.metric.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.codegen.model">
+<span id="tvb-hpc-codegen-model-module"></span><h1>tvb_hpc.codegen.model module<a class="headerlink" href="#module-tvb_hpc.codegen.model" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tvb_hpc.codegen.model.ModelGen1">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.model.</code><code class="descname">ModelGen1</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/model.html#ModelGen1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.model.ModelGen1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseCodeGen" title="tvb_hpc.codegen.base.BaseCodeGen"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.codegen.base.BaseCodeGen</span></code></a></p>
+<dl class="method">
+<dt id="tvb_hpc.codegen.model.ModelGen1.declarations">
+<code class="descname">declarations</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/model.html#ModelGen1.declarations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.model.ModelGen1.declarations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.model.ModelGen1.generate_code">
+<code class="descname">generate_code</code><span class="sig-paren">(</span><em>spec: tvb_hpc.codegen.base.BaseSpec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/model.html#ModelGen1.generate_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.model.ModelGen1.generate_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.model.ModelGen1.inner_loop_lines">
+<code class="descname">inner_loop_lines</code><span class="sig-paren">(</span><em>spec: tvb_hpc.codegen.base.BaseSpec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/model.html#ModelGen1.inner_loop_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.model.ModelGen1.inner_loop_lines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.model.ModelGen1.kernel_name">
+<code class="descname">kernel_name</code><a class="headerlink" href="#tvb_hpc.codegen.model.ModelGen1.kernel_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.model.ModelGen1.template">
+<code class="descname">template</code><em class="property"> = '\n#include &lt;math.h&gt;\n\nvoid {name}(\n    unsigned int nnode,\n    {float} * __restrict state,\n    {float} * __restrict input,\n    {float} * __restrict param,\n    {float} * __restrict drift,\n    {float} * __restrict diffs,\n    {float} * __restrict obsrv\n)\n{{\n  {decls}\n  {loop_pragma}\n  for (unsigned int j=0; j &lt; nnode; j++)\n  {{\n    unsigned int i = j / {width};\n    unsigned int jw = j % {width};\n    {body}\n  }}\n}}\n'</em><a class="headerlink" href="#tvb_hpc.codegen.model.ModelGen1.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api_docs.html">API documentation</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+  <li><a href="tvb_hpc.codegen.html">tvb_hpc.codegen package</a><ul>
+      <li>Previous: <a href="tvb_hpc.codegen.metric.html" title="previous chapter">tvb_hpc.codegen.metric module</a></li>
+      <li>Next: <a href="tvb_hpc.codegen.network.html" title="next chapter">tvb_hpc.codegen.network module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api-docs/tvb_hpc.codegen.model.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/api-docs/tvb_hpc.codegen.model.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

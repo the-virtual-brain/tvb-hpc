@@ -1,0 +1,224 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen.base module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.codegen.cfun module" href="tvb_hpc.codegen.cfun.html" />
+    <link rel="prev" title="tvb_hpc.codegen package" href="tvb_hpc.codegen.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.codegen.base">
+<span id="tvb-hpc-codegen-base-module"></span><h1>tvb_hpc.codegen.base module<a class="headerlink" href="#module-tvb_hpc.codegen.base" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tvb_hpc.codegen.base.BaseCodeGen">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.base.</code><code class="descname">BaseCodeGen</code><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#BaseCodeGen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.BaseCodeGen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.codegen.base.BaseCodeGen.generate_alignments">
+<code class="descname">generate_alignments</code><span class="sig-paren">(</span><em>names: typing.List[str], spec: tvb_hpc.codegen.base.BaseSpec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#BaseCodeGen.generate_alignments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.BaseCodeGen.generate_alignments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generates a series of statement lines which declare a pointer to be
+aligned to the alignment given by <code class="docutils literal"><span class="pre">spec</span></code>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">BaseCodeGen</span><span class="p">()</span><span class="o">.</span><span class="n">generate_alignments</span><span class="p">([</span><span class="s1">&#39;a&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">],</span> <span class="p">{</span><span class="s1">&#39;align&#39;</span><span class="p">:</span> <span class="mi">64</span><span class="p">})</span>
+<span class="go">[&#39;a = __builtin_assume_aligned(a, 64);&#39;, ...]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.base.BaseCodeGen.generate_c">
+<code class="descname">generate_c</code><span class="sig-paren">(</span><em>expr</em>, <em>spec: tvb_hpc.codegen.base.BaseSpec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#BaseCodeGen.generate_c"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.BaseCodeGen.generate_c" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate C code for <cite>expr</cite> argument.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.BaseCodeGen.math_names">
+<code class="descname">math_names</code><a class="headerlink" href="#tvb_hpc.codegen.base.BaseCodeGen.math_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of names of mathematical functions which can be
+expected to be available. By default, it includes all names provided by
+the standard C/C++ math library, but maybe more limited for certain
+targets like CUDA.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.base.BaseLayout">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.base.</code><code class="descname">BaseLayout</code><span class="sig-paren">(</span><em>nvar</em>, <em>width</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#BaseLayout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.BaseLayout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Handle layout of data in memory, generating indexing expressions, etc.</p>
+<p>For now, kernels manually / hard code data chunking.</p>
+<dl class="method">
+<dt id="tvb_hpc.codegen.base.BaseLayout.generate_idx_expr">
+<code class="descname">generate_idx_expr</code><span class="sig-paren">(</span><em>ivar: str</em>, <em>jvar: str</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#BaseLayout.generate_idx_expr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.BaseLayout.generate_idx_expr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.BaseLayout.idx_expr_template">
+<code class="descname">idx_expr_template</code><em class="property"> = '{i}/{width}*{width}*{nvar} + {j}*{width} + {i}%{width}'</em><a class="headerlink" href="#tvb_hpc.codegen.base.BaseLayout.idx_expr_template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.base.BaseSpec">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.base.</code><code class="descname">BaseSpec</code><span class="sig-paren">(</span><em>float='float'</em>, <em>width=8</em>, <em>align=None</em>, <em>openmp=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#BaseSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.BaseSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Spec handles details dtype, vectorization, alignment, etc which affect
+code generation but not the math.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.BaseSpec.ct_dtype">
+<code class="descname">ct_dtype</code><a class="headerlink" href="#tvb_hpc.codegen.base.BaseSpec.ct_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.BaseSpec.dict">
+<code class="descname">dict</code><a class="headerlink" href="#tvb_hpc.codegen.base.BaseSpec.dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.BaseSpec.dtype">
+<code class="descname">dtype</code><a class="headerlink" href="#tvb_hpc.codegen.base.BaseSpec.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.BaseSpec.np_dtype">
+<code class="descname">np_dtype</code><a class="headerlink" href="#tvb_hpc.codegen.base.BaseSpec.np_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.base.MyCCodeMapper">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.base.</code><code class="descname">MyCCodeMapper</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#MyCCodeMapper"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.MyCCodeMapper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pymbolic.mapper.c_code.CCodeMapper</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.codegen.base.MyCCodeMapper.map_call">
+<code class="descname">map_call</code><span class="sig-paren">(</span><em>expr</em>, <em>enclosing_prec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#MyCCodeMapper.map_call"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.MyCCodeMapper.map_call" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.base.MyCCodeMapper.map_power">
+<code class="descname">map_power</code><span class="sig-paren">(</span><em>expr</em>, <em>enclosing_prec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#MyCCodeMapper.map_power"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.MyCCodeMapper.map_power" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.base.Storage">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.base.</code><code class="descname">Storage</code><a class="reference internal" href="../_modules/tvb_hpc/codegen/base.html#Storage"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.base.Storage" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">enum.Enum</span></code></p>
+<p>An enumeration.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.Storage.extern">
+<code class="descname">extern</code><em class="property"> = 'extern'</em><a class="headerlink" href="#tvb_hpc.codegen.base.Storage.extern" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.Storage.inline">
+<code class="descname">inline</code><em class="property"> = 'inline'</em><a class="headerlink" href="#tvb_hpc.codegen.base.Storage.inline" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.base.Storage.static">
+<code class="descname">static</code><em class="property"> = 'static'</em><a class="headerlink" href="#tvb_hpc.codegen.base.Storage.static" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api_docs.html">API documentation</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+  <li><a href="tvb_hpc.codegen.html">tvb_hpc.codegen package</a><ul>
+      <li>Previous: <a href="tvb_hpc.codegen.html" title="previous chapter">tvb_hpc.codegen package</a></li>
+      <li>Next: <a href="tvb_hpc.codegen.cfun.html" title="next chapter">tvb_hpc.codegen.cfun module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api-docs/tvb_hpc.codegen.base.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/api-docs/tvb_hpc.codegen.base.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

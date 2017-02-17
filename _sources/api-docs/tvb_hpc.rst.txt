@@ -1,0 +1,34 @@
+tvb_hpc package
+===============
+
+Subpackages
+-----------
+
+.. toctree::
+
+    tvb_hpc.codegen
+
+Submodules
+----------
+
+.. toctree::
+
+   tvb_hpc.aligned
+   tvb_hpc.bold
+   tvb_hpc.compiler
+   tvb_hpc.coupling
+   tvb_hpc.descriptors
+   tvb_hpc.model
+   tvb_hpc.network
+   tvb_hpc.rng
+   tvb_hpc.schemes
+   tvb_hpc.tests
+   tvb_hpc.utils
+
+Module contents
+---------------
+
+.. automodule:: tvb_hpc
+    :members:
+    :undoc-members:
+    :show-inheritance:

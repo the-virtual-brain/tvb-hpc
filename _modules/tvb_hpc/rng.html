@@ -1,0 +1,174 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.rng &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.rng</h1><div class="highlight"><pre>
+<span></span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">SIMD friendly random number generation.</span>
+
+<span class="sd">Currently uses only Philox4x64 which assumes 128-bit, but for GPU usage,</span>
+<span class="sd">switch to a 32-bit. See include/Random123/index.html for details.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">ctypes</span>
+<span class="kn">from</span> <span class="nn">tvb_hpc.codegen.base</span> <span class="k">import</span> <span class="n">BaseCodeGen</span>
+<span class="kn">from</span> <span class="nn">tvb_hpc.compiler</span> <span class="k">import</span> <span class="n">CppCompiler</span>
+<span class="kn">from</span> <span class="nn">tvb_hpc.utils</span> <span class="k">import</span> <span class="n">include_dir</span>
+
+<span class="n">rng_template</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">#include &lt;Random123/philox.h&gt;</span>
+<span class="s2">#include &lt;Random123/boxmuller.hpp&gt;</span>
+
+<span class="s2">extern &quot;C&quot; {</span>
+
+<span class="s2">void tvb_rng(long long int seed, unsigned int nout,</span>
+<span class="s2">             float * __restrict out) {</span>
+
+<span class="s2">    </span><span class="si">%(decls)s</span><span class="s2"></span>
+
+<span class="s2">    // TODO other variants might vectorize better?</span>
+<span class="s2">    </span><span class="si">%(loop_pragma)s</span><span class="s2"></span>
+<span class="s2">    for(unsigned int i=0; i&lt;(nout/4); ++i) {</span>
+<span class="s2">        philox4x32_ctr_t ctr;</span>
+<span class="s2">        philox4x32_key_t key;</span>
+
+<span class="s2">        ctr.v[0] = seed + 4*i;</span>
+<span class="s2">        ctr.v[1] = seed + 4*i + 1;</span>
+<span class="s2">        ctr.v[2] = seed + 4*i + 2;</span>
+<span class="s2">        ctr.v[3] = seed + 4*i + 3;</span>
+
+<span class="s2">        philox4x32_ctr_t result = philox4x32(ctr, key);</span>
+
+<span class="s2">        r123::float2 normal = r123::boxmuller(result.v[0], result.v[1]);</span>
+<span class="s2">        out[i*4 + 0] = normal.x;</span>
+<span class="s2">        out[i*4 + 1] = normal.y;</span>
+
+<span class="s2">        r123::float2 normal2 = r123::boxmuller(result.v[2], result.v[3]);</span>
+<span class="s2">        out[i*4 + 2] = normal2.x;</span>
+<span class="s2">        out[i*4 + 3] = normal2.y;</span>
+<span class="s2">    }</span>
+<span class="s2">}</span>
+
+<span class="s2">}</span>
+
+<span class="s2">&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="RNG"><a class="viewcode-back" href="../../api-docs/tvb_hpc.rng.html#tvb_hpc.rng.RNG">[docs]</a><span class="k">class</span> <span class="nc">RNG</span><span class="p">:</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">comp</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp</span> <span class="o">=</span> <span class="n">comp</span> <span class="ow">or</span> <span class="n">CppCompiler</span><span class="p">()</span>  <span class="c1"># type: Compiler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cg</span> <span class="o">=</span> <span class="n">BaseCodeGen</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RNG.build"><a class="viewcode-back" href="../../api-docs/tvb_hpc.rng.html#tvb_hpc.rng.RNG.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spec</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp</span><span class="o">.</span><span class="n">cflags</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;-I&#39;</span> <span class="o">+</span> <span class="n">include_dir</span><span class="p">]</span>
+        <span class="n">loop_pragma</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="n">spec</span><span class="o">.</span><span class="n">openmp</span><span class="p">:</span>
+            <span class="n">loop_pragma</span> <span class="o">=</span> <span class="s1">&#39;#pragma omp parallel for&#39;</span>
+        <span class="n">decls</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">decls</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">cg</span><span class="o">.</span><span class="n">generate_alignments</span><span class="p">([</span><span class="s1">&#39;out&#39;</span><span class="p">],</span> <span class="n">spec</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">rng_template</span> <span class="o">%</span> <span class="p">{</span>
+            <span class="s1">&#39;loop_pragma&#39;</span><span class="p">:</span> <span class="n">loop_pragma</span><span class="p">,</span>
+            <span class="s1">&#39;decls&#39;</span><span class="p">:</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">    &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">decls</span><span class="p">),</span>
+        <span class="p">}</span>
+        <span class="c1"># TODO move to ffi module?</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp</span><span class="p">(</span><span class="s1">&#39;rng&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dll</span><span class="o">.</span><span class="n">tvb_rng</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ctypes</span><span class="o">.</span><span class="n">c_longlong</span><span class="p">,</span>
+                            <span class="n">ctypes</span><span class="o">.</span><span class="n">c_uint</span><span class="p">,</span>
+                            <span class="n">ctypes</span><span class="o">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">ctypes</span><span class="o">.</span><span class="n">c_float</span><span class="p">)]</span></div>
+
+<div class="viewcode-block" id="RNG.fill"><a class="viewcode-back" href="../../api-docs/tvb_hpc.rng.html#tvb_hpc.rng.RNG.fill">[docs]</a>    <span class="k">def</span> <span class="nf">fill</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">seed</span><span class="o">=</span><span class="mi">42</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="o">.</span><span class="n">argtypes</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">seed</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="o">.</span><span class="n">argtypes</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">),</span>
+            <span class="n">array</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data_as</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">fn</span><span class="o">.</span><span class="n">argtypes</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

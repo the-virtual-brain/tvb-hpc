@@ -1,0 +1,7 @@
+tvb_hpc.rng module
+==================
+
+.. automodule:: tvb_hpc.rng
+    :members:
+    :undoc-members:
+    :show-inheritance:

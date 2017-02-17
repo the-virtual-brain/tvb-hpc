@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.descriptors module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.model module" href="tvb_hpc.model.html" />
+    <link rel="prev" title="tvb_hpc.coupling module" href="tvb_hpc.coupling.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.descriptors">
+<span id="tvb-hpc-descriptors-module"></span><h1>tvb_hpc.descriptors module<a class="headerlink" href="#module-tvb_hpc.descriptors" title="Permalink to this headline">¶</a></h1>
+<p>Data descriptors for declaring workspace for algorithms and checking usage.</p>
+<p>The classes herein are intended to make maintenance easier by enforcing
+stated constraints which are more typical in static typing situations.</p>
+<dl class="class">
+<dt id="tvb_hpc.descriptors.Dim">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">Dim</code><a class="reference internal" href="../_modules/tvb_hpc/descriptors.html#Dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.Dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.descriptors.Final" title="tvb_hpc.descriptors.Final"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.descriptors.Final</span></code></a></p>
+<p>Specialization of Final to int/long type.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.descriptors.Final">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">Final</code><span class="sig-paren">(</span><em>type=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/descriptors.html#Final"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.Final" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A descriptor for an attribute, possibly type-checked, that once initialized, cannot be changed.</p>
+<dl class="class">
+<dt id="tvb_hpc.descriptors.Final.State">
+<em class="property">class </em><code class="descname">State</code><span class="sig-paren">(</span><em>value</em>, <em>initialized</em><span class="sig-paren">)</span><a class="headerlink" href="#tvb_hpc.descriptors.Final.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.Final.State.initialized">
+<code class="descname">initialized</code><a class="headerlink" href="#tvb_hpc.descriptors.Final.State.initialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.Final.State.value">
+<code class="descname">value</code><a class="headerlink" href="#tvb_hpc.descriptors.Final.State.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="tvb_hpc.descriptors.ImmutableAttrError">
+<em class="property">exception </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">ImmutableAttrError</code><a class="reference internal" href="../_modules/tvb_hpc/descriptors.html#ImmutableAttrError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.ImmutableAttrError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">AttributeError</span></code></p>
+<p>Error due to modifying an immutable attribute.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="tvb_hpc.descriptors.IncorrectTypeAttrError">
+<em class="property">exception </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">IncorrectTypeAttrError</code><a class="reference internal" href="../_modules/tvb_hpc/descriptors.html#IncorrectTypeAttrError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.IncorrectTypeAttrError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">AttributeError</span></code></p>
+<p>Error due to using incorrect type to set attribute value.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.descriptors.NDArray">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">NDArray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype</em>, <em>read_only=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/descriptors.html#NDArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.NDArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.descriptors.StaticAttr" title="tvb_hpc.descriptors.StaticAttr"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.descriptors.StaticAttr</span></code></a></p>
+<p>Data descriptor for a NumPy array, with type, mutability and shape checking.</p>
+<dl class="class">
+<dt id="tvb_hpc.descriptors.NDArray.State">
+<em class="property">class </em><code class="descname">State</code><span class="sig-paren">(</span><em>array</em>, <em>initialized</em><span class="sig-paren">)</span><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.State.array">
+<code class="descname">array</code><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.State.array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.State.initialized">
+<code class="descname">initialized</code><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.State.initialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.dtype">
+<code class="descclassname">NDArray.</code><code class="descname">dtype</code><em class="property"> = None</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.instance_state">
+<code class="descclassname">NDArray.</code><code class="descname">instance_state</code><em class="property"> = {}</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.instance_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.read_only">
+<code class="descclassname">NDArray.</code><code class="descname">read_only</code><em class="property"> = True</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.read_only" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.shape">
+<code class="descclassname">NDArray.</code><code class="descname">shape</code><em class="property"> = ()</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.descriptors.StaticAttr">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">StaticAttr</code><a class="reference internal" href="../_modules/tvb_hpc/descriptors.html#StaticAttr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.StaticAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Base class which requires all attributes to be declared at class level.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+      <li>Previous: <a href="tvb_hpc.coupling.html" title="previous chapter">tvb_hpc.coupling module</a></li>
+      <li>Next: <a href="tvb_hpc.model.html" title="next chapter">tvb_hpc.model module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/tvb_hpc.descriptors.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/source/tvb_hpc.descriptors.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

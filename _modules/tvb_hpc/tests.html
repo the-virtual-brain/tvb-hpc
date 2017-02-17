@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.tests &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.tests</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">ctypes</span> <span class="k">as</span> <span class="nn">ct</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">unittest</span> <span class="k">import</span> <span class="n">TestCase</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="k">import</span> <span class="n">kstest</span>
+
+<span class="kn">from</span> <span class="nn">.bold</span> <span class="k">import</span> <span class="n">BalloonWindkessel</span>
+<span class="kn">from</span> <span class="nn">.codegen.base</span> <span class="k">import</span> <span class="n">BaseSpec</span>
+<span class="kn">from</span> <span class="nn">.codegen.model</span> <span class="k">import</span> <span class="n">ModelGen1</span>
+<span class="kn">from</span> <span class="nn">.codegen.cfun</span> <span class="k">import</span> <span class="n">CfunGen1</span>
+<span class="kn">from</span> <span class="nn">.codegen.network</span> <span class="k">import</span> <span class="n">NetGen1</span>
+<span class="kn">from</span> <span class="nn">.compiler</span> <span class="k">import</span> <span class="n">Compiler</span>
+<span class="kn">from</span> <span class="nn">.compiler</span> <span class="k">import</span> <span class="n">CppCompiler</span>
+<span class="kn">from</span> <span class="nn">.coupling</span> <span class="k">import</span> <span class="n">BaseCoupling</span>
+<span class="kn">from</span> <span class="nn">.coupling</span> <span class="k">import</span> <span class="n">Linear</span> <span class="k">as</span> <span class="n">LCf</span><span class="p">,</span> <span class="n">Diff</span><span class="p">,</span> <span class="n">Sigmoidal</span><span class="p">,</span> <span class="n">Kuramoto</span> <span class="k">as</span> <span class="n">KCf</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">_TestModel</span><span class="p">,</span> <span class="n">HMJE</span><span class="p">,</span> <span class="n">RWW</span><span class="p">,</span> <span class="n">JansenRit</span><span class="p">,</span> <span class="n">Linear</span><span class="p">,</span> <span class="n">G2DO</span>
+<span class="kn">from</span> <span class="nn">.model</span> <span class="k">import</span> <span class="n">Kuramoto</span>
+<span class="kn">from</span> <span class="nn">.network</span> <span class="k">import</span> <span class="n">DenseNetwork</span>
+<span class="kn">from</span> <span class="nn">.rng</span> <span class="k">import</span> <span class="n">RNG</span>
+<span class="kn">from</span> <span class="nn">.schemes</span> <span class="k">import</span> <span class="n">euler_maruyama_logp</span>
+
+<span class="n">LOG</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TestLogProb"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestLogProb">[docs]</a><span class="k">class</span> <span class="nc">TestLogProb</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestLogProb.setUp"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestLogProb.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">_TestModel</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="TestLogProb.test_partials"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestLogProb.test_partials">[docs]</a>    <span class="k">def</span> <span class="nf">test_partials</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logp</span> <span class="o">=</span> <span class="n">euler_maruyama_logp</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">state_sym</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">drift_sym</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">diffs_sym</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">var</span><span class="p">,</span> <span class="n">expr</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">indvars</span><span class="p">,</span>
+                             <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">logp</span><span class="p">)):</span>
+            <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="TestModel"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel">[docs]</a><span class="k">class</span> <span class="nc">TestModel</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestModel.setUp"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">BaseSpec</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_build_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="n">BaseSpec</span><span class="p">,</span> <span class="n">log_code</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">Compiler</span><span class="p">()</span>
+        <span class="n">cg</span> <span class="o">=</span> <span class="n">ModelGen1</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">cg</span><span class="o">.</span><span class="n">generate_code</span><span class="p">(</span><span class="n">spec</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">log_code</span><span class="p">:</span>
+            <span class="n">LOG</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="n">code</span><span class="p">)</span>
+        <span class="n">lib</span> <span class="o">=</span> <span class="n">comp</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">lib</span><span class="p">,</span> <span class="n">cg</span><span class="o">.</span><span class="n">kernel_name</span><span class="p">)</span>
+        <span class="n">fn</span><span class="o">.</span><span class="n">restype</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># equiv. C void return type</span>
+        <span class="n">ui</span> <span class="o">=</span> <span class="n">ct</span><span class="o">.</span><span class="n">c_uint</span>
+        <span class="n">f</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">ct_dtype</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">ct</span><span class="o">.</span><span class="n">POINTER</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="n">fn</span><span class="o">.</span><span class="n">argtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">ui</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fp</span><span class="p">,</span> <span class="n">fp</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">fn</span>
+
+    <span class="k">def</span> <span class="nf">_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">g</span><span class="p">,</span> <span class="n">o</span> <span class="o">=</span> <span class="n">args</span>
+        <span class="n">nn</span> <span class="o">=</span> <span class="n">ct</span><span class="o">.</span><span class="n">c_uint</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">fp</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">argtypes</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">ctypes</span><span class="o">.</span><span class="n">data_as</span><span class="p">(</span><span class="n">fp</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">]</span>
+        <span class="n">fn</span><span class="p">(</span><span class="n">nn</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TestModel.test_test_model_code_gen"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_test_model_code_gen">[docs]</a>    <span class="k">def</span> <span class="nf">test_test_model_code_gen</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">_TestModel</span><span class="p">()</span>
+        <span class="n">fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">arrs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">prep_arrays</span><span class="p">(</span><span class="mi">1024</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_call</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="o">*</span><span class="n">arrs</span><span class="p">)</span></div>
+        <span class="c1"># TODO timing</span>
+        <span class="c1"># TODO allclose against TVB</span>
+
+<div class="viewcode-block" id="TestModel.test_balloon_model"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_balloon_model">[docs]</a>    <span class="k">def</span> <span class="nf">test_balloon_model</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">BalloonWindkessel</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestModel.test_hmje"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_hmje">[docs]</a>    <span class="k">def</span> <span class="nf">test_hmje</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">HMJE</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestModel.test_rww"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_rww">[docs]</a>    <span class="k">def</span> <span class="nf">test_rww</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">RWW</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestModel.test_jr"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_jr">[docs]</a>    <span class="k">def</span> <span class="nf">test_jr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">JansenRit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestModel.test_linear"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_linear">[docs]</a>    <span class="k">def</span> <span class="nf">test_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Linear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestModel.test_g2do"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestModel.test_g2do">[docs]</a>    <span class="k">def</span> <span class="nf">test_g2do</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">G2DO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_build_func</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="TestRNG"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestRNG">[docs]</a><span class="k">class</span> <span class="nc">TestRNG</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestRNG.test_r123_unifrom"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestRNG.test_r123_unifrom">[docs]</a>    <span class="k">def</span> <span class="nf">test_r123_unifrom</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">CppCompiler</span><span class="p">()</span>
+        <span class="n">rng</span> <span class="o">=</span> <span class="n">RNG</span><span class="p">(</span><span class="n">comp</span><span class="p">)</span>
+        <span class="n">rng</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">BaseSpec</span><span class="p">())</span>
+        <span class="c1"># LOG.debug(list(comp.cache.values())[0][&#39;asm&#39;])</span>
+        <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span><span class="p">,</span> <span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">rng</span><span class="o">.</span><span class="n">fill</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+        <span class="n">d</span><span class="p">,</span> <span class="n">p</span> <span class="o">=</span> <span class="n">kstest</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="s1">&#39;norm&#39;</span><span class="p">)</span>
+        <span class="c1"># check normal samples are normal</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">places</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertAlmostEqual</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">std</span><span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="n">places</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">assertLess</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="TestCoupling"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestCoupling">[docs]</a><span class="k">class</span> <span class="nc">TestCoupling</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestCoupling.setUp"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestCoupling.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">BaseSpec</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_test_cfun_code</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cf</span><span class="p">:</span> <span class="n">BaseCoupling</span><span class="p">):</span>
+        <span class="n">comp</span> <span class="o">=</span> <span class="n">Compiler</span><span class="p">()</span>
+        <span class="n">cg</span> <span class="o">=</span> <span class="n">CfunGen1</span><span class="p">(</span><span class="n">cf</span><span class="p">)</span>
+        <span class="n">dll</span> <span class="o">=</span> <span class="n">comp</span><span class="p">(</span><span class="n">cf</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">cg</span><span class="o">.</span><span class="n">generate_code</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">cg</span><span class="o">.</span><span class="n">kernel_names</span><span class="p">:</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">dll</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TestCoupling.test_linear"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestCoupling.test_linear">[docs]</a>    <span class="k">def</span> <span class="nf">test_linear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">G2DO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_cfun_code</span><span class="p">(</span><span class="n">LCf</span><span class="p">(</span><span class="n">model</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TestCoupling.test_diff"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestCoupling.test_diff">[docs]</a>    <span class="k">def</span> <span class="nf">test_diff</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">G2DO</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_cfun_code</span><span class="p">(</span><span class="n">Diff</span><span class="p">(</span><span class="n">model</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TestCoupling.test_sigm"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestCoupling.test_sigm">[docs]</a>    <span class="k">def</span> <span class="nf">test_sigm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">JansenRit</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_cfun_code</span><span class="p">(</span><span class="n">Sigmoidal</span><span class="p">(</span><span class="n">model</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="TestCoupling.test_kura"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestCoupling.test_kura">[docs]</a>    <span class="k">def</span> <span class="nf">test_kura</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Kuramoto</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_cfun_code</span><span class="p">(</span><span class="n">KCf</span><span class="p">(</span><span class="n">model</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="TestNetwork"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestNetwork">[docs]</a><span class="k">class</span> <span class="nc">TestNetwork</span><span class="p">(</span><span class="n">TestCase</span><span class="p">):</span>
+
+<div class="viewcode-block" id="TestNetwork.setUp"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestNetwork.setUp">[docs]</a>    <span class="k">def</span> <span class="nf">setUp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spec</span> <span class="o">=</span> <span class="n">BaseSpec</span><span class="p">(</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">comp</span> <span class="o">=</span> <span class="n">Compiler</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_test_dense</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_cls</span><span class="p">,</span> <span class="n">cfun_cls</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model_cls</span><span class="p">()</span>
+        <span class="n">cfun</span> <span class="o">=</span> <span class="n">cfun_cls</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">DenseNetwork</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">cfun</span><span class="p">)</span>
+        <span class="n">cg</span> <span class="o">=</span> <span class="n">NetGen1</span><span class="p">(</span><span class="n">net</span><span class="p">)</span>
+        <span class="n">code</span> <span class="o">=</span> <span class="n">cg</span><span class="o">.</span><span class="n">generate_code</span><span class="p">(</span><span class="n">CfunGen1</span><span class="p">(</span><span class="n">cfun</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">spec</span><span class="p">)</span>
+        <span class="n">dll</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">comp</span><span class="p">(</span><span class="s1">&#39;dense_net&#39;</span><span class="p">,</span> <span class="n">code</span><span class="p">)</span>
+        <span class="nb">getattr</span><span class="p">(</span><span class="n">dll</span><span class="p">,</span> <span class="n">cg</span><span class="o">.</span><span class="n">kernel_name</span><span class="p">)</span>
+
+<div class="viewcode-block" id="TestNetwork.test_hmje"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestNetwork.test_hmje">[docs]</a>    <span class="k">def</span> <span class="nf">test_hmje</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_dense</span><span class="p">(</span><span class="n">HMJE</span><span class="p">,</span> <span class="n">LCf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestNetwork.test_kuramoto"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestNetwork.test_kuramoto">[docs]</a>    <span class="k">def</span> <span class="nf">test_kuramoto</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_dense</span><span class="p">(</span><span class="n">Kuramoto</span><span class="p">,</span> <span class="n">KCf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TestNetwork.test_jr"><a class="viewcode-back" href="../../api-docs/tvb_hpc.tests.html#tvb_hpc.tests.TestNetwork.test_jr">[docs]</a>    <span class="k">def</span> <span class="nf">test_jr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_dense</span><span class="p">(</span><span class="n">JansenRit</span><span class="p">,</span> <span class="n">Sigmoidal</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

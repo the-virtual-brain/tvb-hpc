@@ -1,0 +1,1073 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>aligned &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="tvb-hpc" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.aligned">
+<span id="aligned"></span><h1>aligned<a class="headerlink" href="#module-tvb_hpc.aligned" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tvb_hpc.aligned.AlignedAlloc">
+<em class="property">class </em><code class="descclassname">tvb_hpc.aligned.</code><code class="descname">AlignedAlloc</code><span class="sig-paren">(</span><em>size</em>, <em>alignment=64</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/aligned.html#AlignedAlloc"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.aligned.AlignedAlloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.aligned.AlignedAlloc.free">
+<code class="descname">free</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/aligned.html#AlignedAlloc.free"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.aligned.AlignedAlloc.free" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.bold">
+<span id="bold"></span><h1>bold<a class="headerlink" href="#module-tvb_hpc.bold" title="Permalink to this headline">¶</a></h1>
+<p>Source for Balloon-Windkessel model of BOLD.</p>
+<dl class="class">
+<dt id="tvb_hpc.bold.BalloonWindkessel">
+<em class="property">class </em><code class="descclassname">tvb_hpc.bold.</code><code class="descname">BalloonWindkessel</code><a class="reference internal" href="_modules/tvb_hpc/bold.html#BalloonWindkessel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.const">
+<code class="descname">const</code><em class="property"> = {'k3': 0.5, 'k2': 0.2, 'k1': 2.77264, 'RECIP_E0': 2.5, 'RECIP_ALPHA': 3.125, 'RECIP_TAU_O': 1.0204081632653061, 'RECIP_TAU_F': 2.4390243902439024, 'RECIP_TAU_S': 1.5384615384615383, 'R_0': 25.0, 'NU_0': 40.3, 'EPSILON': 0.5, 'E0': 0.4, 'V0': 4.0, 'TE': 0.04, 'ALPHA': 0.32, 'TAU_O': 0.98, 'TAU_F': 0.41, 'TAU_S': 0.65}</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.diffs">
+<code class="descname">diffs</code><em class="property"> = (0, 0, 0, 0)</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.drift">
+<code class="descname">drift</code><em class="property"> = ('x - RECIP_TAU_S * s - RECIP_TAU_F * (f - 1)', 's', 'RECIP_TAU_O * (f - v**RECIP_ALPHA)', 'RECIP_TAU_O * (f * (1 - (1 - E0)**(1 / f)) * RECIP_E0 - v**RECIP_ALPHA * (q / v))')</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.input">
+<code class="descname">input</code><em class="property"> = 'x'</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('V0 * (   k1 * (1 - q     )        + k2 * (1 - q / v )        + k3 * (1 -     v ) )',)</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.state">
+<code class="descname">state</code><em class="property"> = 's f v q'</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.codegen">
+<span id="codegen"></span><h1>codegen<a class="headerlink" href="#module-tvb_hpc.codegen" title="Permalink to this headline">¶</a></h1>
+<p>Handle code generation tasks. Likely to become a module with
+task specific modules.</p>
+<dl class="class">
+<dt id="tvb_hpc.codegen.BaseCodeGen">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.</code><code class="descname">BaseCodeGen</code><a class="reference internal" href="_modules/tvb_hpc/codegen.html#BaseCodeGen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.BaseCodeGen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.codegen.BaseCodeGen.generate_alignments">
+<code class="descname">generate_alignments</code><span class="sig-paren">(</span><em>names: typing.List[str], spec: typing.Dict[str, str]</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#BaseCodeGen.generate_alignments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.BaseCodeGen.generate_alignments" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.BaseCodeGen.generate_c">
+<code class="descname">generate_c</code><span class="sig-paren">(</span><em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#BaseCodeGen.generate_c"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.BaseCodeGen.generate_c" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.BaseLayout">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.</code><code class="descname">BaseLayout</code><a class="reference internal" href="_modules/tvb_hpc/codegen.html#BaseLayout"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.BaseLayout" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Handle layout of data in memory, generating indexing expressions, etc.</p>
+<p>For now, kernels manually / hard code data chunking.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.BaseSpec">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.</code><code class="descname">BaseSpec</code><span class="sig-paren">(</span><em>float='float'</em>, <em>width=8</em>, <em>align=64</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#BaseSpec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.BaseSpec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Spec handles details dtype, vectorization, alignment, etc which affect
+code generation but not the math.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.BaseSpec.ct_dtype">
+<code class="descname">ct_dtype</code><a class="headerlink" href="#tvb_hpc.codegen.BaseSpec.ct_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.BaseSpec.dict">
+<code class="descname">dict</code><a class="headerlink" href="#tvb_hpc.codegen.BaseSpec.dict" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.BaseSpec.dtype">
+<code class="descname">dtype</code><a class="headerlink" href="#tvb_hpc.codegen.BaseSpec.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.BaseSpec.np_dtype">
+<code class="descname">np_dtype</code><a class="headerlink" href="#tvb_hpc.codegen.BaseSpec.np_dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.codegen.ModelGen1">
+<em class="property">class </em><code class="descclassname">tvb_hpc.codegen.</code><code class="descname">ModelGen1</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#ModelGen1"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.ModelGen1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.codegen.BaseCodeGen" title="tvb_hpc.codegen.BaseCodeGen"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.codegen.BaseCodeGen</span></code></a></p>
+<dl class="method">
+<dt id="tvb_hpc.codegen.ModelGen1.declarations">
+<code class="descname">declarations</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#ModelGen1.declarations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.ModelGen1.declarations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.ModelGen1.generate_code">
+<code class="descname">generate_code</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#ModelGen1.generate_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.ModelGen1.generate_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.codegen.ModelGen1.inner_loop_lines">
+<code class="descname">inner_loop_lines</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/codegen.html#ModelGen1.inner_loop_lines"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.codegen.ModelGen1.inner_loop_lines" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.ModelGen1.kernel_name">
+<code class="descname">kernel_name</code><a class="headerlink" href="#tvb_hpc.codegen.ModelGen1.kernel_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.codegen.ModelGen1.template">
+<code class="descname">template</code><em class="property"> = '\n#include &lt;math.h&gt;\n\nvoid {name}(\n    unsigned int nnode,\n    {float} * __restrict state,\n    {float} * __restrict input,\n    {float} * __restrict param,\n    {float} * __restrict drift,\n    {float} * __restrict diffs,\n    {float} * __restrict obsrv\n)\n{{\n  {decls}\n  {loop_pragma}\n  for (unsigned int j=0; j &lt; nnode; j++)\n  {{\n    unsigned int i = j / {width};\n    unsigned int jw = j % {width};\n    {body}\n  }}\n}}\n'</em><a class="headerlink" href="#tvb_hpc.codegen.ModelGen1.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.compiler">
+<span id="compiler"></span><h1>compiler<a class="headerlink" href="#module-tvb_hpc.compiler" title="Permalink to this headline">¶</a></h1>
+<p>The compiler module handles invocation of compilers to generate a shared lib
+which can be loaded via ctypes.</p>
+<dl class="class">
+<dt id="tvb_hpc.compiler.Compiler">
+<em class="property">class </em><code class="descclassname">tvb_hpc.compiler.</code><code class="descname">Compiler</code><span class="sig-paren">(</span><em>cc=None</em>, <em>cflags=[]</em>, <em>ldflags=[]</em>, <em>gen_asm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/compiler.html#Compiler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.compiler.Compiler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Handles compiler configuration &amp; building code</p>
+<dl class="attribute">
+<dt id="tvb_hpc.compiler.Compiler.default_compiler">
+<code class="descname">default_compiler</code><em class="property"> = '/usr/local/bin/gcc-6'</em><a class="headerlink" href="#tvb_hpc.compiler.Compiler.default_compiler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.compiler.Compiler.source_suffix">
+<code class="descname">source_suffix</code><em class="property"> = 'c'</em><a class="headerlink" href="#tvb_hpc.compiler.Compiler.source_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.compiler.CppCompiler">
+<em class="property">class </em><code class="descclassname">tvb_hpc.compiler.</code><code class="descname">CppCompiler</code><span class="sig-paren">(</span><em>cc=None</em>, <em>cflags=[]</em>, <em>ldflags=[]</em>, <em>gen_asm=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/compiler.html#CppCompiler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.compiler.CppCompiler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.compiler.Compiler" title="tvb_hpc.compiler.Compiler"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.compiler.Compiler</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.compiler.CppCompiler.default_compiler">
+<code class="descname">default_compiler</code><em class="property"> = '/usr/local/bin/g++-6'</em><a class="headerlink" href="#tvb_hpc.compiler.CppCompiler.default_compiler" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.compiler.CppCompiler.source_suffix">
+<code class="descname">source_suffix</code><em class="property"> = 'c++'</em><a class="headerlink" href="#tvb_hpc.compiler.CppCompiler.source_suffix" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.coupling">
+<span id="coupling"></span><h1>coupling<a class="headerlink" href="#module-tvb_hpc.coupling" title="Permalink to this headline">¶</a></h1>
+<p>The coupling module describes features of coupling functions.</p>
+<p>NB bug/feature wrt. TVB here: we assume pre_syn is observables, not state vars.</p>
+<p>If single expression given, applied to all observables. Otherwise,
+empty expressions stop evaluation of coupling on one or more observables.</p>
+<p>A connection is specified node to node, so applies to all cvars.</p>
+<dl class="class">
+<dt id="tvb_hpc.coupling.BaseCoupling">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">BaseCoupling</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#BaseCoupling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.codegen.BaseCodeGen" title="tvb_hpc.codegen.BaseCodeGen"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.codegen.BaseCodeGen</span></code></a></p>
+<dl class="method">
+<dt id="tvb_hpc.coupling.BaseCoupling.declarations">
+<code class="descname">declarations</code><span class="sig-paren">(</span><em>expr</em>, <em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#BaseCoupling.declarations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.declarations" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.coupling.BaseCoupling.generate_code">
+<code class="descname">generate_code</code><span class="sig-paren">(</span><em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#BaseCoupling.generate_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.generate_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.param">
+<code class="descname">param</code><em class="property"> = {}</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.stat">
+<code class="descname">stat</code><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.stat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.template">
+<code class="descname">template</code><em class="property"> = '\n#include &lt;math.h&gt;\n\n#pragma omp declare simd\n{float} {pre_sum_name}({float} pre_syn, {float} post_syn)\n{{\n    {pre_decls}\n    return {pre_sum};\n}}\n\n#pragma omp declare simd\n{float} {post_sum_name}({float} {stat})\n{{\n    {post_decls}\n    return {post_sum};\n}}\n'</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Diff">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Diff</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#Diff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Diff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.Linear" title="tvb_hpc.coupling.Linear"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.Linear</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Diff.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('pre_syn - post_syn',)</em><a class="headerlink" href="#tvb_hpc.coupling.Diff.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Kuramoto">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Kuramoto</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#Kuramoto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Kuramoto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.Diff" title="tvb_hpc.coupling.Diff"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.Diff</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Kuramoto.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ('a * mean',)</em><a class="headerlink" href="#tvb_hpc.coupling.Kuramoto.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Kuramoto.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('sin(pre_syn - post_syn)',)</em><a class="headerlink" href="#tvb_hpc.coupling.Kuramoto.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Linear">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Linear</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#Linear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.BaseCoupling" title="tvb_hpc.coupling.BaseCoupling"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.BaseCoupling</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Linear.param">
+<code class="descname">param</code><em class="property"> = {'a': 0.001, 'b': 0}</em><a class="headerlink" href="#tvb_hpc.coupling.Linear.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Linear.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ('a * sum + b',)</em><a class="headerlink" href="#tvb_hpc.coupling.Linear.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Linear.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('pre_syn',)</em><a class="headerlink" href="#tvb_hpc.coupling.Linear.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Sigmoidal">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Sigmoidal</code><span class="sig-paren">(</span><em>model</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/coupling.html#Sigmoidal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.BaseCoupling" title="tvb_hpc.coupling.BaseCoupling"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.BaseCoupling</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Sigmoidal.param">
+<code class="descname">param</code><em class="property"> = {'cmin': 0, 'cmax': 0.005, 'midpoint': 6, 'r': 1, 'a': 0.56}</em><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Sigmoidal.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ('a * sum',)</em><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Sigmoidal.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('cmax / (1 + exp(r * (midpoint - pre_syn)))',)</em><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.descriptors">
+<span id="descriptors"></span><h1>descriptors<a class="headerlink" href="#module-tvb_hpc.descriptors" title="Permalink to this headline">¶</a></h1>
+<p>Data descriptors for declaring workspace for algorithms and checking usage.</p>
+<p>The classes herein are intended to make maintenance easier by enforcing
+stated constraints which are more typical in static typing situations.</p>
+<dl class="class">
+<dt id="tvb_hpc.descriptors.Dim">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">Dim</code><a class="reference internal" href="_modules/tvb_hpc/descriptors.html#Dim"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.Dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.descriptors.Final" title="tvb_hpc.descriptors.Final"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.descriptors.Final</span></code></a></p>
+<p>Specialization of Final to int/long type.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.descriptors.Final">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">Final</code><span class="sig-paren">(</span><em>type=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/descriptors.html#Final"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.Final" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>A descriptor for an attribute, possibly type-checked, that once initialized, cannot be changed.</p>
+<dl class="class">
+<dt id="tvb_hpc.descriptors.Final.State">
+<em class="property">class </em><code class="descname">State</code><span class="sig-paren">(</span><em>value</em>, <em>initialized</em><span class="sig-paren">)</span><a class="headerlink" href="#tvb_hpc.descriptors.Final.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.Final.State.initialized">
+<code class="descname">initialized</code><a class="headerlink" href="#tvb_hpc.descriptors.Final.State.initialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.Final.State.value">
+<code class="descname">value</code><a class="headerlink" href="#tvb_hpc.descriptors.Final.State.value" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="tvb_hpc.descriptors.ImmutableAttrError">
+<em class="property">exception </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">ImmutableAttrError</code><a class="reference internal" href="_modules/tvb_hpc/descriptors.html#ImmutableAttrError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.ImmutableAttrError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">AttributeError</span></code></p>
+<p>Error due to modifying an immutable attribute.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="tvb_hpc.descriptors.IncorrectTypeAttrError">
+<em class="property">exception </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">IncorrectTypeAttrError</code><a class="reference internal" href="_modules/tvb_hpc/descriptors.html#IncorrectTypeAttrError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.IncorrectTypeAttrError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">AttributeError</span></code></p>
+<p>Error due to using incorrect type to set attribute value.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.descriptors.NDArray">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">NDArray</code><span class="sig-paren">(</span><em>shape</em>, <em>dtype</em>, <em>read_only=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/descriptors.html#NDArray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.NDArray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.descriptors.StaticAttr" title="tvb_hpc.descriptors.StaticAttr"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.descriptors.StaticAttr</span></code></a></p>
+<p>Data descriptor for a NumPy array, with type, mutability and shape checking.</p>
+<dl class="class">
+<dt id="tvb_hpc.descriptors.NDArray.State">
+<em class="property">class </em><code class="descname">State</code><span class="sig-paren">(</span><em>array</em>, <em>initialized</em><span class="sig-paren">)</span><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.State" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.State.array">
+<code class="descname">array</code><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.State.array" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.State.initialized">
+<code class="descname">initialized</code><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.State.initialized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.dtype">
+<code class="descclassname">NDArray.</code><code class="descname">dtype</code><em class="property"> = None</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.dtype" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.instance_state">
+<code class="descclassname">NDArray.</code><code class="descname">instance_state</code><em class="property"> = {}</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.instance_state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.read_only">
+<code class="descclassname">NDArray.</code><code class="descname">read_only</code><em class="property"> = True</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.read_only" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.descriptors.NDArray.shape">
+<code class="descclassname">NDArray.</code><code class="descname">shape</code><em class="property"> = ()</em><a class="headerlink" href="#tvb_hpc.descriptors.NDArray.shape" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.descriptors.StaticAttr">
+<em class="property">class </em><code class="descclassname">tvb_hpc.descriptors.</code><code class="descname">StaticAttr</code><a class="reference internal" href="_modules/tvb_hpc/descriptors.html#StaticAttr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.descriptors.StaticAttr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Base class which requires all attributes to be declared at class level.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.model">
+<span id="model"></span><h1>model<a class="headerlink" href="#module-tvb_hpc.model" title="Permalink to this headline">¶</a></h1>
+<p>The model module describes neural mass models.</p>
+<dl class="class">
+<dt id="tvb_hpc.model.BaseModel">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">BaseModel</code><a class="reference internal" href="_modules/tvb_hpc/model.html#BaseModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.BaseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>BaseModel parses attributes on subclasses, defining a networked SDE.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.auxex">
+<code class="descname">auxex</code><em class="property"> = []</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.auxex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.const">
+<code class="descname">const</code><em class="property"> = {}</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.diffs">
+<code class="descname">diffs</code><em class="property"> = ('',)</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.drift">
+<code class="descname">drift</code><em class="property"> = ('',)</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.indvars">
+<code class="descname">indvars</code><a class="headerlink" href="#tvb_hpc.model.BaseModel.indvars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.input">
+<code class="descname">input</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('',)</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.param">
+<code class="descname">param</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.model.BaseModel.partial">
+<code class="descname">partial</code><span class="sig-paren">(</span><em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/model.html#BaseModel.partial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.BaseModel.partial" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.model.BaseModel.prep_arrays">
+<code class="descname">prep_arrays</code><span class="sig-paren">(</span><em>nnode</em>, <em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/model.html#BaseModel.prep_arrays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.BaseModel.prep_arrays" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.state">
+<code class="descname">state</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.G2DO">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">G2DO</code><a class="reference internal" href="_modules/tvb_hpc/model.html#G2DO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.G2DO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Generic nonlinear 2-D (phase plane) oscillator.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.const">
+<code class="descname">const</code><em class="property"> = {'tau': 1.0, 'I': 0.0, 'a': -2.0, 'b': -10.0, 'c': 0.0, 'd': 0.02, 'e': 3.0, 'f': 1.0, 'g': 0.0, 'alpha': 1.0, 'beta': 1.0, 'gamma': 1.0}</em><a class="headerlink" href="#tvb_hpc.model.G2DO.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.diffs">
+<code class="descname">diffs</code><em class="property"> = (0.001, 0.001)</em><a class="headerlink" href="#tvb_hpc.model.G2DO.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.drift">
+<code class="descname">drift</code><em class="property"> = ('d * tau * (alpha*W - f*V**3 + e*V**2 + g*V + gamma*I + gamma*c_0)', 'd * (a + b*V + c*V**2 - beta*W) / tau')</em><a class="headerlink" href="#tvb_hpc.model.G2DO.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.input">
+<code class="descname">input</code><em class="property"> = 'c_0'</em><a class="headerlink" href="#tvb_hpc.model.G2DO.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('W', 'V')</em><a class="headerlink" href="#tvb_hpc.model.G2DO.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.param">
+<code class="descname">param</code><em class="property"> = 'a'</em><a class="headerlink" href="#tvb_hpc.model.G2DO.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.state">
+<code class="descname">state</code><em class="property"> = 'W V'</em><a class="headerlink" href="#tvb_hpc.model.G2DO.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.HMJE">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">HMJE</code><a class="reference internal" href="_modules/tvb_hpc/model.html#HMJE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.HMJE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Hindmarsh-Rose-Jirsa Epileptor model of seizure dynamics.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.const">
+<code class="descname">const</code><em class="property"> = {'Iext2': 0.45, 'a': 1, 'b': 3, 'slope': 0, 'tt': 1, 'c': 1, 'd': 5, 'Kvf': 0, 'Ks': 0, 'Kf': 0, 'aa': 6, 'tau': 10, 'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}</em><a class="headerlink" href="#tvb_hpc.model.HMJE.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.diffs">
+<code class="descname">diffs</code><em class="property"> = (0, 0, 0, 0.0003, 0.0003, 0)</em><a class="headerlink" href="#tvb_hpc.model.HMJE.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.drift">
+<code class="descname">drift</code><em class="property"> = ('tt * (y1 - z + Iext + Kvf * c1 + (  (x1 &lt;  0)*(-a * x1 * x1 + b * x1)+ (x1 &gt;= 0)*(slope - x2 + 0.6 * (z - 4)**2)) * x1)', 'tt * (c - d * x1 * x1 - y1)', 'tt * (r * (4 * (x1 - x0) - z + (z &lt; 0) * (-0.1 * pow(z, 7)) + Ks * c1))', 'tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)', 'tt * ((-y2 + (x2 &gt;= (-3.5)) * (aa * (x2 + 0.25))) / tau)', 'tt * (-0.01 * (g - 0.1 * x1))')</em><a class="headerlink" href="#tvb_hpc.model.HMJE.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.input">
+<code class="descname">input</code><em class="property"> = 'c1 c2'</em><a class="headerlink" href="#tvb_hpc.model.HMJE.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('x1', 'x2', 'z', '-x1 + x2')</em><a class="headerlink" href="#tvb_hpc.model.HMJE.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.param">
+<code class="descname">param</code><em class="property"> = 'x0 Iext r'</em><a class="headerlink" href="#tvb_hpc.model.HMJE.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.state">
+<code class="descname">state</code><em class="property"> = 'x1 y1 z x2 y2 g'</em><a class="headerlink" href="#tvb_hpc.model.HMJE.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.JansenRit">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">JansenRit</code><a class="reference internal" href="_modules/tvb_hpc/model.html#JansenRit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.JansenRit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Jansen-Rit model of visual evoked potentials.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.auxex">
+<code class="descname">auxex</code><em class="property"> = [('sigm_y1_y2', '2 * nu_max / (1 + exp(r * (v0 - (y1 - y2))))'), ('sigm_y0_1', '2 * nu_max / (1 + exp(r * (v0 - (a_1 * J * y0))))'), ('sigm_y0_3', '2 * nu_max / (1 + exp(r * (v0 - (a_3 * J * y0))))')]</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.auxex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.const">
+<code class="descname">const</code><em class="property"> = {'A': 3.25, 'B': 22.0, 'a': 0.1, 'b': 0.05, 'v0': 5.52, 'nu_max': 0.0025, 'r': 0.56, 'J': 135.0, 'a_1': 1.0, 'a_2': 0.8, 'a_3': 0.25, 'a_4': 0.25, 'p_min': 0.12, 'p_max': 0.32, 'mu': 0.22}</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.diffs">
+<code class="descname">diffs</code><em class="property"> = (0, 0, 0, 0, 0, 0)</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.drift">
+<code class="descname">drift</code><em class="property"> = ('y3', 'y4', 'y5', 'A * a * sigm_y1_y2 - 2 * a * y3 - a**2 * y0', 'A * a * (mu + a_2 * J * sigm_y0_1 + lrc) - 2 * a * y4 - a**2 * y1', 'B * b * (a_4 * J * sigm_y0_3) - 2 * b * y5 - b**2 * y2')</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.input">
+<code class="descname">input</code><em class="property"> = 'lrc'</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('y0 - y1',)</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.param">
+<code class="descname">param</code><em class="property"> = 'v0 r'</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.state">
+<code class="descname">state</code><em class="property"> = 'y0 y1 y2 y3 y4 y5'</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.Kuramoto">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">Kuramoto</code><a class="reference internal" href="_modules/tvb_hpc/model.html#Kuramoto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.Kuramoto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Kuramoto model of phase synchronization.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.diffs">
+<code class="descname">diffs</code><em class="property"> = (0,)</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.drift">
+<code class="descname">drift</code><em class="property"> = ('omega + I',)</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.input">
+<code class="descname">input</code><em class="property"> = 'I'</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('theta', 'sin(theta)')</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.param">
+<code class="descname">param</code><em class="property"> = 'omega'</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.state">
+<code class="descname">state</code><em class="property"> = 'theta'</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.state_limits">
+<code class="descname">state_limits</code><em class="property"> = {'theta': (-3.141592653589793, 3.141592653589793, 'wrap')}</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.state_limits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.Linear">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">Linear</code><a class="reference internal" href="_modules/tvb_hpc/model.html#Linear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.Linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Linear differential equation</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.const">
+<code class="descname">const</code><em class="property"> = {'lambda': -1}</em><a class="headerlink" href="#tvb_hpc.model.Linear.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.diffs">
+<code class="descname">diffs</code><em class="property"> = (0.01,)</em><a class="headerlink" href="#tvb_hpc.model.Linear.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.drift">
+<code class="descname">drift</code><em class="property"> = ('lambda * x',)</em><a class="headerlink" href="#tvb_hpc.model.Linear.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.input">
+<code class="descname">input</code><em class="property"> = 'c'</em><a class="headerlink" href="#tvb_hpc.model.Linear.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('x',)</em><a class="headerlink" href="#tvb_hpc.model.Linear.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.param">
+<code class="descname">param</code><em class="property"> = 'lambda'</em><a class="headerlink" href="#tvb_hpc.model.Linear.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.state">
+<code class="descname">state</code><em class="property"> = 'x'</em><a class="headerlink" href="#tvb_hpc.model.Linear.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.RWW">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">RWW</code><a class="reference internal" href="_modules/tvb_hpc/model.html#RWW"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.RWW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Reduced Wong-Wang firing rate model.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.auxex">
+<code class="descname">auxex</code><em class="property"> = [('x', 'w * j * S + io + j * c'), ('h', '(a * x - b) / (1 - exp(-d*(a*x - b)))')]</em><a class="headerlink" href="#tvb_hpc.model.RWW.auxex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.const">
+<code class="descname">const</code><em class="property"> = {'a': 0.27, 'b': 0.108, 'd': 154.0, 'g': 0.641, 'ts': 100.0, 'j': 0.2609, 'w': 0.6, 'io': 0.33}</em><a class="headerlink" href="#tvb_hpc.model.RWW.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.diffs">
+<code class="descname">diffs</code><em class="property"> = (0.01,)</em><a class="headerlink" href="#tvb_hpc.model.RWW.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.drift">
+<code class="descname">drift</code><em class="property"> = ('- (S / ts) + (1 - S) * h * g',)</em><a class="headerlink" href="#tvb_hpc.model.RWW.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.input">
+<code class="descname">input</code><em class="property"> = 'c'</em><a class="headerlink" href="#tvb_hpc.model.RWW.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('S',)</em><a class="headerlink" href="#tvb_hpc.model.RWW.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.param">
+<code class="descname">param</code><em class="property"> = 'w io'</em><a class="headerlink" href="#tvb_hpc.model.RWW.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.state">
+<code class="descname">state</code><em class="property"> = 'S'</em><a class="headerlink" href="#tvb_hpc.model.RWW.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.state_limits">
+<code class="descname">state_limits</code><em class="property"> = {'S': (0, 1, 'clip')}</em><a class="headerlink" href="#tvb_hpc.model.RWW.state_limits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.network">
+<span id="network"></span><h1>network<a class="headerlink" href="#module-tvb_hpc.network" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tvb_hpc.network.DenseNetwork">
+<em class="property">class </em><code class="descclassname">tvb_hpc.network.</code><code class="descname">DenseNetwork</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em>, <em>cfun: tvb_hpc.coupling.BaseCoupling</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/network.html#DenseNetwork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.network.DenseNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.codegen.BaseCodeGen" title="tvb_hpc.codegen.BaseCodeGen"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.codegen.BaseCodeGen</span></code></a></p>
+<p>Simple dense weights network, no delays etc.</p>
+<dl class="method">
+<dt id="tvb_hpc.network.DenseNetwork.generate_code">
+<code class="descname">generate_code</code><span class="sig-paren">(</span><em>spec: tvb_hpc.codegen.BaseSpec</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/network.html#DenseNetwork.generate_code"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.network.DenseNetwork.generate_code" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.network.DenseNetwork.kernel_name">
+<code class="descname">kernel_name</code><a class="headerlink" href="#tvb_hpc.network.DenseNetwork.kernel_name" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.network.DenseNetwork.template">
+<code class="descname">template</code><em class="property"> = '\n{cfun_code}\n\nvoid {name}(unsigned int nnode,\n            {float} * __restrict weights,\n            {float} * __restrict state,\n            {float} * __restrict input\n            )\n{{\n    unsigned int i, j;\n    for (i=0; i&lt;nnode; i++)\n    {{\n        {float} acc = 0;\n        {float} post_syn = state[i/{width}*{width}*{nsvar} + {isvar}*{width} + i % {width}];\n        for (j=0; j&lt;nnode; j++)\n        {{\n            {float} pre_syn = state[j/{width}*{width}*{nsvar} + {isvar}*{width} + j % {width}];\n            {float} el = {cfun_pre_sum}(pre_syn, post_syn);\n            acc += el * weights[i*nnode + j];\n        }}\n        {maybe_apply_mean}\n        unsigned int idx = i/{width}*{width}*{nsvar} + {isvar}*{width} + i % {width};\n        input[idx] = {cfun_post_sum}(acc);\n    }}\n}}\n'</em><a class="headerlink" href="#tvb_hpc.network.DenseNetwork.template" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.rng">
+<span id="rng"></span><h1>rng<a class="headerlink" href="#module-tvb_hpc.rng" title="Permalink to this headline">¶</a></h1>
+<p>SIMD friendly random number generation.</p>
+<p>Currently uses only Philox4x64 which assumes 128-bit, but for GPU usage,
+switch to a 32-bit. See include/Random123/index.html for details.</p>
+<dl class="class">
+<dt id="tvb_hpc.rng.RNG">
+<em class="property">class </em><code class="descclassname">tvb_hpc.rng.</code><code class="descname">RNG</code><span class="sig-paren">(</span><em>comp=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/rng.html#RNG"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.rng.RNG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.rng.RNG.build">
+<code class="descname">build</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/rng.html#RNG.build"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.rng.RNG.build" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.rng.RNG.fill">
+<code class="descname">fill</code><span class="sig-paren">(</span><em>array</em>, <em>seed=42</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/rng.html#RNG.fill"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.rng.RNG.fill" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.schemes">
+<span id="schemes"></span><h1>schemes<a class="headerlink" href="#module-tvb_hpc.schemes" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="tvb_hpc.schemes.euler">
+<code class="descclassname">tvb_hpc.schemes.</code><code class="descname">euler</code><span class="sig-paren">(</span><em>x</em>, <em>dx</em>, <em>dt=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/schemes.html#euler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.schemes.euler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct standard Euler step.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tvb_hpc.schemes.euler_maruyama">
+<code class="descclassname">tvb_hpc.schemes.</code><code class="descname">euler_maruyama</code><span class="sig-paren">(</span><em>x</em>, <em>f</em>, <em>g</em>, <em>dt=None</em>, <em>dWt=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/schemes.html#euler_maruyama"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.schemes.euler_maruyama" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct SDE Euler-Maruyama step.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tvb_hpc.schemes.euler_maruyama_logp">
+<code class="descclassname">tvb_hpc.schemes.</code><code class="descname">euler_maruyama_logp</code><span class="sig-paren">(</span><em>x</em>, <em>f</em>, <em>g</em>, <em>xn=None</em>, <em>dt=None</em>, <em>step=&lt;function euler&gt;</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/schemes.html#euler_maruyama_logp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.schemes.euler_maruyama_logp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct normal log p.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.tests">
+<span id="tests"></span><h1>tests<a class="headerlink" href="#module-tvb_hpc.tests" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tvb_hpc.tests.TestCodeGen">
+<em class="property">class </em><code class="descclassname">tvb_hpc.tests.</code><code class="descname">TestCodeGen</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_balloon_model">
+<code class="descname">test_balloon_model</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_balloon_model"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_balloon_model" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_g2do">
+<code class="descname">test_g2do</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_g2do"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_g2do" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_hmje">
+<code class="descname">test_hmje</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_hmje"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_hmje" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_jr">
+<code class="descname">test_jr</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_jr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_jr" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_linear">
+<code class="descname">test_linear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_linear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_linear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_rww">
+<code class="descname">test_rww</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_rww"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_rww" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCodeGen.test_test_model_code_gen">
+<code class="descname">test_test_model_code_gen</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCodeGen.test_test_model_code_gen"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCodeGen.test_test_model_code_gen" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.tests.TestCoupling">
+<em class="property">class </em><code class="descclassname">tvb_hpc.tests.</code><code class="descname">TestCoupling</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCoupling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCoupling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCoupling.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCoupling.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCoupling.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCoupling.test_diff">
+<code class="descname">test_diff</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCoupling.test_diff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCoupling.test_diff" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCoupling.test_kura">
+<code class="descname">test_kura</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCoupling.test_kura"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCoupling.test_kura" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCoupling.test_linear">
+<code class="descname">test_linear</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCoupling.test_linear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCoupling.test_linear" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestCoupling.test_sigm">
+<code class="descname">test_sigm</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestCoupling.test_sigm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestCoupling.test_sigm" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.tests.TestLogProb">
+<em class="property">class </em><code class="descclassname">tvb_hpc.tests.</code><code class="descname">TestLogProb</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestLogProb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestLogProb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.tests.TestLogProb.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestLogProb.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestLogProb.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestLogProb.test_partials">
+<code class="descname">test_partials</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestLogProb.test_partials"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestLogProb.test_partials" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.tests.TestNetwork">
+<em class="property">class </em><code class="descclassname">tvb_hpc.tests.</code><code class="descname">TestNetwork</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestNetwork"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestNetwork" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.tests.TestNetwork.setUp">
+<code class="descname">setUp</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestNetwork.setUp"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestNetwork.setUp" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.tests.TestNetwork.test_dense">
+<code class="descname">test_dense</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestNetwork.test_dense"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestNetwork.test_dense" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.tests.TestRNG">
+<em class="property">class </em><code class="descclassname">tvb_hpc.tests.</code><code class="descname">TestRNG</code><span class="sig-paren">(</span><em>methodName='runTest'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestRNG"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestRNG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">unittest.case.TestCase</span></code></p>
+<dl class="method">
+<dt id="tvb_hpc.tests.TestRNG.test_r123_unifrom">
+<code class="descname">test_r123_unifrom</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/tests.html#TestRNG.test_r123_unifrom"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.tests.TestRNG.test_r123_unifrom" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc.utils">
+<span id="utils"></span><h1>utils<a class="headerlink" href="#module-tvb_hpc.utils" title="Permalink to this headline">¶</a></h1>
+<dl class="exception">
+<dt id="tvb_hpc.utils.NoSuchExecutable">
+<em class="property">exception </em><code class="descclassname">tvb_hpc.utils.</code><code class="descname">NoSuchExecutable</code><a class="reference internal" href="_modules/tvb_hpc/utils.html#NoSuchExecutable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.utils.NoSuchExecutable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></code></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tvb_hpc.utils.exprs">
+<code class="descclassname">tvb_hpc.utils.</code><code class="descname">exprs</code><span class="sig-paren">(</span><em>sexprs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/utils.html#exprs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.utils.exprs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tvb_hpc.utils.simplify">
+<code class="descclassname">tvb_hpc.utils.</code><code class="descname">simplify</code><span class="sig-paren">(</span><em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/utils.html#simplify"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.utils.simplify" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simplify pymbolic expr via SymPy.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tvb_hpc.utils.vars">
+<code class="descclassname">tvb_hpc.utils.</code><code class="descname">vars</code><span class="sig-paren">(</span><em>svars</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/utils.html#vars"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.utils.vars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="tvb_hpc.utils.which">
+<code class="descclassname">tvb_hpc.utils.</code><code class="descname">which</code><span class="sig-paren">(</span><em>exe</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvb_hpc/utils.html#which"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.utils.which" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-tvb_hpc">
+<span id="module"></span><h1>Module<a class="headerlink" href="#module-tvb_hpc" title="Permalink to this headline">¶</a></h1>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">aligned</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.bold">bold</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.codegen">codegen</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.compiler">compiler</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.coupling">coupling</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.descriptors">descriptors</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.model">model</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.network">network</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.rng">rng</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.schemes">schemes</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.tests">tests</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc.utils">utils</a></li>
+<li><a class="reference internal" href="#module-tvb_hpc">Module</a></li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">tvb-hpc</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/tvb_hpc.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tvb_hpc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

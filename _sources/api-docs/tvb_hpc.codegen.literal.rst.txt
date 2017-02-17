@@ -1,0 +1,7 @@
+tvb_hpc.codegen.literal module
+==============================
+
+.. automodule:: tvb_hpc.codegen.literal
+    :members:
+    :undoc-members:
+    :show-inheritance:

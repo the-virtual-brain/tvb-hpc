@@ -1,0 +1,7 @@
+tvb_hpc.aligned module
+======================
+
+.. automodule:: tvb_hpc.aligned
+    :members:
+    :undoc-members:
+    :show-inheritance:

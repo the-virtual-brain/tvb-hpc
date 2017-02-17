@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.bold module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.compiler module" href="tvb_hpc.compiler.html" />
+    <link rel="prev" title="tvb_hpc.aligned module" href="tvb_hpc.aligned.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.bold">
+<span id="tvb-hpc-bold-module"></span><h1>tvb_hpc.bold module<a class="headerlink" href="#module-tvb_hpc.bold" title="Permalink to this headline">¶</a></h1>
+<p>Source for Balloon-Windkessel model of BOLD.</p>
+<dl class="class">
+<dt id="tvb_hpc.bold.BalloonWindkessel">
+<em class="property">class </em><code class="descclassname">tvb_hpc.bold.</code><code class="descname">BalloonWindkessel</code><a class="reference internal" href="../_modules/tvb_hpc/bold.html#BalloonWindkessel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="tvb_hpc.model.html#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.const">
+<code class="descname">const</code><em class="property"> = {'RECIP_TAU_S': 1.5384615384615383, 'RECIP_TAU_F': 2.4390243902439024, 'RECIP_TAU_O': 1.0204081632653061, 'RECIP_ALPHA': 3.125, 'E0': 0.4, 'RECIP_E0': 2.5, 'V0': 4.0, 'k1': 2.77264, 'k2': 0.2, 'k3': 0.5}</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.diffs">
+<code class="descname">diffs</code><em class="property"> = (0, 0, 0, 0)</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.drift">
+<code class="descname">drift</code><em class="property"> = ('x - RECIP_TAU_S * s - RECIP_TAU_F * (f - 1)', 's', 'RECIP_TAU_O * (f - v**RECIP_ALPHA)', 'RECIP_TAU_O * (f * (1 - (1 - E0)**(1 / f)) * RECIP_E0 - v**RECIP_ALPHA * (q / v))')</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.input">
+<code class="descname">input</code><em class="property"> = 'x'</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('V0 * (   k1 * (1 - q     )        + k2 * (1 - q / v )        + k3 * (1 -     v ) )',)</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.bold.BalloonWindkessel.state">
+<code class="descname">state</code><em class="property"> = 's f v q'</em><a class="headerlink" href="#tvb_hpc.bold.BalloonWindkessel.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api_docs.html">API documentation</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+      <li>Previous: <a href="tvb_hpc.aligned.html" title="previous chapter">tvb_hpc.aligned module</a></li>
+      <li>Next: <a href="tvb_hpc.compiler.html" title="next chapter">tvb_hpc.compiler module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api-docs/tvb_hpc.bold.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/api-docs/tvb_hpc.bold.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

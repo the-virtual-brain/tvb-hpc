@@ -1,0 +1,258 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.codegen.base &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for tvb_hpc.codegen.base</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">enum</span>
+<span class="kn">import</span> <span class="nn">ctypes</span> <span class="k">as</span> <span class="nn">ct</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">List</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">pymbolic.mapper.c_code</span> <span class="k">import</span> <span class="n">CCodeMapper</span>
+
+
+<div class="viewcode-block" id="Storage"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.Storage">[docs]</a><span class="k">class</span> <span class="nc">Storage</span><span class="p">(</span><span class="n">enum</span><span class="o">.</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="n">static</span> <span class="o">=</span> <span class="s1">&#39;static&#39;</span>
+    <span class="n">inline</span> <span class="o">=</span> <span class="s1">&#39;inline&#39;</span>
+    <span class="n">extern</span> <span class="o">=</span> <span class="s1">&#39;extern&#39;</span></div>
+
+
+<div class="viewcode-block" id="MyCCodeMapper"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.MyCCodeMapper">[docs]</a><span class="k">class</span> <span class="nc">MyCCodeMapper</span><span class="p">(</span><span class="n">CCodeMapper</span><span class="p">):</span>
+
+    <span class="n">_float_funcs</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">f</span><span class="p">:</span> <span class="n">f</span> <span class="o">+</span> <span class="s1">&#39;f&#39;</span>
+        <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="s1">&#39;sin cos exp pow&#39;</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_float</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;use_float&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="c1"># lifted from pymbolic, slight modified</span>
+<div class="viewcode-block" id="MyCCodeMapper.map_call"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.MyCCodeMapper.map_call">[docs]</a>    <span class="k">def</span> <span class="nf">map_call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">enclosing_prec</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">pymbolic.primitives</span> <span class="k">import</span> <span class="n">Variable</span>
+        <span class="kn">from</span> <span class="nn">pymbolic.mapper.stringifier</span> <span class="k">import</span> <span class="n">PREC_NONE</span><span class="p">,</span> <span class="n">PREC_CALL</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">function</span><span class="p">,</span> <span class="n">Variable</span><span class="p">):</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="n">expr</span><span class="o">.</span><span class="n">function</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rec</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">function</span><span class="p">,</span> <span class="n">PREC_CALL</span><span class="p">)</span>
+        <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_float_funcs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">func</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">(</span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="n">func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">join_rec</span><span class="p">(</span><span class="s2">&quot;, &quot;</span><span class="p">,</span> <span class="n">expr</span><span class="o">.</span><span class="n">parameters</span><span class="p">,</span> <span class="n">PREC_NONE</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="MyCCodeMapper.map_power"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.MyCCodeMapper.map_power">[docs]</a>    <span class="k">def</span> <span class="nf">map_power</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">enclosing_prec</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">pymbolic.mapper.stringifier</span> <span class="k">import</span> <span class="n">PREC_NONE</span>
+        <span class="kn">from</span> <span class="nn">pymbolic.primitives</span> <span class="k">import</span> <span class="n">is_constant</span><span class="p">,</span> <span class="n">is_zero</span>
+        <span class="k">if</span> <span class="n">is_constant</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">exponent</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">is_zero</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">exponent</span><span class="p">):</span>
+                <span class="k">return</span> <span class="s2">&quot;1&quot;</span>
+            <span class="k">elif</span> <span class="n">is_zero</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rec</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">enclosing_prec</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">is_zero</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rec</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="o">*</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">enclosing_prec</span><span class="p">)</span>
+            <span class="c1"># cube is common in our code</span>
+            <span class="k">elif</span> <span class="n">is_zero</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">exponent</span> <span class="o">-</span> <span class="mi">3</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">rec</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="o">*</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="o">*</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">enclosing_prec</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="s2">&quot;pow(</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">)&quot;</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rec</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">base</span><span class="p">,</span> <span class="n">PREC_NONE</span><span class="p">),</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">rec</span><span class="p">(</span><span class="n">expr</span><span class="o">.</span><span class="n">exponent</span><span class="p">,</span> <span class="n">PREC_NONE</span><span class="p">))</span></div></div>
+
+
+<div class="viewcode-block" id="BaseCodeGen"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseCodeGen">[docs]</a><span class="k">class</span> <span class="nc">BaseCodeGen</span><span class="p">:</span>
+
+    <span class="c1"># http://www.cplusplus.com/reference/cmath/</span>
+    <span class="n">_math_names</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s1">&#39;cos sin tan acos asin atan atan2 cosh sinh tanh acosh asinh atanh &#39;</span>
+        <span class="s1">&#39;exp frexp ldexp log log10 modf exp2 expm1 ilogb log1p log2 logb &#39;</span>
+        <span class="s1">&#39;scalbn scalbln pow sqrt cbrt hypot erf erfc tgamma lgamma ceil &#39;</span>
+        <span class="s1">&#39;floor fmod trunc round lround llround rint lrint llrint nearbyint &#39;</span>
+        <span class="s1">&#39;remainder remquo copysign nan nextafter nexttoward fdim fmax fmin &#39;</span>
+        <span class="s1">&#39;fabs abs fma fpclassify isfinite isinf isnan isnormal signbit &#39;</span>
+        <span class="s1">&#39;isgreater isgreaterequal isless islessequal islessgreater &#39;</span>
+        <span class="s1">&#39;isunordered INFINITY NAN HUGE_VAL HUGE_VALF HUGE_VALL &#39;</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">math_names</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        A list of names of mathematical functions which can be</span>
+<span class="sd">        expected to be available. By default, it includes all names provided by</span>
+<span class="sd">        the standard C/C++ math library, but maybe more limited for certain</span>
+<span class="sd">        targets like CUDA.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_math_names</span>
+
+<div class="viewcode-block" id="BaseCodeGen.generate_alignments"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseCodeGen.generate_alignments">[docs]</a>    <span class="k">def</span> <span class="nf">generate_alignments</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">spec</span><span class="p">:</span> <span class="s1">&#39;BaseSpec&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generates a series of statement lines which declare a pointer to be</span>
+<span class="sd">        aligned to the alignment given by ``spec``.</span>
+
+<span class="sd">        &gt;&gt;&gt; BaseCodeGen().generate_alignments([&#39;a&#39;, &#39;b&#39;], {&#39;align&#39;: 64})</span>
+<span class="sd">        [&#39;a = __builtin_assume_aligned(a, 64);&#39;, ...]</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="n">spec</span><span class="o">.</span><span class="n">align</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">lines</span>
+        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">names</span><span class="p">:</span>
+            <span class="n">fmt</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{name}</span><span class="s1"> = __builtin_assume_aligned(</span><span class="si">{name}</span><span class="s1">, </span><span class="si">{value}</span><span class="s1">);&#39;</span>
+            <span class="n">line</span> <span class="o">=</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">lines</span></div>
+
+<div class="viewcode-block" id="BaseCodeGen.generate_c"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseCodeGen.generate_c">[docs]</a>    <span class="k">def</span> <span class="nf">generate_c</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">expr</span><span class="p">,</span> <span class="n">spec</span><span class="p">:</span> <span class="s1">&#39;BaseSpec&#39;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate C code for `expr` argument.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">mapper</span> <span class="o">=</span> <span class="n">MyCCodeMapper</span><span class="p">(</span><span class="n">use_float</span><span class="o">=</span><span class="n">spec</span><span class="o">.</span><span class="n">float</span> <span class="o">==</span> <span class="s1">&#39;float&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mapper</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span></div></div>
+
+    <span class="c1"># TODO common interface? kernel_name, decls, innerloop, pragma etc</span>
+
+
+<div class="viewcode-block" id="BaseSpec"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseSpec">[docs]</a><span class="k">class</span> <span class="nc">BaseSpec</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Spec handles details dtype, vectorization, alignment, etc which affect</span>
+<span class="sd">    code generation but not the math.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">float</span><span class="o">=</span><span class="s1">&#39;float&#39;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span> <span class="n">align</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">openmp</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">float</span> <span class="o">=</span> <span class="nb">float</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">align</span> <span class="o">=</span> <span class="n">align</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">openmp</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">float</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">np_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ct_dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="n">ct</span><span class="o">.</span><span class="n">c_float</span><span class="p">}[</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">]</span>
+
+    <span class="c1"># TODO refactor so not needed</span>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dict</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s1">&#39;float&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">float</span><span class="p">,</span>
+            <span class="s1">&#39;width&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">,</span>
+            <span class="s1">&#39;align&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">align</span><span class="p">,</span>
+            <span class="s1">&#39;openmp&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">openmp</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BaseLayout"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseLayout">[docs]</a><span class="k">class</span> <span class="nc">BaseLayout</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handle layout of data in memory, generating indexing expressions, etc.</span>
+
+<span class="sd">    For now, kernels manually / hard code data chunking.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">idx_expr_template</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="s2">&quot;</span><span class="si">{i}</span><span class="s2">/</span><span class="si">{width}</span><span class="s2">*</span><span class="si">{width}</span><span class="s2">*</span><span class="si">{nvar}</span><span class="s2"> + </span><span class="si">{j}</span><span class="s2">*</span><span class="si">{width}</span><span class="s2"> + </span><span class="si">{i}</span><span class="s2">%</span><span class="si">{width}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nvar</span><span class="p">,</span> <span class="n">width</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nvar</span> <span class="o">=</span> <span class="n">nvar</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="n">width</span>
+
+<div class="viewcode-block" id="BaseLayout.generate_idx_expr"><a class="viewcode-back" href="../../../api-docs/tvb_hpc.codegen.base.html#tvb_hpc.codegen.base.BaseLayout.generate_idx_expr">[docs]</a>    <span class="k">def</span> <span class="nf">generate_idx_expr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ivar</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">jvar</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">idx_expr_template</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">i</span><span class="o">=</span><span class="n">ivar</span><span class="p">,</span>
+            <span class="n">j</span><span class="o">=</span><span class="n">jvar</span><span class="p">,</span>
+            <span class="n">nvar</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">nvar</span><span class="p">,</span>
+            <span class="n">width</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  <li><a href="../codegen.html">tvb_hpc.codegen</a><ul>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

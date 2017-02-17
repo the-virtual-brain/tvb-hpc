@@ -1,0 +1,206 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.coupling module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.descriptors module" href="tvb_hpc.descriptors.html" />
+    <link rel="prev" title="tvb_hpc.compiler module" href="tvb_hpc.compiler.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.coupling">
+<span id="tvb-hpc-coupling-module"></span><h1>tvb_hpc.coupling module<a class="headerlink" href="#module-tvb_hpc.coupling" title="Permalink to this headline">¶</a></h1>
+<p>The coupling module describes features of coupling functions.</p>
+<p>NB bug/feature wrt. TVB here: we assume pre_syn is observables, not state vars.</p>
+<p>If single expression given, applied to all observables. Otherwise,
+empty expressions stop evaluation of coupling on one or more observables.</p>
+<p>A connection is specified node to node, so applies to all cvars.</p>
+<dl class="class">
+<dt id="tvb_hpc.coupling.BaseCoupling">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">BaseCoupling</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/coupling.html#BaseCoupling"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.param">
+<code class="descname">param</code><em class="property"> = {}</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.BaseCoupling.stat">
+<code class="descname">stat</code><a class="headerlink" href="#tvb_hpc.coupling.BaseCoupling.stat" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Diff">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Diff</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/coupling.html#Diff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Diff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.Linear" title="tvb_hpc.coupling.Linear"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.Linear</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Diff.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('pre_syn - post_syn',)</em><a class="headerlink" href="#tvb_hpc.coupling.Diff.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Kuramoto">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Kuramoto</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/coupling.html#Kuramoto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Kuramoto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.Diff" title="tvb_hpc.coupling.Diff"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.Diff</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Kuramoto.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ('a * mean',)</em><a class="headerlink" href="#tvb_hpc.coupling.Kuramoto.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Kuramoto.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('sin(pre_syn - post_syn)',)</em><a class="headerlink" href="#tvb_hpc.coupling.Kuramoto.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Linear">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Linear</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/coupling.html#Linear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.BaseCoupling" title="tvb_hpc.coupling.BaseCoupling"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.BaseCoupling</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Linear.param">
+<code class="descname">param</code><em class="property"> = {'a': 0.001, 'b': 0}</em><a class="headerlink" href="#tvb_hpc.coupling.Linear.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Linear.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ('a * sum + b',)</em><a class="headerlink" href="#tvb_hpc.coupling.Linear.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Linear.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('pre_syn',)</em><a class="headerlink" href="#tvb_hpc.coupling.Linear.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.coupling.Sigmoidal">
+<em class="property">class </em><code class="descclassname">tvb_hpc.coupling.</code><code class="descname">Sigmoidal</code><span class="sig-paren">(</span><em>model: tvb_hpc.model.BaseModel</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/coupling.html#Sigmoidal"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.coupling.BaseCoupling" title="tvb_hpc.coupling.BaseCoupling"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.coupling.BaseCoupling</span></code></a></p>
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Sigmoidal.param">
+<code class="descname">param</code><em class="property"> = {'cmin': 0, 'cmax': 0.005, 'midpoint': 6, 'r': 1, 'a': 0.56}</em><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Sigmoidal.post_sum">
+<code class="descname">post_sum</code><em class="property"> = ('a * sum',)</em><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal.post_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.coupling.Sigmoidal.pre_sum">
+<code class="descname">pre_sum</code><em class="property"> = ('cmax / (1 + exp(r * (midpoint - pre_syn)))',)</em><a class="headerlink" href="#tvb_hpc.coupling.Sigmoidal.pre_sum" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="../api_docs.html">API documentation</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+      <li>Previous: <a href="tvb_hpc.compiler.html" title="previous chapter">tvb_hpc.compiler module</a></li>
+      <li>Next: <a href="tvb_hpc.descriptors.html" title="next chapter">tvb_hpc.descriptors module</a></li>
+  </ul></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/api-docs/tvb_hpc.coupling.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/api-docs/tvb_hpc.coupling.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

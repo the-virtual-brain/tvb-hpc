@@ -1,0 +1,434 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvb_hpc.model module &#8212; tvb-hpc 0.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="tvb_hpc.network module" href="tvb_hpc.network.html" />
+    <link rel="prev" title="tvb_hpc.descriptors module" href="tvb_hpc.descriptors.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvb_hpc.model">
+<span id="tvb-hpc-model-module"></span><h1>tvb_hpc.model module<a class="headerlink" href="#module-tvb_hpc.model" title="Permalink to this headline">¶</a></h1>
+<p>The model module describes neural mass models.</p>
+<dl class="class">
+<dt id="tvb_hpc.model.BaseModel">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">BaseModel</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#BaseModel"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.BaseModel" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>BaseModel parses attributes on subclasses, defining a networked SDE.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.auxex">
+<code class="descname">auxex</code><em class="property"> = []</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.auxex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.const">
+<code class="descname">const</code><em class="property"> = {}</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.diffs">
+<code class="descname">diffs</code><em class="property"> = ('',)</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.drift">
+<code class="descname">drift</code><em class="property"> = ('',)</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.indvars">
+<code class="descname">indvars</code><a class="headerlink" href="#tvb_hpc.model.BaseModel.indvars" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.input">
+<code class="descname">input</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('',)</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.param">
+<code class="descname">param</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.model.BaseModel.partial">
+<code class="descname">partial</code><span class="sig-paren">(</span><em>expr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/model.html#BaseModel.partial"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.BaseModel.partial" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="tvb_hpc.model.BaseModel.prep_arrays">
+<code class="descname">prep_arrays</code><span class="sig-paren">(</span><em>nnode</em>, <em>spec</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/tvb_hpc/model.html#BaseModel.prep_arrays"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.BaseModel.prep_arrays" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.BaseModel.state">
+<code class="descname">state</code><em class="property"> = ''</em><a class="headerlink" href="#tvb_hpc.model.BaseModel.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.G2DO">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">G2DO</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#G2DO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.G2DO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Generic nonlinear 2-D (phase plane) oscillator.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.const">
+<code class="descname">const</code><em class="property"> = {'tau': 1.0, 'I': 0.0, 'a': -2.0, 'b': -10.0, 'c': 0.0, 'd': 0.02, 'e': 3.0, 'f': 1.0, 'g': 0.0, 'alpha': 1.0, 'beta': 1.0, 'gamma': 1.0}</em><a class="headerlink" href="#tvb_hpc.model.G2DO.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.diffs">
+<code class="descname">diffs</code><em class="property"> = (0.001, 0.001)</em><a class="headerlink" href="#tvb_hpc.model.G2DO.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.drift">
+<code class="descname">drift</code><em class="property"> = ('d * tau * (alpha*W - f*V**3 + e*V**2 + g*V + gamma*I + gamma*c_0)', 'd * (a + b*V + c*V**2 - beta*W) / tau')</em><a class="headerlink" href="#tvb_hpc.model.G2DO.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.input">
+<code class="descname">input</code><em class="property"> = 'c_0'</em><a class="headerlink" href="#tvb_hpc.model.G2DO.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('W', 'V')</em><a class="headerlink" href="#tvb_hpc.model.G2DO.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.param">
+<code class="descname">param</code><em class="property"> = 'a'</em><a class="headerlink" href="#tvb_hpc.model.G2DO.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.G2DO.state">
+<code class="descname">state</code><em class="property"> = 'W V'</em><a class="headerlink" href="#tvb_hpc.model.G2DO.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.HMJE">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">HMJE</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#HMJE"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.HMJE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Hindmarsh-Rose-Jirsa Epileptor model of seizure dynamics.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.const">
+<code class="descname">const</code><em class="property"> = {'Iext2': 0.45, 'a': 1, 'b': 3, 'slope': 0, 'tt': 1, 'c': 1, 'd': 5, 'Kvf': 0, 'Ks': 0, 'Kf': 0, 'aa': 6, 'tau': 10, 'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}</em><a class="headerlink" href="#tvb_hpc.model.HMJE.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.diffs">
+<code class="descname">diffs</code><em class="property"> = (0, 0, 0, 0.0003, 0.0003, 0)</em><a class="headerlink" href="#tvb_hpc.model.HMJE.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.drift">
+<code class="descname">drift</code><em class="property"> = ('tt * (y1 - z + Iext + Kvf * c1 + (  (x1 &lt;  0)*(-a * x1 * x1 + b * x1)+ (x1 &gt;= 0)*(slope - x2 + 0.6 * (z - 4)**2)) * x1)', 'tt * (c - d * x1 * x1 - y1)', 'tt * (r * (4 * (x1 - x0) - z + (z &lt; 0) * (-0.1 * pow(z, 7)) + Ks * c1))', 'tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)', 'tt * ((-y2 + (x2 &gt;= (-3.5)) * (aa * (x2 + 0.25))) / tau)', 'tt * (-0.01 * (g - 0.1 * x1))')</em><a class="headerlink" href="#tvb_hpc.model.HMJE.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.input">
+<code class="descname">input</code><em class="property"> = 'c1 c2'</em><a class="headerlink" href="#tvb_hpc.model.HMJE.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('x1', 'x2', 'z', '-x1 + x2')</em><a class="headerlink" href="#tvb_hpc.model.HMJE.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.param">
+<code class="descname">param</code><em class="property"> = 'x0 Iext r'</em><a class="headerlink" href="#tvb_hpc.model.HMJE.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.HMJE.state">
+<code class="descname">state</code><em class="property"> = 'x1 y1 z x2 y2 g'</em><a class="headerlink" href="#tvb_hpc.model.HMJE.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.JansenRit">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">JansenRit</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#JansenRit"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.JansenRit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Jansen-Rit model of visual evoked potentials.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.auxex">
+<code class="descname">auxex</code><em class="property"> = [('sigm_y1_y2', '2 * nu_max / (1 + exp(r * (v0 - (y1 - y2))))'), ('sigm_y0_1', '2 * nu_max / (1 + exp(r * (v0 - (a_1 * J * y0))))'), ('sigm_y0_3', '2 * nu_max / (1 + exp(r * (v0 - (a_3 * J * y0))))')]</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.auxex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.const">
+<code class="descname">const</code><em class="property"> = {'A': 3.25, 'B': 22.0, 'a': 0.1, 'b': 0.05, 'v0': 5.52, 'nu_max': 0.0025, 'r': 0.56, 'J': 135.0, 'a_1': 1.0, 'a_2': 0.8, 'a_3': 0.25, 'a_4': 0.25, 'p_min': 0.12, 'p_max': 0.32, 'mu': 0.22}</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.diffs">
+<code class="descname">diffs</code><em class="property"> = (0, 0, 0, 0, 0, 0)</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.drift">
+<code class="descname">drift</code><em class="property"> = ('y3', 'y4', 'y5', 'A * a * sigm_y1_y2 - 2 * a * y3 - a**2 * y0', 'A * a * (mu + a_2 * J * sigm_y0_1 + lrc) - 2 * a * y4 - a**2 * y1', 'B * b * (a_4 * J * sigm_y0_3) - 2 * b * y5 - b**2 * y2')</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.input">
+<code class="descname">input</code><em class="property"> = 'lrc'</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('y0 - y1',)</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.param">
+<code class="descname">param</code><em class="property"> = 'v0 r'</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.JansenRit.state">
+<code class="descname">state</code><em class="property"> = 'y0 y1 y2 y3 y4 y5'</em><a class="headerlink" href="#tvb_hpc.model.JansenRit.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.Kuramoto">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">Kuramoto</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#Kuramoto"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.Kuramoto" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Kuramoto model of phase synchronization.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.diffs">
+<code class="descname">diffs</code><em class="property"> = (0,)</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.drift">
+<code class="descname">drift</code><em class="property"> = ('omega + I',)</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.input">
+<code class="descname">input</code><em class="property"> = 'I'</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('theta', 'sin(theta)')</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.param">
+<code class="descname">param</code><em class="property"> = 'omega'</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.state">
+<code class="descname">state</code><em class="property"> = 'theta'</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Kuramoto.state_limits">
+<code class="descname">state_limits</code><em class="property"> = {'theta': (-3.141592653589793, 3.141592653589793, 'wrap')}</em><a class="headerlink" href="#tvb_hpc.model.Kuramoto.state_limits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.Linear">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">Linear</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#Linear"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.Linear" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Linear differential equation</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.const">
+<code class="descname">const</code><em class="property"> = {'lambda': -1}</em><a class="headerlink" href="#tvb_hpc.model.Linear.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.diffs">
+<code class="descname">diffs</code><em class="property"> = (0.01,)</em><a class="headerlink" href="#tvb_hpc.model.Linear.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.drift">
+<code class="descname">drift</code><em class="property"> = ('lambda * x',)</em><a class="headerlink" href="#tvb_hpc.model.Linear.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.input">
+<code class="descname">input</code><em class="property"> = 'c'</em><a class="headerlink" href="#tvb_hpc.model.Linear.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('x',)</em><a class="headerlink" href="#tvb_hpc.model.Linear.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.param">
+<code class="descname">param</code><em class="property"> = 'lambda'</em><a class="headerlink" href="#tvb_hpc.model.Linear.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.Linear.state">
+<code class="descname">state</code><em class="property"> = 'x'</em><a class="headerlink" href="#tvb_hpc.model.Linear.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tvb_hpc.model.RWW">
+<em class="property">class </em><code class="descclassname">tvb_hpc.model.</code><code class="descname">RWW</code><a class="reference internal" href="../_modules/tvb_hpc/model.html#RWW"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvb_hpc.model.RWW" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tvb_hpc.model.BaseModel" title="tvb_hpc.model.BaseModel"><code class="xref py py-class docutils literal"><span class="pre">tvb_hpc.model.BaseModel</span></code></a></p>
+<p>Reduced Wong-Wang firing rate model.</p>
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.auxex">
+<code class="descname">auxex</code><em class="property"> = [('x', 'w * j * S + io + j * c'), ('h', '(a * x - b) / (1 - exp(-d*(a*x - b)))')]</em><a class="headerlink" href="#tvb_hpc.model.RWW.auxex" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.const">
+<code class="descname">const</code><em class="property"> = {'a': 0.27, 'b': 0.108, 'd': 154.0, 'g': 0.641, 'ts': 100.0, 'j': 0.2609, 'w': 0.6, 'io': 0.33}</em><a class="headerlink" href="#tvb_hpc.model.RWW.const" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.diffs">
+<code class="descname">diffs</code><em class="property"> = (0.01,)</em><a class="headerlink" href="#tvb_hpc.model.RWW.diffs" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.drift">
+<code class="descname">drift</code><em class="property"> = ('- (S / ts) + (1 - S) * h * g',)</em><a class="headerlink" href="#tvb_hpc.model.RWW.drift" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.input">
+<code class="descname">input</code><em class="property"> = 'c'</em><a class="headerlink" href="#tvb_hpc.model.RWW.input" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.obsrv">
+<code class="descname">obsrv</code><em class="property"> = ('S',)</em><a class="headerlink" href="#tvb_hpc.model.RWW.obsrv" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.param">
+<code class="descname">param</code><em class="property"> = 'w io'</em><a class="headerlink" href="#tvb_hpc.model.RWW.param" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.state">
+<code class="descname">state</code><em class="property"> = 'S'</em><a class="headerlink" href="#tvb_hpc.model.RWW.state" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="tvb_hpc.model.RWW.state_limits">
+<code class="descname">state_limits</code><em class="property"> = {'S': (0, 1, 'clip')}</em><a class="headerlink" href="#tvb_hpc.model.RWW.state_limits" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="tvb_hpc.html">tvb_hpc package</a><ul>
+      <li>Previous: <a href="tvb_hpc.descriptors.html" title="previous chapter">tvb_hpc.descriptors module</a></li>
+      <li>Next: <a href="tvb_hpc.network.html" title="next chapter">tvb_hpc.network module</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="../_sources/source/tvb_hpc.model.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, TVB-HPC Contributers.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="../_sources/source/tvb_hpc.model.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

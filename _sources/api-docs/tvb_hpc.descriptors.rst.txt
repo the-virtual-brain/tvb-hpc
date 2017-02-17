@@ -1,0 +1,7 @@
+tvb_hpc.descriptors module
+==========================
+
+.. automodule:: tvb_hpc.descriptors
+    :members:
+    :undoc-members:
+    :show-inheritance:

@@ -1,0 +1,7 @@
+tvb_hpc.coupling module
+=======================
+
+.. automodule:: tvb_hpc.coupling
+    :members:
+    :undoc-members:
+    :show-inheritance:
