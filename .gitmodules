@@ -1,3 +1,0 @@
-[submodule "extern/geodesic"]
-	path = extern/geodesic
-	url = https://github.com/the-virtual-brain/tvb-geodesic
