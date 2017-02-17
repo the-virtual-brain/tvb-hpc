@@ -3,6 +3,10 @@
 This is a Python package for generating code for parameter sweeps and Bayesian
 inversion.
 
+## Docs
+
+Sphinx-built docs are [here](https://the-virtual-brain.github.io/tvb-hpc).
+
 ## Development
 
 Current development is test-driven, run
@@ -18,7 +22,3 @@ If you're going to commit and push, consider using the pre commit hooks
 ```bash
 ln -s $(pwd)/{.pre-commit,.git/hooks/pre-commit}
 ```
-
-## Docs
-
-Sphinx-built docs are [here](https://the-virtual-brain.github.io/tvb-hpc).
