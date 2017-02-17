@@ -1,4 +1,10 @@
 
+"""
+The compiler module handles invocation of compilers to generate a shared lib
+which can be loaded via ctypes.
+
+"""
+
 import os
 import os.path
 import sys

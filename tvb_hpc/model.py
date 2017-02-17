@@ -1,11 +1,18 @@
+
+"""
+The model module describes neural mass models.
+
+"""
+
 import numpy as np
 import pymbolic as pm
 from pymbolic.mapper.differentiator import DifferentiationMapper
-from tvb_hpc.codegen import BaseCodeGen
+
+import tvb_hpc.codegen.base
 from tvb_hpc.utils import simplify, vars, exprs
 
 
-class BaseModel(BaseCodeGen):
+class BaseModel:
     """
     BaseModel parses attributes on subclasses, defining a networked SDE.
 
@@ -21,6 +28,7 @@ class BaseModel(BaseCodeGen):
     auxex = []
 
     def __init__(self):
+        # TODO check dependencies etc
         self.state_sym = vars(self.state)
         self.input_sym = vars(self.input)
         self.param_sym = vars(self.param)
@@ -38,92 +46,7 @@ class BaseModel(BaseCodeGen):
             exprs.append(simplify(DifferentiationMapper(var)(expr)))
         return np.array(exprs)
 
-    template = """
-#include <math.h>
-
-void {name}(
-    unsigned int nnode,
-    {float} * __restrict state,
-    {float} * __restrict input,
-    {float} * __restrict param,
-    {float} * __restrict drift,
-    {float} * __restrict diffs,
-    {float} * __restrict obsrv
-)
-{{
-  {decls}
-  {loop_pragma}
-  for (unsigned int j=0; j < nnode; j++)
-  {{
-    unsigned int i = j / {width};
-    {body}
-  }}
-}}
-"""
-
-    def generate_code(self, spec):
-        decls = self.generate_alignments(
-            'state input param drift diffs obsrv'.split(), spec)
-        decls += self.declarations(spec)
-        body = self.inner_loop_lines(spec)
-        code = self.template.format(
-            decls='\n  '.join(decls),
-            body='\n    '.join(body),
-            name=self.kernel_name,
-            nsvar=len(self.state_sym),
-            loop_pragma='#pragma omp simd safelen(%d)' % (spec['width'], ),
-            **spec
-        )
-        if spec['float'] == 'float':
-            code = code.replace('pow', 'powf')
-        return code
-
-    def declarations(self, spec):
-        common = {'nsvar': len(self.state_sym), }
-        common.update(spec)
-        lines = []
-        # add constants
-        for name, value in self.const.items():
-            fmt = '{float} {name} = (({float}) {value});'
-            line = fmt.format(name=name, value=value, **common)
-            lines.append(line)
-        return lines
-
-    def inner_loop_lines(self, spec):
-        common = {
-            'nsvar': len(self.state_sym),
-            'nsvar_width': len(self.state_sym) * spec['width']
-        }
-        common.update(spec)
-        lines = []
-        # unpack state, input & parameters
-        fmt = '{float} {var} = {kind}[i * {nsvar_width} + {isvar} * {width} + j];'
-        for kind in 'state input param'.split():
-            vars = getattr(self, kind + '_sym')
-            for i, var in enumerate(vars):
-                line = fmt.format(
-                    kind=kind, var=var.name, isvar=i, **common)
-                lines.append(line)
-        # do aux exprs
-        fmt = '{float} {lhs} = {rhs};'
-        for lhs, rhs in self.auxex:
-            rhs = self.generate_c(pm.parse(rhs))
-            line = fmt.format(lhs=lhs, rhs=rhs, **common)
-            lines.append(line)
-        # store drift / diffs / obsrv
-        fmt = '{kind}[i * {nsvar_width} + {isvar} * {width} + j] = {expr};'
-        for kind in 'drift diffs obsrv'.split():
-            exprs = getattr(self, kind + '_sym')
-            for i, expr in enumerate(exprs):
-                line = fmt.format(
-                    kind=kind, expr=self.generate_c(expr), isvar=i, **common)
-                lines.append(line)
-        return lines
-
-    @property
-    def kernel_name(self):
-        return 'tvb_' + self.__class__.__name__
-
+    # TODO move to ffi module?
     def prep_arrays(self, nnode, spec):
         dtype = {'float': np.float32, 'double': np.float64}[spec['float']]
         arrs = []
@@ -243,3 +166,10 @@ class G2DO(BaseModel):
     )
     diffs = 1e-3, 1e-3
     obsrv = 'W', 'V'
+
+
+if __name__ == '__main__':
+    import tvb_hpc.codegen as cg
+    model = G2DO()
+    spec = tvb_hpc.codegen.base.BaseSpec()
+    print(model.generate_code(spec.dict))

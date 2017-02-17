@@ -2,12 +2,14 @@ import logging
 from unittest import TestCase
 import ctypes as ct
 
-from tvb_hpc.codegen import BaseSpec
+from tvb_hpc.codegen import BaseSpec, CfunGen1
+from tvb_hpc.codegen.model import ModelGen1
 from tvb_hpc.compiler import Compiler
 from tvb_hpc.model import (BaseModel, _TestModel, HMJE, RWW, JansenRit,
                            Linear, G2DO)
 from tvb_hpc.bold import BalloonWindkessel
 from tvb_hpc.schemes import euler_maruyama_logp
+from tvb_hpc.coupling import BaseCoupling
 
 
 LOG = logging.getLogger(__name__)
@@ -37,8 +39,9 @@ class TestCodeGen(TestCase):
 
     def _build_func(self, model: BaseModel, spec):
         comp = Compiler()
-        lib = comp(model.generate_code(spec))
-        fn = getattr(lib, model.kernel_name)
+        cg = ModelGen1(model)
+        lib = comp(cg.generate_code(spec))
+        fn = getattr(lib, cg.kernel_name)
         fn.restype = None  # equiv. C void return type
         ui = ct.c_uint
         f = {'float': ct.c_float, 'double': ct.c_double}[spec['float']]
@@ -129,11 +132,12 @@ class TestCoupling(TestCase):
         self.cflags = '-O3 -march=native'.split()
         self.spec = BaseSpec('float', 8, 64)
 
-    def _test_cfun_code(self, cf):
+    def _test_cfun_code(self, cf: BaseCoupling):
         comp = Compiler(cflags=self.cflags)
-        dll = comp(cf.generate_code(self.spec))
-        getattr(dll, cf._post_sum_name)
-        getattr(dll, cf._pre_sum_name)
+        cg = CfunGen1(cf)
+        dll = comp(cg.generate_code(self.spec))
+        getattr(dll, cg.kernel_name_post_sum)
+        getattr(dll, cg.kernel_name_pre_sum)
 
     def test_linear(self):
         from tvb_hpc.coupling import Linear
@@ -177,8 +181,10 @@ class TestNetwork(TestCase):
 
     def test_dense(self):
         from tvb_hpc.network import DenseNetwork
+        from tvb_hpc.codegen import CfunGen1
+        from tvb_hpc.codegen.network import NetGen1
         net = DenseNetwork(self.model, self.cfun)
-        code = net.generate_code(self.spec)
-        print(code)
+        cg = NetGen1(net)
+        code = cg.generate_code(CfunGen1(self.cfun), self.spec)
         dll = self.comp(code)
-        getattr(dll, net.kernel_name)
+        getattr(dll, cg.kernel_name)
