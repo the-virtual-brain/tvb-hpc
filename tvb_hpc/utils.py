@@ -1,5 +1,6 @@
 import os.path
 import numpy as np
+import logging
 import pymbolic as pm
 from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
@@ -8,6 +9,14 @@ from sympy.parsing.sympy_parser import parse_expr
 
 here = os.path.dirname(os.path.abspath(__file__))
 include_dir = os.path.normpath(os.path.join(here, '..', 'include'))
+
+
+def can_bcast(n, m):
+    return (n == 1) or (m == 1) or (n == m)
+
+
+def getLogger(name):
+    return logging.getLogger(name)
 
 
 class NoSuchExecutable(RuntimeError):

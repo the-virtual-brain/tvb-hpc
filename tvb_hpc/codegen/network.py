@@ -1,4 +1,4 @@
-from .base import BaseCodeGen, BaseSpec
+from .base import BaseCodeGen, BaseSpec, BaseLayout
 from .cfun import CfunGen1
 from ..network import DenseNetwork
 
@@ -14,30 +14,27 @@ class NetGen1(BaseCodeGen):
 
 void {name}(unsigned int nnode,
             {float} * __restrict weights,
-            {float} * __restrict state,
-            {float} * __restrict input
+            {float} * __restrict input,
+            {float} * __restrict obsrv
             )
 {{
     unsigned int i, j;
+    {outer_loop_pragma}
     for (i=0; i<nnode; i++)
     {{
-        {float} acc = 0;
-        {float} post_syn = state[i/{width}*{width}*{nsvar} \\
-                                 + {isvar}*{width} + i % {width}];
+        {inner_loop_pragma}
         for (j=0; j<nnode; j++)
         {{
-            {float} pre_syn = state[j/{width}*{width}*{nsvar} \\
-                                    + {isvar}*{width} + j % {width}];
-            {float} el = {cfun_pre_sum}(pre_syn, post_syn);
-            acc += el * weights[i*nnode + j];
+            {accs}
         }}
-        {maybe_apply_mean}
-        unsigned int idx = i/{width}*{width}*{nsvar} \\
-                                + {isvar}*{width} + i % {width};
-        input[idx] = {cfun_post_sum}(acc);
+        {posts}
     }}
 }}
 """
+
+    acc_template = "{acc} += {wij}*{cfun_pre}({pre_syn}, {post_syn});"
+
+    post_template = "{post} = {cfun_post}({post}{norm});"
 
     def __init__(self, net: DenseNetwork):
         self.net = net
@@ -47,19 +44,58 @@ void {name}(unsigned int nnode,
     def kernel_name(self):
         return 'tvb_network'
 
-    def generate_code(self, cfcg: CfunGen1, spec: BaseSpec):
-        maybe_apply_mean = ''
+    def generate_acc(self, layout, input, obsrv, i, fname):
+        from_idx_expr = layout.generate_idx_expr('j', i)
+        to_idx_expr = layout.generate_idx_expr('i', i)
+        return self.acc_template.format(
+            wij='weights[i*nnode + j]',
+            acc='%s[%s]' % (input, to_idx_expr),
+            pre_syn='%s[%s]' % (obsrv, from_idx_expr),
+            post_syn='%s[%s]' % (obsrv, to_idx_expr),
+            cfun_pre=fname)
+
+    def generate_post(self, layout, input, i, fname):
+        to_idx_expr = layout.generate_idx_expr('i', i)
+        norm = ''
         if self.net.cfun.stat == 'mean':
-            maybe_apply_mean = 'acc /= nnode;'
+            norm = ' / nnode'
+        return self.post_template.format(
+            post='%s[%s]' % (input, to_idx_expr),
+            norm=norm,
+            cfun_post=fname)
+
+    def loop_pragmas(self, spec):
+        inner, outer = '', ''
+        if spec.openmp:
+            inner = '#pragma omp parallel for'
+            outer = '#pragma omp simd'
+        return inner, outer
+
+    def generate_code(self, cfcg: CfunGen1, spec: BaseSpec):
+        cfun = self.net.cfun
+        cfun_code = cfcg.generate_code(spec)
+        layout = BaseLayout(
+                nvar=self.net.model.state_sym.size,
+                width=spec.width)
+        accs = []
+        posts = []
+        for i, (obsrv, pre, post, input) in enumerate(cfun.io):
+            accs.append(
+                self.generate_acc(
+                    layout, 'input', 'obsrv', i,
+                    cfcg.pre_expr_kname[str(pre)]))
+            posts.append(
+                self.generate_post(
+                    layout, 'input',  i,
+                    cfcg.post_expr_kname[str(post)]))
+        inner_loop_pragma, outer_loop_pragma = self.loop_pragmas(spec)
         code = self.template.format(
-            cfun_code=cfcg.generate_code(spec),
-            cfun_pre_sum=cfcg.kernel_name_pre_sum,
-            cfun_post_sum=cfcg.kernel_name_post_sum,
+            cfun_code=cfun_code,
             name=self.kernel_name,
-            maybe_apply_mean=maybe_apply_mean,
-            # TODO generalize from cfun definition
-            nsvar=len(self.net.model.state_sym),
-            isvar=0,
+            accs='\n            '.join(accs),
+            posts='\n        '.join(posts),
+            inner_loop_pragma=inner_loop_pragma,
+            outer_loop_pragma=outer_loop_pragma,
             **spec.dict
         )
         return code

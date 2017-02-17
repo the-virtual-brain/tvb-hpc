@@ -50,9 +50,6 @@ void {name}(
             loop_pragma=loop_pragma,
             **spec.dict
         )
-        if spec.float == 'float':
-            # TODO improve CCodeMapper
-            code = code.replace('pow', 'powf')
         return code
 
     def declarations(self, spec):
@@ -87,7 +84,7 @@ void {name}(
         # do aux exprs
         fmt = '{float} {lhs} = {rhs};'
         for lhs, rhs in self.model.auxex:
-            rhs = self.generate_c(pm.parse(rhs))
+            rhs = self.generate_c(pm.parse(rhs), spec)
             line = fmt.format(lhs=lhs, rhs=rhs, **common)
             lines.append(line)
         # store drift / diffs / obsrv
@@ -97,7 +94,9 @@ void {name}(
             nvar_width = len(getattr(self.model, kind + '_sym'))*spec.width
             for i, expr in enumerate(exprs):
                 line = fmt.format(
-                    kind=kind, expr=self.generate_c(expr), isvar=i,
+                    kind=kind,
+                    expr=self.generate_c(expr, spec),
+                    isvar=i,
                     nvar_width=nvar_width,
                     **common)
                 lines.append(line)

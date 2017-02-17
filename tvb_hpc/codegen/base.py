@@ -1,8 +1,58 @@
+import enum
 import ctypes as ct
 from typing import List
 
 import numpy as np
 from pymbolic.mapper.c_code import CCodeMapper
+
+
+class Storage(enum.Enum):
+    static = 'static'
+    inline = 'inline'
+    extern = 'extern'
+
+
+class MyCCodeMapper(CCodeMapper):
+
+    _float_funcs = {
+        f: f + 'f'
+        for f in 'sin cos exp pow'.split()
+    }
+
+    def __init__(self, *args, **kwargs):
+        self.use_float = kwargs.pop('use_float', True)
+        super().__init__(*args, **kwargs)
+
+    # lifted from pymbolic, slight modified
+    def map_call(self, expr, enclosing_prec):
+        from pymbolic.primitives import Variable
+        from pymbolic.mapper.stringifier import PREC_NONE, PREC_CALL
+        if isinstance(expr.function, Variable):
+            func = expr.function.name
+        else:
+            func = self.rec(expr.function, PREC_CALL)
+        func = self._float_funcs.get(func, func)
+        return self.format(
+                "%s(%s)",
+                func, self.join_rec(", ", expr.parameters, PREC_NONE))
+
+    def map_power(self, expr, enclosing_prec):
+        from pymbolic.mapper.stringifier import PREC_NONE
+        from pymbolic.primitives import is_constant, is_zero
+        if is_constant(expr.exponent):
+            if is_zero(expr.exponent):
+                return "1"
+            elif is_zero(expr.exponent - 1):
+                return self.rec(expr.base, enclosing_prec)
+            elif is_zero(expr.exponent - 2):
+                return self.rec(expr.base*expr.base, enclosing_prec)
+            # cube is common in our code
+            elif is_zero(expr.exponent - 3):
+                return self.rec(expr.base*expr.base*expr.base, enclosing_prec)
+        return self.format(
+                "pow(%s, %s)",
+                self.rec(expr.base, PREC_NONE),
+                self.rec(expr.exponent, PREC_NONE))
 
 
 class BaseCodeGen:
@@ -49,11 +99,12 @@ class BaseCodeGen:
             lines.append(line)
         return lines
 
-    def generate_c(self, expr):
+    def generate_c(self, expr, spec: 'BaseSpec'):
         """
         Generate C code for `expr` argument.
         """
-        return CCodeMapper()(expr)
+        mapper = MyCCodeMapper(use_float=spec.float == 'float')
+        return mapper(expr)
 
     # TODO common interface? kernel_name, decls, innerloop, pragma etc
 
@@ -102,4 +153,16 @@ class BaseLayout:
 
     """
 
-    # TODO
+    idx_expr_template = (
+            "{i}/{width}*{width}*{nvar} + {j}*{width} + {i}%{width}")
+
+    def __init__(self, nvar, width):
+        self.nvar = nvar
+        self.width = width
+
+    def generate_idx_expr(self, ivar: str, jvar: str):
+        return self.idx_expr_template.format(
+            i=ivar,
+            j=jvar,
+            nvar=self.nvar,
+            width=self.width)

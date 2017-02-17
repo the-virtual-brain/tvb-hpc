@@ -123,8 +123,8 @@ class TestCoupling(TestCase):
         comp = Compiler()
         cg = CfunGen1(cf)
         dll = comp(cf.__class__.__name__, cg.generate_code(self.spec))
-        getattr(dll, cg.kernel_name_post_sum)
-        getattr(dll, cg.kernel_name_pre_sum)
+        for name in cg.kernel_names:
+            getattr(dll, name)
 
     def test_linear(self):
         model = G2DO()
@@ -148,12 +148,21 @@ class TestNetwork(TestCase):
     def setUp(self):
         self.spec = BaseSpec('float', 8)
         self.comp = Compiler()
-        self.model = JansenRit()
-        self.cfun = Sigmoidal(self.model)
 
-    def test_dense(self):
-        net = DenseNetwork(self.model, self.cfun)
+    def _test_dense(self, model_cls, cfun_cls):
+        model = model_cls()
+        cfun = cfun_cls(model)
+        net = DenseNetwork(model, cfun)
         cg = NetGen1(net)
-        code = cg.generate_code(CfunGen1(self.cfun), self.spec)
+        code = cg.generate_code(CfunGen1(cfun), self.spec)
         dll = self.comp('dense_net', code)
         getattr(dll, cg.kernel_name)
+
+    def test_hmje(self):
+        self._test_dense(HMJE, LCf)
+
+    def test_kuramoto(self):
+        self._test_dense(Kuramoto, KCf)
+
+    def test_jr(self):
+        self._test_dense(JansenRit, Sigmoidal)
