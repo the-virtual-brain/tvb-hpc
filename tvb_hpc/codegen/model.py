@@ -38,13 +38,16 @@ void {name}(
             'state input param drift diffs obsrv'.split(), spec)
         decls += self.declarations(spec)
         body = self.inner_loop_lines(spec)
+        loop_pragma = ''
+        if spec['openmp']:
+            loop_pragma = '#pragma omp simd safelen(%d)' % (spec['width'], )
         code = self.template.format(
             decls='\n  '.join(decls),
             body='\n    '.join(body),
             name=self.kernel_name,
             nsvar=len(self.model.state_sym),
             # icc -> pragma vector simd ivdep, does better
-            loop_pragma='#pragma omp simd safelen(%d)' % (spec['width'], ),
+            loop_pragma=loop_pragma,
             **spec
         )
         if spec['float'] == 'float':
@@ -57,6 +60,8 @@ void {name}(
         lines = []
         # add constants
         for name, value in self.model.const.items():
+            if name in self.model.param:
+                continue
             fmt = '{float} {name} = (({float}) {value});'
             line = fmt.format(name=name, value=value, **common)
             lines.append(line)

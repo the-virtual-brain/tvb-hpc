@@ -1,6 +1,6 @@
 from pymbolic.mapper.dependency import DependencyMapper
 
-from tvb_hpc.codegen import BaseCodeGen
+from .base import BaseCodeGen, BaseSpec
 from tvb_hpc.coupling import BaseCoupling
 
 
@@ -9,14 +9,14 @@ class CfunGen1(BaseCodeGen):
     template = """
 #include <math.h>
 
-#pragma omp declare simd
+{func_pragma}
 {float} {pre_sum_name}({float} pre_syn, {float} post_syn)
 {{
     {pre_decls}
     return {pre_sum};
 }}
 
-#pragma omp declare simd
+{func_pragma}
 {float} {post_sum_name}({float} {stat})
 {{
     {post_decls}
@@ -27,19 +27,29 @@ class CfunGen1(BaseCodeGen):
     def __init__(self, cfun: BaseCoupling):
         self.cfun = cfun
 
-    def generate_code(self, spec):
+    def generate_code(self, spec: BaseSpec):
         # TODO generalize
         assert len(self.cfun.pre_sum_sym) == 1
         assert len(self.cfun.post_sum_sym) == 1
         pre_sum = self.generate_c(self.cfun.pre_sum_sym[0])
         post_sum = self.generate_c(self.cfun.post_sum_sym[0])
+        func_pragma = ''
+        if spec.openmp:
+            func_pragma = '#pragma omp declare simd'
+
+        pre_decls = ''
+        if 'post_syn' not in self.cfun.pre_sum:
+            pre_decls += '(void) post_syn;\n    '
+        pre_decls += self.declarations(self.cfun.pre_sum_sym[0], spec)
+
         code = self.template.format(
             pre_sum_name=self.kernel_name_pre_sum,
             post_sum_name=self.kernel_name_post_sum,
             pre_sum=pre_sum,
             post_sum=post_sum,
-            pre_decls=self.declarations(self.cfun.pre_sum_sym[0], spec),
+            pre_decls=pre_decls,
             post_decls=self.declarations(self.cfun.post_sum_sym[0], spec),
+            func_pragma=func_pragma,
             stat=self.cfun.stat,
             **spec.dict
         )

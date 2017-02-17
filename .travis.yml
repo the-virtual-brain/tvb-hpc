@@ -2,5 +2,5 @@ language: python
 python:
     - "3.6"
 install:
-    - "pip install -r requirements.txt"
+    - "pip install -r requirements-dev.txt"
 script: "python3 -m unittest discover tvb_hpc"

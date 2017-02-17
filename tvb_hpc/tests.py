@@ -1,4 +1,8 @@
+import os
 import logging
+logging.basicConfig(level=getattr(logging, os.environ.get('TVB_LOG', 'WARNING')))
+
+
 from unittest import TestCase
 import ctypes as ct
 
@@ -13,7 +17,6 @@ from tvb_hpc.coupling import BaseCoupling
 
 
 LOG = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
 
 
 class TestLogProb(TestCase):
@@ -31,16 +34,18 @@ class TestLogProb(TestCase):
             pass
 
 
-class TestCodeGen(TestCase):
+class TestModel(TestCase):
 
     def setUp(self):
-        self.cflags = '-mavx2 -O3 -ffast-math -fopenmp'.split()
         self.spec = BaseSpec('float', 8, 64).dict
 
-    def _build_func(self, model: BaseModel, spec):
+    def _build_func(self, model: BaseModel, spec, log_code=False):
         comp = Compiler()
         cg = ModelGen1(model)
-        lib = comp(cg.generate_code(spec))
+        code = cg.generate_code(spec)
+        if log_code:
+            LOG.debug(code)
+        lib = comp(model.__class__.__name__, code)
         fn = getattr(lib, cg.kernel_name)
         fn.restype = None  # equiv. C void return type
         ui = ct.c_uint
@@ -95,47 +100,29 @@ class TestRNG(TestCase):
         import numpy as np
         from tvb_hpc.rng import RNG
         from scipy.stats import kstest
-        import time
         from tvb_hpc.compiler import CppCompiler
+        from tvb_hpc.codegen import BaseSpec
         comp = CppCompiler(gen_asm=True)
-        comp.cflags += '-O3 -fopenmp'.split()
         rng = RNG(comp)
-        rng.build()
+        rng.build(BaseSpec())
         # LOG.debug(list(comp.cache.values())[0]['asm'])
         array = np.zeros((1024 * 1024, ), np.float32)
         rng.fill(array)
         d, p = kstest(array, 'norm')
+        # check normal samples are normal
         self.assertAlmostEqual(array.mean(), 0, places=2)
         self.assertAlmostEqual(array.std(), 1, places=2)
         self.assertLess(d, 0.01)
 
-        # test timing
-        shape = (1024 * 1024, )
-        tic = time.time()
-        array = np.zeros(shape)
-        array = array.astype(np.float32)
-        rng.fill(array)
-        et1 = time.time() - tic
-
-        tic = time.time()
-        np.random.randn(*shape).astype('f')
-        et2 = time.time() - tic
-        self.assertLess(et1, et2)
-        LOG.info('r123 %0.3fs, np %0.3fs' % (et1, et2))
-
-
 class TestCoupling(TestCase):
 
     def setUp(self):
-        # GCC 6 is generating AVX-512 instructions for functions declared SIMD
-        # despite march=native... encouraging but not testable locally.
-        self.cflags = '-O3 -march=native'.split()
         self.spec = BaseSpec('float', 8, 64)
 
     def _test_cfun_code(self, cf: BaseCoupling):
-        comp = Compiler(cflags=self.cflags)
+        comp = Compiler()
         cg = CfunGen1(cf)
-        dll = comp(cg.generate_code(self.spec))
+        dll = comp(cf.__class__.__name__, cg.generate_code(self.spec))
         getattr(dll, cg.kernel_name_post_sum)
         getattr(dll, cg.kernel_name_pre_sum)
 
@@ -167,11 +154,8 @@ class TestCoupling(TestCase):
 class TestNetwork(TestCase):
 
     def setUp(self):
-        # GCC 6 is generating AVX-512 instructions for functions declared SIMD
-        # despite march=native... encouraging but not testable locally.
-        self.cflags = '-O3 -march=native'.split()
         self.spec = BaseSpec('float', 8, 64)
-        self.comp = Compiler(cflags=self.cflags)
+        self.comp = Compiler()
 
         from tvb_hpc.coupling import Sigmoidal
         from tvb_hpc.model import JansenRit
@@ -186,5 +170,5 @@ class TestNetwork(TestCase):
         net = DenseNetwork(self.model, self.cfun)
         cg = NetGen1(net)
         code = cg.generate_code(CfunGen1(self.cfun), self.spec)
-        dll = self.comp(code)
+        dll = self.comp('dense_net', code)
         getattr(dll, cg.kernel_name)

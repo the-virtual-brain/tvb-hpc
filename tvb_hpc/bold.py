@@ -28,7 +28,19 @@ def _balloon_windkessel_constants():
     k1 = (4.3 * NU_0 * E0 * TE)
     k2 = (EPSILON * R_0 * E0 * TE)
     k3 = (1.0 - EPSILON)
-    return {k: v for k, v in locals().items() if isinstance(v, float)}
+
+    return {
+        'RECIP_TAU_S': RECIP_TAU_S,
+        'RECIP_TAU_F': RECIP_TAU_F,
+        'RECIP_TAU_O': RECIP_TAU_O,
+        'RECIP_ALPHA': RECIP_ALPHA,
+        'E0': E0,
+        'RECIP_E0': RECIP_E0,
+        'V0': V0,
+        'k1': k1,
+        'k2': k2,
+        'k3': k3
+    }
 
 
 class BalloonWindkessel(BaseModel):

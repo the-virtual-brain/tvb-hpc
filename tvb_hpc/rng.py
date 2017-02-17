@@ -25,7 +25,7 @@ void tvb_rng(long long int seed, unsigned int nout,
 
     // TODO other variants might vectorize better?
     %(loop_pragma)s
-    for(int i=0; i<(nout/4); ++i) {
+    for(unsigned int i=0; i<(nout/4); ++i) {
         philox4x32_ctr_t ctr;
         philox4x32_key_t key;
 
@@ -56,12 +56,15 @@ class RNG:
     def __init__(self, comp=None):
         self.comp = comp or CppCompiler()  # type: Compiler
 
-    def build(self):
+    def build(self, spec):
         self.comp.cflags += ['-I' + include_dir]
+        loop_pragma = ''
+        if spec.openmp:
+            loop_pragma = '#pragma omp parallel for'
         code = rng_template % {
-            'loop_pragma': '#pragma omp parallel for',
+            'loop_pragma': loop_pragma,
         }
-        self.dll = self.comp(code)
+        self.dll = self.comp('rng', code)
         self.fn = self.dll.tvb_rng
         self.fn.restype = None
         self.fn.argtypes = [ctypes.c_longlong,

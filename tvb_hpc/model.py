@@ -61,7 +61,7 @@ class _TestModel(BaseModel):
     input = 'i1'
     param = 'a b c'
     auxex = [('y1_3', 'y1 * y1 * y1')]
-    drift = '(y1 - y1_3/3 + y2)*b', '(a - y1 + i1)/b'
+    drift = '(y1 - y1_3/3 + y2 + e)*b', '(a - y1 + i1 + d)/b'
     diffs = 'c', 'c'
     obsrv = 'y1',
     const = {'d': 3.0, 'e': -12.23904e-2}
@@ -108,9 +108,9 @@ class RWW(BaseModel):
     input = 'c'
     param = 'w io'
     const = {'a': 0.270, 'b': 0.108, 'd': 154.0, 'g': 0.641,
-             'ts': 100.0, 'j': 0.2609, 'w': 0.6, 'io': 0.33}
+             'ts': 100.0, 'J': 0.2609, 'w': 0.6, 'io': 0.33}
     auxex = [
-        ('x', 'w * j * S + io + j * c'),
+        ('x', 'w * J * S + io + J * c'),
         ('h', '(a * x - b) / (1 - exp(-d*(a*x - b)))')
     ]
     drift = '- (S / ts) + (1 - S) * h * g',
@@ -123,7 +123,7 @@ class JansenRit(BaseModel):
     state = 'y0 y1 y2 y3 y4 y5'
     const = {'A': 3.25, 'B': 22.0, 'a': 0.1, 'b': 0.05, 'v0': 5.52,
              'nu_max': 0.0025, 'r': 0.56, 'J': 135.0, 'a_1': 1.0, 'a_2': 0.8,
-             'a_3': 0.25, 'a_4': 0.25, 'p_min': 0.12, 'p_max': 0.32, 'mu': 0.22}
+             'a_3': 0.25, 'a_4': 0.25, 'mu': 0.22}
     input = 'lrc'
     param = 'v0 r'
     auxex = [
@@ -147,7 +147,7 @@ class Linear(BaseModel):
     input = 'c'
     param = 'lambda'
     const = {'lambda': -1}  # default value
-    drift = 'lambda * x',
+    drift = 'lambda * x + c',
     diffs = 1e-2,
     obsrv = 'x',
 

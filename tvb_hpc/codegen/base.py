@@ -65,10 +65,11 @@ class BaseSpec:
 
     """
 
-    def __init__(self, float='float', width=8, align=64):
+    def __init__(self, float='float', width=8, align=64, openmp=False):
         self.float = float
         self.width = width
         self.align = align
+        self.openmp = False
 
     @property
     def dtype(self):
@@ -82,12 +83,14 @@ class BaseSpec:
     def ct_dtype(self):
         return {'float': ct.c_float}[self.dtype]
 
+    # TODO refactor so not needed
     @property
     def dict(self):
         return {
             'float': self.float,
             'width': self.width,
-            'align': self.align
+            'align': self.align,
+            'openmp': self.openmp
         }
 
 

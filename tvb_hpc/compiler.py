@@ -24,14 +24,17 @@ LOG.info('defaulting to %r as C compiler, set CC otherwise' % CC)
 CXX = os.environ.get('CXX', 'g++')
 LOG.info('defaulting to %r as C compiler, set CXX otherwise' % CXX)
 
-CFLAGS = os.environ.get('CFLAGS', '').split()
+CFLAGS = os.environ.get('CFLAGS', '-std=c99 -Wall -Wextra').split()
 LOG.info('defaulting to %r as C flags, set CFLAGS otherwise' % CFLAGS)
+
+CXXFLAGS = os.environ.get('CXXFLAGS', '-std=c++11 -Wall -Wextra').split()
+LOG.info('defaulting to %r as CXX flags, set CXXFLAGS otherwise' % CXXFLAGS)
 
 LDFLAGS = os.environ.get('LDFLAGS', '').split()
 LOG.info('defaulting to %r as linker flags, set LDFLAGS otherwise' % LDFLAGS)
 
 
-OPENMP = True
+OPENMP = False
 if sys.platform == 'darwin':
     os.environ['PATH'] = '/usr/local/bin:' + os.environ['PATH']
     try:
@@ -40,37 +43,49 @@ if sys.platform == 'darwin':
         LOG.info('switched to CC=%r, CXX=%r' % (CC, CXX))
     except NoSuchExecutable:
         LOG.warning('Please brew install gcc-6 if you wish to use OpenMP.')
-        OPENMP = False
 
 
 class Compiler:
     """
     Handles compiler configuration & building code
+
     """
     source_suffix = 'c'
     default_compiler = CC
+    default_compiler_flags = CFLAGS
 
-    def __init__(self, cc=None, cflags=CFLAGS, ldflags=LDFLAGS, gen_asm=False):
+    def __init__(self, cc=None, cflags=None, ldflags=LDFLAGS, gen_asm=False,
+                 openmp=OPENMP):
+        """
+
+        :param cc: compiler to use
+        :param cflags: list of flags to pass to compiler
+        :param ldflags: list of linker flags
+        :param gen_asm: bool, generate and store assembly
+        :param openmp: bool, use OpenMP
+
+        """
         self.cc = which(cc or self.default_compiler)
-        self.cflags = cflags  # type: List[str]
+        self.cflags = cflags or self.default_compiler_flags
         self.ldflags = ldflags
         self.cache = {}
         self.gen_asm = gen_asm
+        self.openmp = openmp
+        if self.openmp:
+            self.cflags.append('-fopenmp')
 
-    def __call__(self, code: str) -> ctypes.CDLL:
-        key = code
+    def __call__(self, name: str, code: str) -> ctypes.CDLL:
+        key = name
         if key not in self.cache:
-            self.cache[key] = self._build(code)
+            self.cache[key] = self._build(name, code)
         return self.cache[key]['dll']
 
-    def _build(self, code):
-        if not OPENMP and '-fopenmp' in self.cflags:
-            self.cflags.remove('-fopenmp')
+    def _build(self, name, code):
         tempdir = tempfile.TemporaryDirectory()
-        c_fname = os.path.join(tempdir.name, 'code.' + self.source_suffix)
-        S_fname = os.path.join(tempdir.name, 'code.S')
-        obj_fname = os.path.join(tempdir.name, 'code.o')
-        dll_fname = os.path.join(tempdir.name, 'code.so')
+        c_fname = os.path.join(tempdir.name, name + '.' + self.source_suffix)
+        S_fname = os.path.join(tempdir.name, name + '.S')
+        obj_fname = os.path.join(tempdir.name, name + '.o')
+        dll_fname = os.path.join(tempdir.name, name + '.so')
         with open(c_fname, 'w') as fd:
             fd.write(code)
         self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname], tempdir.name)
@@ -85,7 +100,7 @@ class Compiler:
         return locals()
 
     def _run(self, args, cwd, **kwargs):
-        LOG.info(args)
+        LOG.debug(args)
         subprocess.check_call(
             args, cwd=cwd, **kwargs
         )
@@ -93,3 +108,4 @@ class Compiler:
 class CppCompiler(Compiler):
     source_suffix = 'c++'
     default_compiler = CXX
+    default_compiler_flags = CXXFLAGS
