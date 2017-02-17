@@ -1,15 +1,167 @@
 import enum
 import ctypes as ct
 from typing import List
-
+from collections import namedtuple
 import numpy as np
 from pymbolic.mapper.c_code import CCodeMapper
 
 
+class TypeTable:
+
+    Type = namedtuple('Type', 'name ctypes numpy')
+
+    type_table = [
+        Type('float', ct.c_float, np.float32),
+        Type('double', ct.c_double, np.float64),
+        Type('int', ct.c_int, np.intc),
+        Type('unsigned int', ct.c_uint, np.uintc),
+        Type('void', ct.c_void_p, np.void),
+    ]
+
+    def find_type(self, type):
+        """
+        Finds correspondences among C type names (str), ctypes types and numpy
+        types.
+
+        """
+        if isinstance(type, str):
+            type = type.strip()
+        for types in self.type_table:
+            if type in types:
+                return types
+        msg = 'Unknown type %r'
+        raise ValueError(msg % type)
+
+
+def indent(code, n=4):
+    lines = []
+    for line in code.split('\n'):
+        if line.strip():
+            line = n*' ' + line
+        lines.append(line)
+    return '\n'.join(lines)
+
+
+class GeneratesC:
+    def generate_c(self):
+        pass
+
+
 class Storage(enum.Enum):
+    none = ''
     static = 'static'
     inline = 'inline'
     extern = 'extern'
+
+
+class Block(GeneratesC):
+
+    template = """
+{{
+{body}
+}}
+"""
+
+    def __init__(self, *args):
+        self.args = args
+
+    def generate_c(self):
+        body = []
+        for arg in self.args:
+            if not isinstance(arg, str):
+                arg = arg.generate_c()
+            body.append(arg)
+        body = '\n'.join(body)
+        return self.template.format(body=indent(body))
+
+
+class Func(GeneratesC):
+
+    template = """
+{pragma}
+{storage}
+{restype} {name}({args}) {body}
+"""
+
+    def __init__(self, name, body, args,
+                 restype='void',
+                 pragma='',
+                 storage=Storage.none):
+        self.name = name
+        if not isinstance(body, Block):
+            body = Block(body)
+        self.body = body.generate_c()
+        self.pragma = pragma
+        self.storage = storage.value
+        self.restype = restype
+        self.args = args
+        self.parse_args()
+
+    def generate_c(self):
+        return self.template.format(**self.__dict__)
+
+    def parse_args(self):
+        args = [arg.strip() for arg in self.args.split(',')]
+        ttable = TypeTable()
+        types, names = [], []
+        for arg in args:
+            parts = arg.split('*')
+            if len(parts) == 2:
+                type = ct.POINTER(ttable.find_type(parts[0]).ctypes)
+                name = parts[1]
+            elif len(parts) == 1:
+                type, name = arg.split(' ')
+            else:
+                msg = 'Not smart enough for %r.'
+                raise ValueError(msg % (arg, ))
+            types.append(type)
+            names.append(type)
+        self.types = types
+        self.names = names
+
+    def compile(self, compiler):
+        self.lib = compiler(self.name, self.generate_c())
+        ttable = TypeTable()
+        fn = getattr(self.lib, self.name)
+        fn.restype = ttable.find_type(self.restype).ctypes
+        if self.restype == 'void':
+            fn.restype = None
+        fn.argtypes = self.types
+        self.fn = fn
+        return fn
+
+    def __call__(self, *args):
+        if not hasattr(self, 'fn'):
+            from ..compiler import Compiler
+            self.compile(Compiler())
+        prepped_args = []
+        for arg, ctype in zip(args, self.fn.argtypes):
+            if hasattr(arg, 'ctypes'):
+                arg = arg.ctypes.data_as(ctype)
+            else:
+                arg = ctype(arg)
+            prepped_args.append(arg)
+        return self.fn(*prepped_args)
+
+
+class Loop(GeneratesC):
+    template = """
+for ({type} {var} = {lo}; {var} < {hi}; {var}++)
+{body}
+"""
+
+    def __init__(self, var, hi, body, lo=0, pragma='', type='unsigned int'):
+        self.var = var
+        self.lo = lo
+        self.hi = hi
+        if not isinstance(body, Block):
+            body = Block(body)
+        self.body = indent(body.generate_c())
+        self.pragma = pragma
+        self.type = type
+
+    def generate_c(self):
+        return self.template.format(**self.__dict__)
 
 
 class MyCCodeMapper(CCodeMapper):

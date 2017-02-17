@@ -5,3 +5,4 @@ sympy==1.0
 scipy
 sphinx
 flake8
+ipython

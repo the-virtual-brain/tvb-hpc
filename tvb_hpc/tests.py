@@ -6,7 +6,7 @@ import numpy as np
 from scipy.stats import kstest
 
 from .bold import BalloonWindkessel
-from .codegen.base import BaseSpec
+from .codegen.base import BaseSpec, Loop, Func, TypeTable
 from .codegen.model import ModelGen1
 from .codegen.cfun import CfunGen1
 from .codegen.network import NetGen1
@@ -21,6 +21,23 @@ from .rng import RNG
 from .schemes import euler_maruyama_logp
 
 LOG = logging.getLogger(__name__)
+
+
+class TestCG(TestCase):
+
+    def test_loop(self):
+        ttable = TypeTable()
+        for name in 'float double int'.split():
+            ft = ttable.find_type(name)
+            func = Func(
+                name='test_loop',
+                args=ft.name + ' *x',
+                body=Loop(var='i', hi=10, body='x[i] += 1;')
+            )
+            x = np.zeros((20, ), ft.numpy)
+            func(x)
+            self.assertTrue((x[:10] == 1).all())
+            self.assertTrue((x[10:] == 0).all())
 
 
 class TestLogProb(TestCase):
