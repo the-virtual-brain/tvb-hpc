@@ -11,3 +11,7 @@ CMakeFiles
 cmake_install.cmake
 compile_commands.json
 tests
+env
+data
+.ipynb_checkpoints
+.idea
