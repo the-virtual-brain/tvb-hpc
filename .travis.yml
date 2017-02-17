@@ -2,8 +2,7 @@ language: python
 python:
     - "3.6"
 env:
-  - CXXFLAGS="-Wall -Wextra"
-  - TVB_LOG=DEBUG
+  - CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG
 install:
     - "pip install -r requirements-dev.txt"
 script: "python3 -m unittest discover tvb_hpc"
