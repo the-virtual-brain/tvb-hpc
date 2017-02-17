@@ -43,7 +43,7 @@ def indent(code, n=4):
 
 
 class GeneratesC:
-    def generate_c(self):
+    def generate_c(self, spec):
         pass
 
 
@@ -70,7 +70,7 @@ class Unit(GeneratesC):
             body = body.generate_c()
         self.body = body
 
-    def generate_c(self):
+    def generate_c(self, spec):
         return self.template.format(**self.__dict__)
 
 
@@ -85,11 +85,11 @@ class Block(GeneratesC):
     def __init__(self, *args):
         self.args = args
 
-    def generate_c(self):
+    def generate_c(self, spec):
         body = []
         for arg in self.args:
             if not isinstance(arg, str):
-                arg = arg.generate_c()
+                arg = arg.generate_c(spec)
             body.append(arg)
         body = '\n'.join(body)
         return self.template.format(body=indent(body))
@@ -100,7 +100,7 @@ class Func(GeneratesC):
     template = """
 {pragma}
 {storage}
-{restype} {name}({args}) {body}
+{restype} {name}({args}) {body_code}
 """
 
     def __init__(self, name, body, args,
@@ -111,15 +111,16 @@ class Func(GeneratesC):
         self.name = name
         if not isinstance(body, Block):
             body = Block(body)
-        self.body = body.generate_c()
+        self.body = body
         self.pragma = pragma
         self.storage = storage.value
         self.restype = restype
         self.args = args
         self.parse_args()
 
-    def generate_c(self):
-        return self.template.format(**self.__dict__)
+    def generate_c(self, spec):
+        body_code = self.body.generate_c(spec)
+        return self.template.format(body_code=body_code, **self.__dict__)
 
     def parse_args(self):
         args = [arg.strip() for arg in self.args.split(',')]
@@ -140,8 +141,8 @@ class Func(GeneratesC):
         self.types = types
         self.names = names
 
-    def compile(self, compiler):
-        self.lib = compiler(self.name, self.generate_c())
+    def compile(self, compiler, spec):
+        self.lib = compiler(self.name, self.generate_c(spec))
         ttable = TypeTable()
         fn = getattr(self.lib, self.name)
         fn.restype = ttable.find_type(self.restype).ctypes
@@ -154,7 +155,8 @@ class Func(GeneratesC):
     def __call__(self, *args):
         if not hasattr(self, 'fn'):
             from ..compiler import Compiler
-            self.compile(Compiler())
+            from .base import BaseSpec
+            self.compile(Compiler(), BaseSpec())
         prepped_args = []
         for arg, ctype in zip(args, self.fn.argtypes):
             if hasattr(arg, 'ctypes'):
@@ -182,8 +184,8 @@ for ({type} {var} = {lo}; {var} < {hi}; {var}++)
         self.pragma = pragma
         self.type = type
 
-    def generate_c(self):
-        body_code = indent(self.body.generate_c())
+    def generate_c(self, spec):
+        body_code = indent(self.body.generate_c(spec))
         return self.template.format(body_code=body_code, **self.__dict__)
 
 

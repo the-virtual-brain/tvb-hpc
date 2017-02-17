@@ -51,6 +51,6 @@ state[idx] += dt * drift[idx];
             name=self.kernel_name,
             model_code=model_code,
             model_name=model_name,
-            loops=indent(outer.generate_c()),
+            loops=indent(outer.generate_c(spec)),
             **spec.dict
         )
