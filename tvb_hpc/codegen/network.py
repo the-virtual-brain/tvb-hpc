@@ -1,4 +1,4 @@
-from .base import BaseCodeGen, BaseSpec
+from .base import BaseCodeGen, BaseSpec, Loop, Func, Block
 from .cfun import CfunGen1
 from ..network import DenseNetwork
 
@@ -9,28 +9,7 @@ class NetGen1(BaseCodeGen):
 
     """
 
-    template = """
-{cfun_code}
-
-void {name}(unsigned int nnode,
-            {float} * __restrict weights,
-            {float} * __restrict input,
-            {float} * __restrict obsrv
-            )
-{{
-    unsigned int i, j;
-    {outer_loop_pragma}
-    for (i=0; i<nnode; i++)
-    {{
-        {inner_loop_pragma}
-        for (j=0; j<nnode; j++)
-        {{
-            {accs}
-        }}
-        {posts}
-    }}
-}}
-"""
+    template = "{cfun_code}\n{func_code}"
 
     acc_template = "{acc} += {wij}*{cfun_pre}({pre_syn}, {post_syn});"
 
@@ -66,12 +45,8 @@ void {name}(unsigned int nnode,
             norm=norm,
             cfun_post=fname)
 
-    def loop_pragmas(self, spec):
-        inner, outer = '', ''
-        if spec.openmp:
-            inner = '#pragma omp parallel for'
-            outer = '#pragma omp simd'
-        return inner, outer
+    def generate_c(self, *args):
+        return self.generate_code(*args)
 
     def generate_code(self, cfcg: CfunGen1, spec: BaseSpec):
         cfun = self.net.cfun
@@ -87,14 +62,19 @@ void {name}(unsigned int nnode,
                 self.generate_post(
                     spec, 'input',  i,
                     cfcg.post_expr_kname[str(post)]))
-        inner_loop_pragma, outer_loop_pragma = self.loop_pragmas(spec)
+
+        inner = Loop('j', 'nnode', '\n'.join(accs))
+        outer = Loop('i', 'nnode', Block(inner, '\n'.join(posts)))
+        if spec.openmp:
+            outer.pragma = '#pragma omp parallel for'
+            inner.pragma = '#pragma omp simd'
+        args = 'unsigned int nnode, '
+        args += ', '.join(['{0} *{1}'.format(spec.float, name)
+                           for name in 'weights input obsrv'.split()])
+        self.func = Func(self.kernel_name, outer, args)
         code = self.template.format(
             cfun_code=cfun_code,
-            name=self.kernel_name,
-            accs='\n            '.join(accs),
-            posts='\n        '.join(posts),
-            inner_loop_pragma=inner_loop_pragma,
-            outer_loop_pragma=outer_loop_pragma,
+            func_code=self.func.generate_c(spec),
             **spec.dict
         )
         return code

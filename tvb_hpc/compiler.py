@@ -19,19 +19,19 @@ LOG = logging.getLogger(__name__)
 
 
 CC = os.environ.get('CC', 'gcc')
-LOG.info('defaulting to %r as C compiler, set CC otherwise' % CC)
+LOG.debug('defaulting to %r as C compiler, set CC otherwise' % CC)
 
 CXX = os.environ.get('CXX', 'g++')
-LOG.info('defaulting to %r as C compiler, set CXX otherwise' % CXX)
+LOG.debug('defaulting to %r as C compiler, set CXX otherwise' % CXX)
 
 CFLAGS = os.environ.get('CFLAGS', '-std=c99 -Wall -Wextra').split()
-LOG.info('defaulting to %r as C flags, set CFLAGS otherwise' % CFLAGS)
+LOG.debug('defaulting to %r as C flags, set CFLAGS otherwise' % CFLAGS)
 
 CXXFLAGS = os.environ.get('CXXFLAGS', '-std=c++11 -Wall -Wextra').split()
-LOG.info('defaulting to %r as CXX flags, set CXXFLAGS otherwise' % CXXFLAGS)
+LOG.debug('defaulting to %r as CXX flags, set CXXFLAGS otherwise' % CXXFLAGS)
 
 LDFLAGS = os.environ.get('LDFLAGS', '').split()
-LOG.info('defaulting to %r as linker flags, set LDFLAGS otherwise' % LDFLAGS)
+LOG.debug('defaulting to %r as linker flags, set LDFLAGS otherwise' % LDFLAGS)
 
 
 OPENMP = False
@@ -40,7 +40,7 @@ if sys.platform == 'darwin':
     try:
         CC = which('gcc-6')
         CXX = which('g++-6')
-        LOG.info('switched to CC=%r, CXX=%r' % (CC, CXX))
+        LOG.debug('switched to CC=%r, CXX=%r' % (CC, CXX))
     except NoSuchExecutable:
         LOG.warning('Please brew install gcc-6 if you wish to use OpenMP.')
 

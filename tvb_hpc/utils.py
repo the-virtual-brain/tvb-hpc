@@ -1,6 +1,7 @@
 import os.path
 import numpy as np
 import logging
+import time
 import pymbolic as pm
 from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
@@ -67,3 +68,15 @@ def exprs(sexprs):
             except Exception as exc:
                 raise Exception(repr(expr))
     return np.array(exprs)
+
+
+class timer:
+    logger = getLogger('tvb_hpc.utils.timer')
+
+    def __enter__(self, *args):
+        self.tic = time.time()
+
+    def __exit__(self, *args):
+        toc = time.time()
+        msg = 'elapsed %.3fs'
+        self.logger.info(msg, toc - self.tic)

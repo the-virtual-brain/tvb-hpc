@@ -155,7 +155,12 @@ class TestNetwork(TestCase):
         cg = NetGen1(net)
         code = cg.generate_code(CfunGen1(cfun), self.spec)
         dll = self.comp('dense_net', code)
-        getattr(dll, cg.kernel_name)
+        cg.func.fn = getattr(dll, cg.kernel_name)
+        cg.func.annot_types(cg.func.fn)
+        _, input, _, _, _, obsrv = model.prep_arrays(256, self.spec)
+        nnode = input[0].shape[0] * input[0].shape[-1]
+        weights = np.random.randn(nnode, nnode).astype(self.spec.np_dtype)
+        cg.func(nnode, weights, input, obsrv)
 
     def test_hmje(self):
         self._test_dense(HMJE, LCf)
@@ -181,5 +186,6 @@ class TestScheme(TestModel):
         lib = comp(eulercg.kernel_name, code)
         eulercg.func.fn = getattr(lib, eulercg.kernel_name)
         eulercg.func.annot_types(eulercg.func.fn)
-        arrs = model.prep_arrays(1024, self.spec)
-        eulercg.func(0.012, arrs[0].shape[0], *arrs)
+        arrs = model.prep_arrays(256, self.spec)
+        nnode = arrs[0].shape[0] * arrs[0].shape[-1]
+        eulercg.func(0.012, nnode, *arrs)

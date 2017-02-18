@@ -16,6 +16,7 @@ class BaseModel:
 
     """
 
+    dt = 1e-3
     state = ''
     input = ''
     param = ''
