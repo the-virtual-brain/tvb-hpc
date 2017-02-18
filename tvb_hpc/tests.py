@@ -189,3 +189,21 @@ class TestScheme(TestModel):
         arrs = model.prep_arrays(256, self.spec)
         nnode = arrs[0].shape[0] * arrs[0].shape[-1]
         eulercg.func(0.012, nnode, *arrs)
+
+
+if __name__ == '__main__':
+    # list cases or methods
+    import sys
+    if len(sys.argv) > 1:
+        cmd = sys.argv[1]
+        if cmd in ('cases', 'methods'):
+            for key in dir():
+                val = globals().get(key)
+                if isinstance(val, type) and issubclass(val, TestCase):
+                    if cmd == 'cases':
+                        print('tvb_hpc.tests.%s' % (val.__name__, ))
+                    elif cmd == 'methods':
+                        for key in dir(val):
+                            if key.startswith('test_'):
+                                print('tvb_hpc.tests.%s.%s' % (
+                                    val.__name__, key))
