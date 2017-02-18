@@ -2,8 +2,8 @@ language: python
 python:
     - "3.6"
 env:
-  - CC=clang CXX=clang++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG
-  - CC=gcc CXX=g++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG
+  - CC=clang CXX=clang++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS=""
+  - CC=gcc CXX=g++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS=""
 install:
     - "pip install -r requirements-dev.txt"
 script:
