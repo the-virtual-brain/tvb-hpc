@@ -2,6 +2,7 @@ import logging
 from unittest import TestCase
 
 import numpy as np
+import numpy.testing
 from scipy.stats import kstest
 
 from .bold import BalloonWindkessel
@@ -187,8 +188,18 @@ class TestScheme(TestModel):
         eulercg.func.fn = getattr(lib, eulercg.kernel_name)
         eulercg.func.annot_types(eulercg.func.fn)
         arrs = model.prep_arrays(256, self.spec)
+        xr = np.random.randn(*arrs[0].shape).astype('f')
+        arrs[0][:] = xr
         nnode = arrs[0].shape[0] * arrs[0].shape[-1]
-        eulercg.func(0.012, nnode, *arrs)
+        eulercg.func(model.dt, nnode, *arrs)
+        x0, _, _, _, _, o0 = arrs
+        arrs = model.prep_arrays(256, self.spec)
+        arrs[0][:] = xr
+        model.npeval(arrs)
+        x, i, p, f, g, o1 = arrs
+        x1 = x + model.dt * f
+        numpy.testing.assert_allclose(x0, x1, 1e-5, 1e-6)
+        numpy.testing.assert_allclose(o0, o1, 1e-5, 1e-6)
 
 
 if __name__ == '__main__':

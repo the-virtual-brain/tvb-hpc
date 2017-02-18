@@ -24,24 +24,26 @@ class NetGen1(BaseCodeGen):
         return 'tvb_network'
 
     def generate_acc(self, spec, input, obsrv, i, fname):
-        nvar = self.net.model.state_sym.size
+        nvar = self.net.model.obsrv_sym.size
+        nivar = self.net.model.input_sym.size
         from_idx_expr = spec.layout.generate_idx_expr('j', i, nvar)
         to_idx_expr = spec.layout.generate_idx_expr('i', i, nvar)
+        acc_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
         return self.acc_template.format(
             wij='weights[i*nnode + j]',
-            acc='%s[%s]' % (input, to_idx_expr),
+            acc='%s[%s]' % (input, acc_idx_expr),
             pre_syn='%s[%s]' % (obsrv, from_idx_expr),
             post_syn='%s[%s]' % (obsrv, to_idx_expr),
             cfun_pre=fname)
 
     def generate_post(self, spec, input, i, fname):
-        nvar = self.net.model.state_sym.size
-        to_idx_expr = spec.layout.generate_idx_expr('i', i, nvar)
+        nivar = self.net.model.input_sym.size
+        out_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
         norm = ''
         if self.net.cfun.stat == 'mean':
             norm = ' / nnode'
         return self.post_template.format(
-            post='%s[%s]' % (input, to_idx_expr),
+            post='%s[%s]' % (input, out_idx_expr),
             norm=norm,
             cfun_post=fname)
 

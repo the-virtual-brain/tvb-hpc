@@ -54,6 +54,41 @@ class BaseModel:
             arrs.append(np.zeros(shape, dtype))
         return arrs
 
+    def _npeval_mat(self, a):
+        if a.shape[1] == 0:
+            return []
+        return np.transpose(a, (1, 0, 2)).reshape((a.shape[1], -1))
+
+    def npeval(self, arrs):
+        nn, _, w = arrs[0].shape
+        ns = {}
+        x, i, p, f, g, o = arrs
+        for key in dir(np):
+            ns[key] = getattr(np, key)
+        ns.update(self.const)
+        for par, val in zip(self.param_sym, self._npeval_mat(p)):
+            ns[par.name] = val
+        for svar, val in zip(self.state_sym, self._npeval_mat(x)):
+            ns[svar.name] = val
+        for ivar, val in zip(self.input_sym, self._npeval_mat(i)):
+            ns[ivar.name] = val
+        for lhs, rhs in self.auxex:
+            ns[lhs] = eval(rhs, ns)
+        for i, expr in enumerate(self.drift):
+            f[:, i, :] = self._npeval_expr(expr, ns, (nn, w))
+        for i, expr in enumerate(self.diffs):
+            g[:, i, :] = self._npeval_expr(expr, ns, (nn, w))
+        for i, expr in enumerate(self.obsrv):
+            o[:, i, :] = self._npeval_expr(expr, ns, (nn, w))
+
+    def _npeval_expr(self, expr, ns, shape):
+        if isinstance(expr, (str, )):
+            return eval(expr, ns).reshape(shape)
+        elif isinstance(expr, (int, float)):
+            return expr
+        else:
+            raise ValueError(type(expr))
+
 
 class _TestModel(BaseModel):
     state = 'y1 y2'
@@ -144,9 +179,9 @@ class Linear(BaseModel):
     'Linear differential equation'
     state = 'x'
     input = 'c'
-    param = 'lambda'
-    const = {'lambda': -1}  # default value
-    drift = 'lambda * x + c',
+    param = 'lam'
+    const = {'lam': -1}  # default value
+    drift = 'lam * x + c',
     diffs = 1e-2,
     obsrv = 'x',
 

@@ -4,7 +4,6 @@ Harnesses hold things in place.
 
 """
 
-from tvb_hpc.utils import timer
 from tvb_hpc.codegen.cfun import CfunGen1
 from tvb_hpc.codegen.model import ModelGen1
 from tvb_hpc.codegen.scheme import EulerSchemeGen
@@ -56,10 +55,13 @@ class SimpleTimeStep(BaseHarness):
         self.logger.debug('nblock %d', self.nblock)
         self.logger.debug('array shape %r', self.arrs[0].shape)
 
+    @property
+    def obsrv(self):
+        return self.arrs[-1].copy()
+
     def run(self, n_iter=100):
         dt = self.model.dt
         x, i, p, f, g, o = self.arrs
-        with timer():
-            for _ in range(n_iter):
-                self.net_cg.func(self.nnode, self.weights, i, o)
-                self.step_cg.func(dt, self.nnode, x, i, p, f, g, o)
+        for _ in range(n_iter):
+            self.net_cg.func(self.nnode, self.weights, i, o)
+            self.step_cg.func(dt, self.nnode, x, i, p, f, g, o)
