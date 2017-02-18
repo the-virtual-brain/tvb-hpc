@@ -46,7 +46,7 @@ if sys.platform == 'darwin':
 
 
 _DEFAULT_SANFLAGS = '-g -fsanitize=address -fsanitize=undefined'
-SANFLAGS = os.environ.get('TVB_SANFLAGS', _DEFAULT_SANFLAGS).split()
+SANFLAGS = os.environ.get('SANFLAGS', _DEFAULT_SANFLAGS).split()
 if SANFLAGS:
     CFLAGS += SANFLAGS
     CXXFLAGS += SANFLAGS
