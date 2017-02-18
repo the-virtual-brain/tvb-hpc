@@ -158,10 +158,19 @@ class TestNetwork(TestCase):
         dll = self.comp('dense_net', code)
         cg.func.fn = getattr(dll, cg.kernel_name)
         cg.func.annot_types(cg.func.fn)
-        _, input, _, _, _, obsrv = model.prep_arrays(256, self.spec)
-        nnode = input[0].shape[0] * input[0].shape[-1]
+        nnode = 128
+        nblck = int(nnode / self.spec.width)
+        _, input, _, _, _, obsrv = model.prep_arrays(nblck, self.spec)
+        robsrv = np.random.randn(*obsrv.shape).astype(self.spec.np_dtype)
         weights = np.random.randn(nnode, nnode).astype(self.spec.np_dtype)
+        obsrv[:] = robsrv
         cg.func(nnode, weights, input, obsrv)
+        input1 = input.copy()
+        _, input, _, _, _, obsrv = model.prep_arrays(nblck, self.spec)
+        obsrv[:] = robsrv
+        net.npeval(weights, obsrv, input)
+        input2 = input.copy()
+        numpy.testing.assert_allclose(input1, input2, 1e-5, 1e-6)
 
     def test_hmje(self):
         self._test_dense(HMJE, LCf)

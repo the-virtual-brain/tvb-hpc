@@ -45,8 +45,11 @@ class BaseModel:
             exprs.append(simplify(DifferentiationMapper(var)(expr)))
         return np.array(exprs)
 
-    # TODO move to ffi module?
     def prep_arrays(self, nnode, spec: BaseSpec):
+        """
+        Prepare arrays for use with this model.
+
+        """
         dtype = spec.np_dtype
         arrs = []
         for key in 'state input param drift diffs obsrv'.split():
@@ -60,6 +63,11 @@ class BaseModel:
         return np.transpose(a, (1, 0, 2)).reshape((a.shape[1], -1))
 
     def npeval(self, arrs):
+        """
+        Evaluate model equations on arrays using NumPy.
+
+        """
+        # TODO generalize layout.. xarray?
         nn, _, w = arrs[0].shape
         ns = {}
         x, i, p, f, g, o = arrs
