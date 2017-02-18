@@ -15,3 +15,4 @@ env
 data
 .ipynb_checkpoints
 .idea
+tvb_hpc.egg-info
