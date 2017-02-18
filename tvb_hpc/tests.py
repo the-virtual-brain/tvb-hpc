@@ -20,6 +20,7 @@ from .model import Kuramoto
 from .network import DenseNetwork
 from .rng import RNG
 from .schemes import euler_maruyama_logp
+from .harness import SimpleTimeStep
 
 LOG = logging.getLogger(__name__)
 
@@ -209,6 +210,31 @@ class TestScheme(TestModel):
         x1 = x + model.dt * f
         numpy.testing.assert_allclose(x0, x1, 1e-5, 1e-6)
         numpy.testing.assert_allclose(o0, o1, 1e-5, 1e-6)
+
+
+class TestHarness(TestCase):
+
+    def test_hmje(self):
+        model = HMJE()
+        cfun = LCf(model)
+        net = DenseNetwork(model, cfun)
+        stepper = SimpleTimeStep(model, cfun, net)
+        nnode = 64
+        dtype = stepper.spec.np_dtype
+        weights = np.random.randn(nnode, nnode).astype(dtype)
+        stepper.prep_data(weights)
+        xr = np.random.randn(*stepper.arrs[0].shape).astype(dtype)
+        stepper.arrs[0][:] = xr
+        x, i, p, f, g, o = [a.copy() for a in stepper.arrs]
+        niter = 100
+        stepper.run(niter)
+        obs1 = stepper.obsrv
+        for _ in range(niter):
+            net.npeval(weights, o, i)
+            model.npeval((x, i, p, f, g, o))
+            x += model.dt * f
+        obs2 = o.copy()
+        numpy.testing.assert_allclose(obs1, obs2, 1e-5, 1e-6)
 
 
 if __name__ == '__main__':
