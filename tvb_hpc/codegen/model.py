@@ -1,51 +1,39 @@
 import pymbolic as pm
 
-from .base import BaseCodeGen, BaseSpec, Storage, Loop, indent
+from .base import BaseCodeGen, BaseSpec, Storage, Loop, indent, Func
 from ..model import BaseModel
 
 
 class ModelGen1(BaseCodeGen):
 
-    template = """
-#include <math.h>
-
-{storage}
-void {name}(
-    unsigned int nnode,
-    {float} *state,
-    {float} *input,
-    {float} *param,
-    {float} *drift,
-    {float} *diffs,
-    {float} *obsrv
-)
-{{
-  {decls}
-  {loops}
-}}
-"""
+    template = "#include <math.h>\n{func_code}"
 
     def __init__(self, model: BaseModel):
         self.model = model
         self.storage = Storage.default
 
-    def generate_code(self, spec: BaseSpec, storage=None):
+    def generate_code(self, spec: BaseSpec, storage=Storage.default):
         decls = self.generate_alignments(
             'state input param drift diffs obsrv'.split(), spec)
         decls += self.declarations(spec)
-        body = self.inner_loop_lines(spec)
-        inner = Loop('j', spec.width, '\n'.join(body))
+        loop_body = self.inner_loop_lines(spec)
+        inner = Loop('j', spec.width, '\n'.join(loop_body))
         outer = Loop('i', 'nnode / %d' % (spec.width, ), inner)
         if spec.openmp:
             # icc -> pragma vector simd ivdep, does better?
             inner.pragma = '#pragma omp simd'
             outer.pragma = '#pragma omp parallel for'
-        code = self.template.format(
+        body = '{decls}\n{loops}'.format(
             decls='\n  '.join(decls),
-            name=self.kernel_name,
             loops=indent(outer.generate_c(spec)),
-            storage=(storage or self.storage).value,
-            **spec.dict
+        )
+        argnames = 'state input param drift diffs obsrv'
+        args = 'unsigned int nnode, '
+        args += ', '.join(['{float} *{name}'.format(name=name, **spec.dict)
+                           for name in argnames.split()])
+        self.func = Func(self.kernel_name, body, args, storage=storage)
+        code = self.template.format(
+            func_code=self.func.generate_c(spec)
         )
         return code
 

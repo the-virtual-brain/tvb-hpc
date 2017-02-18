@@ -132,23 +132,28 @@ class Func(GeneratesC):
                 type = ct.POINTER(ttable.find_type(parts[0]).ctypes)
                 name = parts[1]
             elif len(parts) == 1:
-                type, name = arg.split(' ')
+                parts = arg.split(' ')
+                name = parts[-1]
+                type = ttable.find_type(' '.join(parts[:-1])).ctypes
             else:
                 msg = 'Not smart enough for %r.'
                 raise ValueError(msg % (arg, ))
             types.append(type)
-            names.append(type)
+            names.append(name)
         self.types = types
         self.names = names
 
-    def compile(self, compiler, spec):
-        self.lib = compiler(self.name, self.generate_c(spec))
+    def annot_types(self, fn):
         ttable = TypeTable()
-        fn = getattr(self.lib, self.name)
         fn.restype = ttable.find_type(self.restype).ctypes
         if self.restype == 'void':
             fn.restype = None
         fn.argtypes = self.types
+
+    def compile(self, compiler, spec):
+        self.lib = compiler(self.name, self.generate_c(spec))
+        fn = getattr(self.lib, self.name)
+        self.annot_types(fn)
         self.fn = fn
         return fn
 

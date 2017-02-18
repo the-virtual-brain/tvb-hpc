@@ -45,6 +45,13 @@ if sys.platform == 'darwin':
         LOG.warning('Please brew install gcc-6 if you wish to use OpenMP.')
 
 
+_DEFAULT_SANFLAGS = '-g -fsanitize=address -fsanitize=undefined'
+SANFLAGS = os.environ.get('TVB_SANFLAGS', _DEFAULT_SANFLAGS).split()
+if SANFLAGS:
+    CFLAGS += SANFLAGS
+    CXXFLAGS += SANFLAGS
+
+
 class Compiler:
     """
     Handles compiler configuration & building code

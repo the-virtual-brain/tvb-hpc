@@ -1,5 +1,5 @@
 
-from .base import BaseCodeGen, Loop, indent, Storage
+from .base import BaseCodeGen, Loop, indent, Storage, Func
 
 
 class EulerSchemeGen(BaseCodeGen):
@@ -7,20 +7,11 @@ class EulerSchemeGen(BaseCodeGen):
     template = """
 {model_code}
 
-void {name}(
-    {float} dt,
-    unsigned int nnode,
-    {float} *state,
-    {float} *input,
-    {float} *param,
-    {float} *drift,
-    {float} *diffs,
-    {float} *obsrv
-)
-{{
-    {model_name}(nnode, state, input, param, drift, diffs, obsrv);
-{loops}
-}}
+{func_code}
+"""
+
+    model_call = """
+{model_name}(nnode, state, input, param, drift, diffs, obsrv);
 """
 
     chunk_template = """
@@ -36,7 +27,7 @@ state[idx] += dt * drift[idx];
         return 'tvb_Euler_%s' % (
             self.modelcg.model.__class__.__name__, )
 
-    def generate_c(self, spec):
+    def generate_c(self, spec, storage=Storage.default):
         model_code = self.modelcg.generate_code(spec, Storage.static)
         model_name = self.modelcg.kernel_name
         nsvar = self.modelcg.model.state_sym.size
@@ -47,10 +38,16 @@ state[idx] += dt * drift[idx];
         if spec.openmp:
             chunk.pragma = '#pragma omp simd'
             outer.pragma = '#pragma omp parallel for'
+        body = self.model_call.format(model_name=model_name)
+        body += outer.generate_c(spec)
+        args = 'float dt, unsigned int nnode, '
+        argnames = 'state input param drift diffs obsrv'.split()
+        args += ', '.join(['{float} *{0}'.format(name, **spec.dict)
+                           for name in argnames])
+        self.func = Func(self.kernel_name, indent(body),
+                         args, storage=storage)
         return self.template.format(
-            name=self.kernel_name,
             model_code=model_code,
-            model_name=model_name,
-            loops=indent(outer.generate_c(spec)),
+            func_code=self.func.generate_c(spec),
             **spec.dict
         )

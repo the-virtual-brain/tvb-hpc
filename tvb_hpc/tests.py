@@ -1,4 +1,3 @@
-import ctypes as ct
 import logging
 from unittest import TestCase
 
@@ -61,59 +60,41 @@ class TestModel(TestCase):
     def setUp(self):
         self.spec = BaseSpec('float', 8)
 
-    def _build_func(self, model: BaseModel, spec: BaseSpec, log_code=False):
+    def _test(self, model: BaseModel, spec: BaseSpec, log_code=False):
         comp = Compiler()
         cg = ModelGen1(model)
         code = cg.generate_code(spec)
         if log_code:
             LOG.debug(code)
         lib = comp(model.__class__.__name__, code)
-        fn = getattr(lib, cg.kernel_name)
-        fn.restype = None  # equiv. C void return type
-        ui = ct.c_uint
-        f = spec.ct_dtype
-        fp = ct.POINTER(f)
-        fn.argtypes = [ui, fp, fp, fp, fp, fp, fp]
-        return fn
-
-    def _call(self, fn, *args):
-        x, i, p, f, g, o = args
-        nn = ct.c_uint(x.shape[0])
-        fp = fn.argtypes[1]
-        args = [a.ctypes.data_as(fp) for a in args]
-        fn(nn, *args)
-
-    def test_test_model_code_gen(self):
-        model = _TestModel()
-        fn = self._build_func(model, self.spec)
+        cg.func.fn = getattr(lib, cg.kernel_name)
+        cg.func.annot_types(cg.func.fn)
         arrs = model.prep_arrays(1024, self.spec)
-        self._call(fn, *arrs)
-        # TODO timing
-        # TODO allclose against TVB
+        cg.func(arrs[0].shape[0], *arrs)
 
     def test_balloon_model(self):
         model = BalloonWindkessel()
-        self._build_func(model, self.spec)
+        self._test(model, self.spec)
 
     def test_hmje(self):
         model = HMJE()
-        self._build_func(model, self.spec)
+        self._test(model, self.spec)
 
     def test_rww(self):
         model = RWW()
-        self._build_func(model, self.spec)
+        self._test(model, self.spec)
 
     def test_jr(self):
         model = JansenRit()
-        self._build_func(model, self.spec)
+        self._test(model, self.spec)
 
     def test_linear(self):
         model = Linear()
-        self._build_func(model, self.spec)
+        self._test(model, self.spec)
 
     def test_g2do(self):
         model = G2DO()
-        self._build_func(model, self.spec)
+        self._test(model, self.spec)
 
 
 class TestRNG(TestCase):
@@ -186,16 +167,19 @@ class TestNetwork(TestCase):
         self._test_dense(JansenRit, Sigmoidal)
 
 
-class TestScheme(TestCase):
+class TestScheme(TestModel):
 
     def setUp(self):
         self.spec = BaseSpec('float', 8, openmp=True)
         self.comp = Compiler(openmp=True)
 
-    def test_euler(self):
-        model = HMJE()
+    def _test(self, model: BaseModel, spec: BaseSpec):
+        comp = Compiler()
         modelcg = ModelGen1(model)
         eulercg = EulerSchemeGen(modelcg)
-        lib = self.comp('euler', eulercg.generate_c(self.spec))
-        fn = getattr(lib, eulercg.kernel_name)
-        self.assertIsNotNone(fn)
+        code = eulercg.generate_c(self.spec)
+        lib = comp(eulercg.kernel_name, code)
+        eulercg.func.fn = getattr(lib, eulercg.kernel_name)
+        eulercg.func.annot_types(eulercg.func.fn)
+        arrs = model.prep_arrays(1024, self.spec)
+        eulercg.func(0.012, arrs[0].shape[0], *arrs)
