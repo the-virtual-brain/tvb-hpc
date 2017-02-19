@@ -12,8 +12,9 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+import time
 import logging
-from unittest import TestCase
+import unittest
 
 import numpy as np
 import numpy.testing
@@ -35,8 +36,22 @@ from .network import DenseNetwork, DenseDelayNetwork
 from .rng import RNG
 from .schemes import euler_maruyama_logp
 from .harness import SimpleTimeStep
+from .utils import getLogger
 
 LOG = logging.getLogger(__name__)
+
+
+class TestCase(unittest.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.tic = time.time()
+        self.logger = getLogger(self.id())
+
+    def tearDown(self):
+        super().tearDown()
+        msg = 'required %.3fs'
+        self.logger.info(msg, time.time() - self.tic)
 
 
 class TestCG(TestCase):
@@ -59,6 +74,7 @@ class TestCG(TestCase):
 class TestLogProb(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.model = _TestModel()
 
     def test_partials(self):
@@ -74,6 +90,7 @@ class TestLogProb(TestCase):
 class TestModel(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.spec = BaseSpec('float', 8)
 
     def _test(self, model: BaseModel, spec: BaseSpec, log_code=False):
@@ -132,6 +149,7 @@ class TestRNG(TestCase):
 class TestCoupling(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.spec = BaseSpec('float', 8)
 
     def _test_cfun_code(self, cf: BaseCoupling):
@@ -161,6 +179,7 @@ class TestCoupling(TestCase):
 class TestNetwork(TestCase):
 
     def setUp(self):
+        super().setUp()
         self.spec = BaseSpec('float', 8)
         self.comp = Compiler()
 
@@ -210,6 +229,7 @@ class TestNetwork(TestCase):
 class TestScheme(TestModel):
 
     def setUp(self):
+        super().setUp()
         self.spec = BaseSpec('float', 8, openmp=True)
         self.comp = Compiler(openmp=True)
 
