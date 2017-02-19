@@ -9,5 +9,5 @@ fi
 set -eu
 
 export PYTHONPATH=$(git rev-parse --show-toplevel)
-python3 -m unittest tvb_hpc.tests
+TVB_LOG=INFO python3 -m unittest tvb_hpc.tests
 flake8 tvb_hpc
