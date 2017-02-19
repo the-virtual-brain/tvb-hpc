@@ -23,7 +23,7 @@ from .bold import BalloonWindkessel
 from .codegen.base import BaseSpec, Loop, Func, TypeTable
 from .codegen.model import ModelGen1
 from .codegen.cfun import CfunGen1
-from .codegen.network import NetGen1
+from .codegen.network import NetGen1, NetGen2
 from .codegen.scheme import EulerSchemeGen
 from .compiler import Compiler
 from .compiler import CppCompiler
@@ -31,7 +31,7 @@ from .coupling import BaseCoupling
 from .coupling import Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
-from .network import DenseNetwork
+from .network import DenseNetwork, DenseDelayNetwork
 from .rng import RNG
 from .schemes import euler_maruyama_logp
 from .harness import SimpleTimeStep
@@ -195,6 +195,16 @@ class TestNetwork(TestCase):
 
     def test_jr(self):
         self._test_dense(JansenRit, Sigmoidal)
+
+    def test_delay(self):
+        model = HMJE()
+        cfun = LCf(model)
+        net = DenseDelayNetwork(model, cfun)
+        cg = NetGen2(net)
+        code = cg.generate_code(CfunGen1(cfun), self.spec)
+        dll = self.comp('dense_delay_net', code)
+        cg.func.fn = getattr(dll, cg.kernel_name)
+        cg.func.annot_types(cg.func.fn)
 
 
 class TestScheme(TestModel):

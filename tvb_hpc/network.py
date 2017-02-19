@@ -51,3 +51,28 @@ class DenseNetwork:
             weighted = eval(str(pre), ns) * weights
             ns[self.cfun.stat] = getattr(weighted, self.cfun.stat)(axis=1)
             input[:, i, :] = eval(str(post), ns).reshape((nn, w))
+
+
+class DenseDelayNetwork:
+    """
+    Dense network with delays.
+
+    In TVB, we use circular indexing, but this incurs penalty in terms of
+    complexity of data structures, always performing integer modulo, etc.  Far
+    simpler to assume contiguous time and periodically reconstruct as memory
+    constraints require, which can be done in a background thread to minimize
+    overhead.
+
+    """
+
+    def __init__(self, model: BaseModel, cfun: BaseCoupling):
+        self.model = model
+        self.cfun = cfun
+
+    def npeval(self, weights, obsrv, input):
+        """
+        Unlike DenseNetwork.npeval, obsrv here is the history of observables
+        used to compute time-delayed coupling.
+
+        """
+        pass

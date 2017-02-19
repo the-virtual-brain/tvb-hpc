@@ -31,16 +31,18 @@ class NetGen1(BaseCodeGen):
 
     def __init__(self, net: DenseNetwork):
         self.net = net
-        assert isinstance(self.net, DenseNetwork)
 
     @property
     def kernel_name(self):
         return 'tvb_network'
 
+    def _acc_from_idx_expr(self, spec, idx, i, nvar):
+        return spec.layout.generate_idx_expr('j', i, nvar)
+
     def generate_acc(self, spec, input, obsrv, i, fname):
         nvar = self.net.model.obsrv_sym.size
         nivar = self.net.model.input_sym.size
-        from_idx_expr = spec.layout.generate_idx_expr('j', i, nvar)
+        from_idx_expr = self._acc_from_idx_expr(spec, 'j', i, nvar)
         to_idx_expr = spec.layout.generate_idx_expr('i', i, nvar)
         acc_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
         return self.acc_template.format(
@@ -78,15 +80,15 @@ class NetGen1(BaseCodeGen):
                 self.generate_post(
                     spec, 'input',  i,
                     cfcg.post_expr_kname[str(post)]))
-
         inner = Loop('j', 'nnode', '\n'.join(accs))
         outer = Loop('i', 'nnode', Block(inner, '\n'.join(posts)))
         if spec.openmp:
             outer.pragma = '#pragma omp parallel for'
             inner.pragma = '#pragma omp simd'
-        args = 'unsigned int nnode, '
-        args += ', '.join(['{0} *{1}'.format(spec.float, name)
-                           for name in 'weights input obsrv'.split()])
+        args = self._base_args()
+        args += ['{0} *{1}'.format(spec.float, name)
+                 for name in 'weights input obsrv'.split()]
+        args = ', '.join(args)
         self.func = Func(self.kernel_name, outer, args)
         code = self.template.format(
             cfun_code=cfun_code,
@@ -94,3 +96,22 @@ class NetGen1(BaseCodeGen):
             **spec.dict
         )
         return code
+
+    def _base_args(self):
+        return ['unsigned int nnode']
+
+
+class NetGen2(NetGen1):
+    """
+    Code generation handling time delay coupling.
+
+    """
+
+    def _acc_from_idx_expr(self, spec, idx, i, nvar):
+        fmt = "((int) (i_t - (delays[i*nnode + j]/dt))*(%s))"
+        fmt %= super()._acc_from_idx_expr(spec, idx, i, nvar)
+        return fmt
+
+    def _base_args(self):
+        extra = ['unsigned int i_t', 'float *delays', 'float dt']
+        return super()._base_args() + extra
