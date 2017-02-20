@@ -30,6 +30,8 @@ class ModelGen1(BaseCodeGen):
         decls = self.generate_alignments(
             'state input param drift diffs obsrv'.split(), spec)
         decls += self.declarations(spec)
+        if self.model.param_sym.size == 0:
+            decls.append('(void) param;')
         loop_body = self.inner_loop_lines(spec)
         inner = Loop('j', spec.width, '\n'.join(loop_body))
         outer = Loop('i', 'nnode / %d' % (spec.width, ), inner)

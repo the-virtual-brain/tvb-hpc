@@ -21,7 +21,7 @@ import numpy.testing
 from scipy.stats import kstest
 
 from .bold import BalloonWindkessel
-from .codegen.base import BaseSpec, Loop, Func, TypeTable
+from .codegen.base import BaseSpec, Loop, Func, TypeTable, Storage
 from .codegen.model import ModelGen1
 from .codegen.cfun import CfunGen1
 from .codegen.network import NetGen1, NetGen2
@@ -154,7 +154,7 @@ class TestCoupling(TestCase):
 
     def _test_cfun_code(self, cf: BaseCoupling):
         comp = Compiler()
-        cg = CfunGen1(cf)
+        cg = CfunGen1(cf, storage=Storage.default)
         dll = comp(cf.__class__.__name__, cg.generate_code(self.spec))
         for name in cg.kernel_names:
             getattr(dll, name)

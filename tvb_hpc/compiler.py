@@ -121,6 +121,7 @@ class Compiler:
         self._run([self.cc] + self.cflags + self.ldflags +
                   ['-shared', obj_fname, '-o', dll_fname], tempdir.name)
         dll = ctypes.CDLL(dll_fname)
+        tempdir.cleanup()
         return locals()
 
     def _run(self, args, cwd, **kwargs):
