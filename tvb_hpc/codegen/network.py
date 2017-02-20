@@ -27,6 +27,8 @@ class NetGen1(BaseCodeGen):
 
     acc_template = "{acc} += {wij}*{cfun_pre}({pre_syn}, {post_syn});"
 
+    zero_template = "{acc} = (({float}) 0);"
+
     post_template = "{post} = {cfun_post}({post}{norm});"
 
     def __init__(self, net: DenseNetwork):
@@ -38,6 +40,13 @@ class NetGen1(BaseCodeGen):
 
     def _acc_from_idx_expr(self, spec, idx, i, nvar):
         return spec.layout.generate_idx_expr('j', i, nvar)
+
+    def generate_zero(self, spec, input, i):
+        nivar = self.net.model.input_sym.size
+        acc_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
+        return self.zero_template.format(
+            acc='%s[%s]' % (input, acc_idx_expr),
+            float=spec.float)
 
     def generate_acc(self, spec, input, obsrv, i, fname):
         nvar = self.net.model.obsrv_sym.size
@@ -66,22 +75,31 @@ class NetGen1(BaseCodeGen):
     def generate_c(self, *args):
         return self.generate_code(*args)
 
-    def generate_code(self, cfcg: CfunGen1, spec: BaseSpec):
-        cfun = self.net.cfun
-        cfun_code = cfcg.generate_code(spec)
+    def build_inner(self, spec, cfun, cfcg):
         accs = []
-        posts = []
         for i, (obsrv, pre, post, input) in enumerate(cfun.io):
             accs.append(
                 self.generate_acc(
                     spec, 'input', 'obsrv', i,
                     cfcg.pre_expr_kname[str(pre)]))
+        return Loop('j', 'nnode', '\n'.join(accs))
+
+    def generate_code(self, cfcg: CfunGen1, spec: BaseSpec):
+        cfun = self.net.cfun
+        cfun_code = cfcg.generate_code(spec)
+        posts = []
+        zeros = []
+        for i, (obsrv, pre, post, input) in enumerate(cfun.io):
+            zeros.append(self.generate_zero(spec, 'input', i))
             posts.append(
                 self.generate_post(
                     spec, 'input',  i,
                     cfcg.post_expr_kname[str(post)]))
-        inner = Loop('j', 'nnode', '\n'.join(accs))
-        outer = Loop('i', 'nnode', Block(inner, '\n'.join(posts)))
+        inner = self.build_inner(spec, cfun, cfcg)
+        outer = Loop('i', 'nnode',
+                     Block('\n'.join(zeros),
+                           inner,
+                           '\n'.join(posts)))
         if spec.openmp:
             outer.pragma = '#pragma omp parallel for'
             inner.pragma = '#pragma omp simd'
@@ -107,11 +125,41 @@ class NetGen2(NetGen1):
 
     """
 
-    def _acc_from_idx_expr(self, spec, idx, i, nvar):
-        fmt = "((int) (i_t - (delays[i*nnode + j]/dt))*(%s))"
-        fmt %= super()._acc_from_idx_expr(spec, idx, i, nvar)
+    dbg_fmt = """
+printf("%d\\t%d\\t%d\\t%d\\t%d\\t%f\\n", i, j,
+       {ivar}, i_t - delays[i*nnode + j],
+       pre_idx_{ivar},
+       obsrv[pre_idx_{ivar}]);
+"""
+
+    def build_inner(self, spec, cfun, cfcg):
+        pre_idxs = []
+        dbgs = []
+        accs = []
+        nvar = self.net.model.obsrv_sym.size
+        for i, (obsrv, pre, post, input) in enumerate(cfun.io):
+            pre_idxs.append('unsigned int pre_idx_{i} = {idx};'.format(
+                    i=i, idx=self._pre_idx(spec, 'j', i, nvar)))
+            if spec.debug:
+                dbgs.append(self.dbg_fmt.format(ivar=i))
+            accs.append(
+                self.generate_acc(
+                    spec, 'input', 'obsrv', i,
+                    cfcg.pre_expr_kname[str(pre)]))
+        return Loop('j', 'nnode', Block(
+            '\n'.join(pre_idxs),
+            '\n'.join(dbgs),
+            '\n'.join(accs),
+        ))
+
+    def _pre_idx(self, spec, idx, i, nvar):
+        fmt = "(i_t - delays[i*nnode + j])*(nnode * %s) + %s"
+        fmt %= nvar, super()._acc_from_idx_expr(spec, idx, i, nvar)
         return fmt
 
+    def _acc_from_idx_expr(self, spec, idx, i, nvar):
+        return 'pre_idx_{i}'.format(i=i)
+
     def _base_args(self):
-        extra = ['unsigned int i_t', 'float *delays', 'float dt']
+        extra = ['unsigned int i_t', 'unsigned int *delays']
         return super()._base_args() + extra

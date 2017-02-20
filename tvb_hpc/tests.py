@@ -216,14 +216,35 @@ class TestNetwork(TestCase):
         self._test_dense(JansenRit, Sigmoidal)
 
     def test_delay(self):
+        spec = BaseSpec('float', width=4)
         model = HMJE()
         cfun = LCf(model)
         net = DenseDelayNetwork(model, cfun)
         cg = NetGen2(net)
-        code = cg.generate_code(CfunGen1(cfun), self.spec)
+        code = cg.generate_code(CfunGen1(cfun), spec)
         dll = self.comp('dense_delay_net', code)
         cg.func.fn = getattr(dll, cg.kernel_name)
         cg.func.annot_types(cg.func.fn)
+        nnode = 64
+        nblck = int(nnode / spec.width)
+        _, input, _, _, _, obsrv = model.prep_arrays(nblck, spec)
+        # robsrv = np.tile(np.random.randn(*obsrv.shape), (100, 1, 1, 1))
+        obsrv = np.zeros((100, ) + obsrv.shape, obsrv.dtype)
+        np.random.seed(42)
+        robsrv = np.random.randn(*obsrv.shape).astype(spec.np_dtype)
+        weights = np.abs(np.random.randn(nnode, nnode).astype(spec.np_dtype))
+        delays = np.random.uniform(0, 50, size=(nnode, nnode)).astype(np.uintc)
+        i_t = 75
+        obsrv[:] = robsrv
+        # import pdb; pdb.set_trace()
+        cg.func(nnode, i_t, delays, weights, input, obsrv)
+        input1 = input.copy()
+        _, input, _, _, _, obsrv = model.prep_arrays(nblck, spec)
+        obsrv = np.zeros((100, ) + obsrv.shape, obsrv.dtype)
+        obsrv[:] = robsrv
+        net.npeval(i_t, delays, weights, obsrv, input, debug=spec.debug)
+        input2 = input.copy()
+        numpy.testing.assert_allclose(input1, input2, 1e-5, 1e-6)
 
 
 class TestScheme(TestModel):

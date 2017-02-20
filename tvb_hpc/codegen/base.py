@@ -315,7 +315,7 @@ class BaseLayout:
     """
 
     idx_expr_template = (
-            "{i}/{width}*{width}*{nvar} + {j}*{width} + {i}%{width}")
+            "({i}/{width})*{width}*{nvar} + {j}*{width} + ({i}%{width})")
 
     def __init__(self, width, nvar=None):
         self.width = width
@@ -336,12 +336,13 @@ class BaseSpec:
     """
 
     def __init__(self, float='float', width=8, align=None, openmp=False,
-                 layout=None):
+                 layout=None, debug=False):
         self.float = float
         self.width = width
         self.align = align
         self.openmp = openmp
         self.layout = layout or BaseLayout(width=width)
+        self.debug = debug
 
     @property
     def dtype(self):

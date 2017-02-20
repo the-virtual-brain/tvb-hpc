@@ -102,7 +102,9 @@ class Compiler:
         return self.cache[key]['dll']
 
     def _build(self, name, code):
-        LOG.debug('compiling unit %r with code\n%s' % (name, code))
+        linocode = '\n'.join(['%05d\t%s' % (i + 1, l)
+                              for i, l in enumerate(code.split('\n'))])
+        LOG.debug('compiling unit %r with code\n%s' % (name, linocode))
         tempdir = tempfile.TemporaryDirectory()
         c_fname = os.path.join(tempdir.name, name + '.' + self.source_suffix)
         S_fname = os.path.join(tempdir.name, name + '.S')
