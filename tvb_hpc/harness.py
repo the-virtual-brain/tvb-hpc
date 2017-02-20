@@ -59,6 +59,7 @@ class SimpleTimeStep(BaseHarness):
         self.net_cg = net_cg
         self.step_cg = step_cg
         self.spec = spec
+        self.comp = comp
         self.logger = getLogger(self.__class__.__name__)
 
     def prep_data(self, weights):

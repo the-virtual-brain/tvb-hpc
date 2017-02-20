@@ -92,6 +92,7 @@ class Compiler:
         self.cache = {}
         self.gen_asm = gen_asm
         self.openmp = openmp
+        self.tempdir = tempfile.TemporaryDirectory()
         if self.openmp:
             self.cflags.append('-fopenmp')
 
@@ -101,33 +102,36 @@ class Compiler:
             self.cache[key] = self._build(name, code)
         return self.cache[key]['dll']
 
+    def tempname(self, name):
+        return os.path.join(self.tempdir.name, name)
+
     def _build(self, name, code):
         linocode = '\n'.join(['%05d\t%s' % (i + 1, l)
                               for i, l in enumerate(code.split('\n'))])
         LOG.debug('compiling unit %r with code\n%s' % (name, linocode))
-        tempdir = tempfile.TemporaryDirectory()
-        c_fname = os.path.join(tempdir.name, name + '.' + self.source_suffix)
-        S_fname = os.path.join(tempdir.name, name + '.S')
-        obj_fname = os.path.join(tempdir.name, name + '.o')
-        dll_fname = os.path.join(tempdir.name, name + '.so')
+        c_fname = self.tempname(name + '.' + self.source_suffix)
+        S_fname = self.tempname(name + '.S')
+        obj_fname = self.tempname(name + '.o')
+        dll_fname = self.tempname(name + '.so')
         with open(c_fname, 'w') as fd:
             fd.write(code)
-        self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname],
-                  tempdir.name)
+        self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname])
         if self.gen_asm:
-            self._run([self.cc] + self.cflags + ['-S', c_fname], tempdir.name)
+            self._run([self.cc] + self.cflags + ['-S', c_fname])
             with open(S_fname, 'r') as fd:
                 asm = fd.read()
         self._run([self.cc] + self.cflags + self.ldflags +
-                  ['-shared', obj_fname, '-o', dll_fname], tempdir.name)
+                  ['-shared', obj_fname, '-o', dll_fname])
         dll = ctypes.CDLL(dll_fname)
-        tempdir.cleanup()
         return locals()
 
-    def _run(self, args, cwd, **kwargs):
+    def __del__(self):
+        self.tempdir.cleanup()
+
+    def _run(self, args, **kwargs):
         LOG.debug(args)
         subprocess.check_call(
-            args, cwd=cwd, **kwargs
+            args, cwd=self.tempdir.name, **kwargs
         )
 
 
