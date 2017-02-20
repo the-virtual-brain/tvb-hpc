@@ -74,6 +74,9 @@ class BaseModel:
         for i, (lo, hi) in enumerate(self.limit):
             state[:, i, :] = np.random.uniform(float(lo), float(hi),
                                                size=(nnode, spec.width))
+        param = arrs[2]
+        for i, psym in enumerate(self.param_sym):
+            param[:, i, :] = self.const[psym.name]
         return arrs
 
     def _npeval_mat(self, a):
@@ -125,7 +128,7 @@ class _TestModel(BaseModel):
     drift = '(y1 - y1_3/3 + y2 + e)*b', '(a - y1 + i1 + d)/b'
     diffs = 'c', 'c'
     obsrv = 'y1',
-    const = {'d': 3.0, 'e': -12.23904e-2}
+    const = {'d': 3.0, 'e': -12.23904e-2, 'a': 1.05, 'b': 3.0, 'c': 1e-5}
     limit = (-1, 1), (-1, 1)
 
 
@@ -138,6 +141,7 @@ class Kuramoto(BaseModel):
     drift = 'omega + I',
     diffs = 0,
     obsrv = 'theta', 'sin(theta)'
+    const = {'omega': 1.0}
 
 
 class HMJE(BaseModel):
@@ -152,9 +156,9 @@ class HMJE(BaseModel):
             '+ (x1 >= 0)*(slope - x2 + 0.6 * (z - 4)**2)'   # noqa: E131
         ') * x1)',
     'tt * (c - d * x1 * x1 - y1)',
-    'tt * (r * (4 * (x1 - x0) - z + (z < 0) * (-0.1 * pow(z, 7)) + Ks * c1))',
+    'tt * (r * (4 * (x1 - x0) - z +  Ks * c1))',
     'tt * (-y2 + x2 - x2*x2*x2 + Iext2 + 2 * g - 0.3 * (z - 3.5) + Kf * c2)',
-    'tt * ((-y2 + (x2 >= (-3.5)) * (aa * (x2 + 0.25))) / tau)',
+    'tt * ((-y2 + (x2 >= (-0.25)) * (aa * (x2 + 0.25))) / tau)',
     'tt * (-0.01 * (g - 0.1 * x1))'
     )
     diffs = 0, 0, 0, 0.0003, 0.0003, 0
