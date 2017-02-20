@@ -37,6 +37,7 @@ from .rng import RNG
 from .schemes import euler_maruyama_logp
 from .harness import SimpleTimeStep
 from .utils import getLogger
+from .aligned import AlignedAlloc
 
 LOG = logging.getLogger(__name__)
 
@@ -52,6 +53,14 @@ class TestCase(unittest.TestCase):
         super().tearDown()
         msg = 'required %.3fs'
         self.logger.info(msg, time.time() - self.tic)
+
+
+class TestAligned(TestCase):
+
+    def test_aligned(self):
+        mem = AlignedAlloc(1024)
+        self.assertNotEqual(mem.buf, 0)
+        del mem
 
 
 class TestCG(TestCase):
