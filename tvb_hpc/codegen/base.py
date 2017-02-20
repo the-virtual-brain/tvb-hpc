@@ -32,7 +32,7 @@ class TypeTable:
         Type('void', ct.c_void_p, np.void),
     ]
 
-    def find_type(self, type):
+    def find_type(self, type) -> Type:
         """
         Finds correspondences among C type names (str), ctypes types and numpy
         types.
@@ -266,7 +266,7 @@ class BaseCodeGen:
     ).split(' ')
 
     @property
-    def math_names(self):
+    def math_names(self) -> List[str]:
         """
         A list of names of mathematical functions which can be
         expected to be available. By default, it includes all names provided by
@@ -286,7 +286,7 @@ class BaseCodeGen:
 
         """
         value = spec.align
-        lines = []
+        lines = []  # type: List[str]
         if value is None:
             return lines
         for name in names:

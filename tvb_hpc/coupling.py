@@ -51,7 +51,7 @@ class BaseCoupling:
         obsrv_sym = self.model.obsrv_sym
         if self.model.input_sym.size < obsrv_sym.size:
             msg = 'input shorter than obsrv, truncating obsrv used for cfun.'
-            self.logger.info(msg)
+            self.logger.debug(msg)
             obsrv_sym = obsrv_sym[:self.model.input_sym.size]
         terms = (
             obsrv_sym,

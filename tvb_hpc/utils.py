@@ -89,8 +89,10 @@ class timer:
 
     def __enter__(self, *args):
         self.tic = time.time()
+        return self
 
     def __exit__(self, *args):
         toc = time.time()
+        self.elapsed = toc - self.tic
         msg = 'elapsed %.3fs'
-        self.logger.info(msg, toc - self.tic)
+        self.logger.info(msg, self.elapsed)
