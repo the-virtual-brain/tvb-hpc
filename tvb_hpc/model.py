@@ -39,6 +39,7 @@ class BaseModel:
     obsrv = '',
     const = {}
     auxex = []
+    limit = []
 
     def __init__(self):
         # TODO check dependencies etc
@@ -69,6 +70,10 @@ class BaseModel:
         for key in 'state input param drift diffs obsrv'.split():
             shape = nnode, len(getattr(self, key + '_sym')), spec.width
             arrs.append(np.zeros(shape, dtype))
+        state = arrs[0]
+        for i, (lo, hi) in enumerate(self.limit):
+            state[:, i, :] = np.random.uniform(float(lo), float(hi),
+                                               size=(nnode, spec.width))
         return arrs
 
     def _npeval_mat(self, a):
@@ -121,12 +126,13 @@ class _TestModel(BaseModel):
     diffs = 'c', 'c'
     obsrv = 'y1',
     const = {'d': 3.0, 'e': -12.23904e-2}
+    limit = (-1, 1), (-1, 1)
 
 
 class Kuramoto(BaseModel):
     "Kuramoto model of phase synchronization."
     state = 'theta'
-    state_limits = {'theta': (-np.pi, np.pi, 'wrap')}
+    limit = (-np.pi, np.pi),
     input = 'I'
     param = 'omega'
     drift = 'omega + I',
@@ -137,6 +143,7 @@ class Kuramoto(BaseModel):
 class HMJE(BaseModel):
     "Hindmarsh-Rose-Jirsa Epileptor model of seizure dynamics."
     state = 'x1 y1 z x2 y2 g'
+    limit = (-2, 1), (20, 2), (2, 5), (-2, 0), (0, 2), (-1, 1)
     input = 'c1 c2'
     param = 'x0 Iext r'
     drift = (
@@ -160,7 +167,7 @@ class HMJE(BaseModel):
 class RWW(BaseModel):
     "Reduced Wong-Wang firing rate model."
     state = 'S'
-    state_limits = {'S': (0, 1, 'clip')}
+    limit = (0, 1),
     input = 'c'
     param = 'w io'
     const = {'a': 0.270, 'b': 0.108, 'd': 154.0, 'g': 0.641,
@@ -177,6 +184,7 @@ class RWW(BaseModel):
 class JansenRit(BaseModel):
     "Jansen-Rit model of visual evoked potentials."
     state = 'y0 y1 y2 y3 y4 y5'
+    limit = (-1, 1), (-500, 500), (-50, 50), (-6, 6), (-20, 20), (-500, 500)
     const = {'A': 3.25, 'B': 22.0, 'a': 0.1, 'b': 0.05, 'v0': 5.52,
              'nu_max': 0.0025, 'r': 0.56, 'J': 135.0, 'a_1': 1.0, 'a_2': 0.8,
              'a_3': 0.25, 'a_4': 0.25, 'mu': 0.22}
@@ -200,6 +208,7 @@ class JansenRit(BaseModel):
 class Linear(BaseModel):
     'Linear differential equation'
     state = 'x'
+    limit = (-10, 10),
     input = 'c'
     param = 'lam'
     const = {'lam': -1}  # default value
@@ -211,6 +220,7 @@ class Linear(BaseModel):
 class G2DO(BaseModel):
     "Generic nonlinear 2-D (phase plane) oscillator."
     state = 'W V'
+    limit = (-5, 5), (-5, 5)
     input = 'c_0'
     param = 'a'
     const = {'tau': 1.0, 'I': 0.0, 'a': -2.0, 'b': -10.0, 'c': 0.0, 'd': 0.02,
