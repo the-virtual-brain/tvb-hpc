@@ -13,7 +13,38 @@
 #     limitations under the License.
 
 
-from .base import BaseCodeGen, Loop, indent, Storage, Func
+"""
+Functions for constructing numerical schemes for nonlinear
+stochastic differential equations.  Since our symbolics are
+not fancy for the moment, only one-step schemes.
+
+"""
+
+import numpy as np
+import pymbolic as pm
+from .codegen import BaseCodeGen, Loop, indent, Storage, Func
+
+
+def euler(x, dx, dt=None):
+    "Construct standard Euler step."
+    dt = dt or pm.var('dt')
+    return x + dt * dx
+
+
+def euler_maruyama(x, f, g, dt=None, dWt=None):
+    "Construct SDE Euler-Maruyama step."
+    dt = dt or pm.var('dt')
+    dWt = dWt or pm.var('dWt')
+    return x + dt * f + dWt * dt**0.5 * g
+
+
+def euler_maruyama_logp(x, f, g, xn=None, dt=None, step=euler):
+    "Construct normal log p."
+    dt = dt or pm.var('dt')
+    mu = step(x, f, dt)
+    sd = dt ** 0.5 * g
+    xn = xn or np.array([pm.var(v.name + '_n') for v in x])
+    return -(xn - mu) ** 2 / (2 * sd ** 2)
 
 
 class EulerSchemeGen(BaseCodeGen):
@@ -33,18 +64,18 @@ unsigned int idx = i * {width} * {nsvar} + j * {width} + l;
 state[idx] += dt * drift[idx];
 """
 
-    def __init__(self, modelcg):
-        self.modelcg = modelcg
+    def __init__(self, model):
+        self.model = model
 
     @property
     def kernel_name(self):
         return 'tvb_Euler_%s' % (
-            self.modelcg.model.__class__.__name__, )
+            self.model.__class__.__name__, )
 
     def generate_c(self, spec, storage=Storage.default):
-        model_code = self.modelcg.generate_code(spec, Storage.static)
-        model_name = self.modelcg.kernel_name
-        nsvar = self.modelcg.model.state_sym.size
+        model_code = self.model.generate_code(spec, Storage.static)
+        model_name = self.model.kernel_name
+        nsvar = self.model.state_sym.size
         chunk = Loop('l', spec.width,
                      self.chunk_template.format(nsvar=nsvar, **spec.dict))
         inner = Loop('j', nsvar, chunk)

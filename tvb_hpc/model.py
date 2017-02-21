@@ -19,8 +19,11 @@ The model module describes neural mass models.
 """
 
 import numpy as np
+import pymbolic as pm
+import loopy as lp
 from pymbolic.mapper.differentiator import DifferentiationMapper
-from .codegen.base import BaseSpec
+from pymbolic.mapper.c_code import CCodeMapper
+from .compiler import Spec
 from .utils import simplify, vars, exprs
 
 
@@ -41,6 +44,8 @@ class BaseModel:
     auxex = []
     limit = []
 
+    template = "#include <math.h>\n{func_code}"
+
     def __init__(self):
         # TODO check dependencies etc
         self.state_sym = vars(self.state)
@@ -60,7 +65,7 @@ class BaseModel:
             exprs.append(simplify(DifferentiationMapper(var)(expr)))
         return np.array(exprs)
 
-    def prep_arrays(self, nnode, spec: BaseSpec):
+    def prep_arrays(self, nnode, spec: Spec):
         """
         Prepare arrays for use with this model.
 
@@ -79,46 +84,60 @@ class BaseModel:
             param[:, i, :] = self.const[psym.name]
         return arrs
 
-    def _npeval_mat(self, a):
-        if a.shape[1] == 0:
-            return []
-        return np.transpose(a, (1, 0, 2)).reshape((a.shape[1], -1))
+    def kernel(self, target=None, typed=True):
+        domains = self._kernel_domains()
+        body = '\n'.join(self.instructions())
+        data = self._kernel_data()
+        knl = lp.make_kernel(domains, body, data, target=target)
+        if typed:
+            dtypes = self._kernel_dtypes()
+            knl = lp.add_dtypes(knl, dtypes)
+        return knl
 
-    def npeval(self, arrs):
-        """
-        Evaluate model equations on arrays using NumPy.
+    def _kernel_domains(self):
+        return "{ [i, j]: 0 <= i < nblock and 0 <= j < width }"
 
-        """
-        # TODO generalize layout.. xarray?
-        nn, _, w = arrs[0].shape
-        ns = {}
-        x, i, p, f, g, o = arrs
-        for key in dir(np):
-            ns[key] = getattr(np, key)
-        ns.update(self.const)
-        for par, val in zip(self.param_sym, self._npeval_mat(p)):
-            ns[par.name] = val
-        for svar, val in zip(self.state_sym, self._npeval_mat(x)):
-            ns[svar.name] = val
-        for ivar, val in zip(self.input_sym, self._npeval_mat(i)):
-            ns[ivar.name] = val
+    def _kernel_data(self):
+        data = 'nblock width state input param drift diffs obsrv'.split()
+        return data
+
+    def _kernel_dtypes(self):
+        dtypes = {key: np.float32 for key in self._kernel_data()[2:]}
+        dtypes['nblock'] = np.uintc
+        dtypes['width'] = np.uintc
+        return dtypes
+
+    def _insn_constants(self):
+        fmt = '<> {key} = {val}'
+        for key, val in self.const.items():
+            if key not in self.param:
+                yield fmt.format(key=key, val=val)
+
+    def _insn_unpack(self):
+        fmt = '<> {var} = {kind}[i, {i}, j]'
+        for kind in 'state input param'.split():
+            vars = getattr(self, kind + '_sym')
+            for i, var in enumerate(vars):
+                yield fmt.format(kind=kind, var=var.name, i=i)
+
+    def _insn_auxex(self):
+        fmt = '<> {lhs} = {rhs}'
         for lhs, rhs in self.auxex:
-            ns[lhs] = eval(rhs, ns)
-        for i, expr in enumerate(self.drift):
-            f[:, i, :] = self._npeval_expr(expr, ns, (nn, w))
-        for i, expr in enumerate(self.diffs):
-            g[:, i, :] = self._npeval_expr(expr, ns, (nn, w))
-        for i, expr in enumerate(self.obsrv):
-            o[:, i, :] = self._npeval_expr(expr, ns, (nn, w))
+            yield fmt.format(lhs=lhs, rhs=rhs)
 
-    def _npeval_expr(self, expr, ns, shape):
-        if isinstance(expr, (str, )):
-            return eval(expr, ns).reshape(shape)
-        elif isinstance(expr, (int, float)):
-            return expr
-        else:
-            raise ValueError(type(expr))
+    def _insn_store(self):
+        fmt = '{kind}[i, {i}, j] = {expr}'
+        for kind in 'drift diffs obsrv'.split():
+            exprs = getattr(self, kind + '_sym')
+            nvar = len(getattr(self, kind + '_sym'))
+            for i, expr in enumerate(exprs):
+                yield fmt.format(kind=kind, expr=str(expr), i=i)
 
+    def instructions(self):
+        lines = []
+        for section in 'constants unpack auxex store'.split():
+            lines += list(getattr(self, '_insn_' + section)())
+        return lines
 
 class _TestModel(BaseModel):
     state = 'y1 y2'
@@ -163,8 +182,8 @@ class HMJE(BaseModel):
     )
     diffs = 0, 0, 0, 0.0003, 0.0003, 0
     obsrv = 'x1', 'x2', 'z', '-x1 + x2'
-    const = {'Iext2': 0.45, 'a': 1, 'b': 3, 'slope': 0, 'tt': 1, 'c': 1,
-             'd': 5, 'Kvf': 0, 'Ks': 0, 'Kf': 0, 'aa': 6, 'tau': 10,
+    const = {'Iext2': 0.45, 'a': 1.0, 'b': 3.0, 'slope': 0.0, 'tt': 1.0, 'c': 1.0,
+             'd': 5.0, 'Kvf': 0.0, 'Ks': 0.0, 'Kf': 0.0, 'aa': 6.0, 'tau': 10.0,
              'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}
 
 

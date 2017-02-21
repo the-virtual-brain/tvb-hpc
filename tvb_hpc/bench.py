@@ -19,7 +19,7 @@ A few benchmarks, not comprehensive.
 
 import numpy as np
 from .lab import HMJE, LinearCfun, DenseNetwork, timer, SimpleTimeStep
-from .codegen.base import BaseSpec
+from .compiler import Spec
 from .utils import getLogger
 
 
@@ -39,7 +39,7 @@ class CtypesOverhead(BaseBench):
         cfun = LinearCfun(model)
         weights = np.abs(np.random.randn(nnode, nnode)).astype('f')
         net = DenseNetwork(model, cfun)
-        spec = BaseSpec('float', 2)
+        spec = Spec('float', 2)
         stepper = SimpleTimeStep(model, cfun, net, spec=spec)
         stepper.prep_data(weights=weights)
         with timer() as t:

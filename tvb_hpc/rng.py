@@ -23,44 +23,39 @@ switch to a 32-bit. See include/Random123/index.html for details.
 
 import numpy as np
 import ctypes
-from tvb_hpc.codegen.base import BaseCodeGen
-from tvb_hpc.compiler import CppCompiler
-from tvb_hpc.utils import include_dir
+from .compiler import CppCompiler, Spec
+from .utils import include_dir
 
 rng_template = """
 #include <Random123/philox.h>
 #include <Random123/boxmuller.hpp>
 
 extern "C" {
+    void tvb_rng(long long int seed, unsigned int nout,
+                 float * __restrict out) {
 
-void tvb_rng(long long int seed, unsigned int nout,
-             float * __restrict out) {
+        // TODO other variants might vectorize better?
+        %(loop_pragma)s
+        for(unsigned int i=0; i<(nout/4); ++i) {
+            philox4x32_ctr_t ctr;
+            philox4x32_key_t key;
 
-    %(decls)s
+            ctr.v[0] = seed + 4*i;
+            ctr.v[1] = seed + 4*i + 1;
+            ctr.v[2] = seed + 4*i + 2;
+            ctr.v[3] = seed + 4*i + 3;
 
-    // TODO other variants might vectorize better?
-    %(loop_pragma)s
-    for(unsigned int i=0; i<(nout/4); ++i) {
-        philox4x32_ctr_t ctr;
-        philox4x32_key_t key;
+            philox4x32_ctr_t result = philox4x32(ctr, key);
 
-        ctr.v[0] = seed + 4*i;
-        ctr.v[1] = seed + 4*i + 1;
-        ctr.v[2] = seed + 4*i + 2;
-        ctr.v[3] = seed + 4*i + 3;
+            r123::float2 normal = r123::boxmuller(result.v[0], result.v[1]);
+            out[i*4 + 0] = normal.x;
+            out[i*4 + 1] = normal.y;
 
-        philox4x32_ctr_t result = philox4x32(ctr, key);
-
-        r123::float2 normal = r123::boxmuller(result.v[0], result.v[1]);
-        out[i*4 + 0] = normal.x;
-        out[i*4 + 1] = normal.y;
-
-        r123::float2 normal2 = r123::boxmuller(result.v[2], result.v[3]);
-        out[i*4 + 2] = normal2.x;
-        out[i*4 + 3] = normal2.y;
+            r123::float2 normal2 = r123::boxmuller(result.v[2], result.v[3]);
+            out[i*4 + 2] = normal2.x;
+            out[i*4 + 3] = normal2.y;
+        }
     }
-}
-
 }
 
 """
@@ -68,23 +63,24 @@ void tvb_rng(long long int seed, unsigned int nout,
 
 class RNG:
 
-    def __init__(self, comp=None):
+    def __init__(self, comp: CppCompiler=None):
         self.comp = comp or CppCompiler()  # type: Compiler
-        self.cg = BaseCodeGen()
 
-    def build(self, spec):
+    def generate_c(self, spec: Spec=None):
+        spec = spec or Spec()
         self.comp.cflags += ['-I' + include_dir]
         loop_pragma = ''
         if spec.openmp:
             loop_pragma = '#pragma omp parallel for'
         decls = []
-        decls += self.cg.generate_alignments(['out'], spec)
-        code = rng_template % {
+        # decls += self.generate_alignments(['out'], spec)
+        return rng_template % {
             'loop_pragma': loop_pragma,
             'decls': '\n    '.join(decls),
         }
-        # TODO move to ffi module?
-        self.dll = self.comp('rng', code)
+
+    def build(self, spec):
+        self.dll = self.comp.build(self.generate_c(spec))
         self.fn = self.dll.tvb_rng
         self.fn.restype = None
         self.fn.argtypes = [ctypes.c_longlong,

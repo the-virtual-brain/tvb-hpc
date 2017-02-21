@@ -15,29 +15,22 @@
 import time
 import logging
 import unittest
-
+import loopy as lp
+from loopy.target.c import CTarget
 import numpy as np
 import numpy.testing
 from scipy.stats import kstest
-
-from .bold import BalloonWindkessel
-from .codegen.base import BaseSpec, Loop, Func, TypeTable, Storage
-from .codegen.model import ModelGen1
-from .codegen.cfun import CfunGen1
-from .codegen.network import NetGen1, NetGen2
-from .codegen.scheme import EulerSchemeGen
-from .compiler import Compiler
-from .compiler import CppCompiler
-from .coupling import BaseCoupling
-from .coupling import Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf
+# from .bold import BalloonWindkessel
+from .compiler import Compiler, CppCompiler, CompiledKernel, Spec
+# from .coupling import Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
-from .network import DenseNetwork, DenseDelayNetwork
+# from .network import DenseNetwork, DenseDelayNetwork
 from .rng import RNG
-from .schemes import euler_maruyama_logp
-from .harness import SimpleTimeStep
+# from .scheme import euler_maruyama_logp, EulerSchemeGen
+# from .harness import SimpleTimeStep
 from .utils import getLogger
-from .aligned import AlignedAlloc
+
 
 LOG = logging.getLogger(__name__)
 
@@ -55,29 +48,17 @@ class TestCase(unittest.TestCase):
         self.logger.info(msg, time.time() - self.tic)
 
 
-class TestAligned(TestCase):
+class TestCompiledKernel(TestCase):
 
-    def test_aligned(self):
-        mem = AlignedAlloc(1024)
-        self.assertNotEqual(mem.buf, 0)
-        del mem
-
-
-class TestCG(TestCase):
-
-    def test_func_loop(self):
-        ttable = TypeTable()
-        for name in 'float double int'.split():
-            ft = ttable.find_type(name)
-            func = Func(
-                name='test_loop',
-                args=ft.name + ' *x',
-                body=Loop(var='i', hi=10, body='x[i] += 1;')
-            )
-            x = np.zeros((20, ), ft.numpy)
-            func(x)
-            self.assertTrue((x[:10] == 1).all())
-            self.assertTrue((x[10:] == 0).all())
+    def test_simple_kernel(self):
+        knl = lp.make_kernel("{ [i]: 0<=i<n }", "out[i] = 2*a[i]", target=CTarget())
+        typed = lp.add_dtypes(knl, {'a': np.float32})
+        code, _ = lp.generate_code(typed)
+        fn = CompiledKernel(typed)
+        a, out = np.zeros((2, 10), np.float32)
+        a[:] = np.r_[:a.size]
+        fn(a, 10, out)
+        np.testing.assert_allclose(out, a * 2)
 
 
 class TestLogProb(TestCase):
@@ -100,20 +81,16 @@ class TestModel(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.spec = BaseSpec('float', 8)
+        self.spec = Spec('float', 8)
 
-    def _test(self, model: BaseModel, spec: BaseSpec, log_code=False):
-        comp = Compiler()
-        cg = ModelGen1(model)
-        code = cg.generate_code(spec)
-        if log_code:
-            LOG.debug(code)
-        lib = comp(model.__class__.__name__, code)
-        cg.func.fn = getattr(lib, cg.kernel_name)
-        cg.func.annot_types(cg.func.fn)
-        arrs = model.prep_arrays(1024, self.spec)
-        cg.func(arrs[0].shape[0], *arrs)
+    def _test(self, model: BaseModel, spec: Spec, log_code=False):
+        knl = model.kernel(target=CTarget())
+        cknl = CompiledKernel(knl)
+        arrs = model.prep_arrays(256, self.spec)
+        nblock, _, width = arrs[0].shape
+        cknl(nblock, width, *arrs)
 
+    @unittest.skip('reimpl')
     def test_balloon_model(self):
         model = BalloonWindkessel()
         self._test(model, self.spec)
@@ -141,10 +118,9 @@ class TestModel(TestCase):
 
 class TestRNG(TestCase):
 
-    def test_r123_unifrom(self):
-        comp = CppCompiler()
-        rng = RNG(comp)
-        rng.build(BaseSpec())
+    def test_r123_normal(self):
+        rng = RNG()
+        rng.build(Spec())
         # LOG.debug(list(comp.cache.values())[0]['asm'])
         array = np.zeros((1024 * 1024, ), np.float32)
         rng.fill(array)
@@ -155,59 +131,61 @@ class TestRNG(TestCase):
         self.assertLess(d, 0.01)
 
 
+@unittest.skip('reimpl')
 class TestCoupling(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.spec = BaseSpec('float', 8)
+        self.spec = Spec('float', 8)
 
-    def _test_cfun_code(self, cf: BaseCoupling):
+    def _test_cfun_code(self, Cf, model):
+        cf = Cf(model, storage=Storage.default)
         comp = Compiler()
-        cg = CfunGen1(cf, storage=Storage.default)
-        dll = comp(cf.__class__.__name__, cg.generate_code(self.spec))
-        for name in cg.kernel_names:
+        # TODO improve API here:
+        dll = comp(cf.__class__.__name__, cf.generate_code(self.spec))
+        for name in cf.kernel_names:
             getattr(dll, name)
 
     def test_linear(self):
         model = G2DO()
-        self._test_cfun_code(LCf(model))
+        self._test_cfun_code(LCf, model)
 
     def test_diff(self):
         model = G2DO()
-        self._test_cfun_code(Diff(model))
+        self._test_cfun_code(Diff, model)
 
     def test_sigm(self):
         model = JansenRit()
-        self._test_cfun_code(Sigmoidal(model))
+        self._test_cfun_code(Sigmoidal, model)
 
     def test_kura(self):
         model = Kuramoto()
-        self._test_cfun_code(KCf(model))
+        self._test_cfun_code(KCf, model)
 
 
+@unittest.skip('reimpl')
 class TestNetwork(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.spec = BaseSpec('float', 8)
+        self.spec = Spec('float', 8)
         self.comp = Compiler()
 
     def _test_dense(self, model_cls, cfun_cls):
         model = model_cls()
         cfun = cfun_cls(model)
         net = DenseNetwork(model, cfun)
-        cg = NetGen1(net)
-        code = cg.generate_code(CfunGen1(cfun), self.spec)
+        code = net.generate_code(self.spec)
         dll = self.comp('dense_net', code)
-        cg.func.fn = getattr(dll, cg.kernel_name)
-        cg.func.annot_types(cg.func.fn)
+        net.func.fn = getattr(dll, net.kernel_name)
+        net.func.annot_types(net.func.fn)
         nnode = 128
         nblck = int(nnode / self.spec.width)
         _, input, _, _, _, obsrv = model.prep_arrays(nblck, self.spec)
         robsrv = np.random.randn(*obsrv.shape).astype(self.spec.np_dtype)
         weights = np.random.randn(nnode, nnode).astype(self.spec.np_dtype)
         obsrv[:] = robsrv
-        cg.func(nnode, weights, input, obsrv)
+        net.func(nnode, weights, input, obsrv)
         input1 = input.copy()
         _, input, _, _, _, obsrv = model.prep_arrays(nblck, self.spec)
         obsrv[:] = robsrv
@@ -225,15 +203,14 @@ class TestNetwork(TestCase):
         self._test_dense(JansenRit, Sigmoidal)
 
     def test_delay(self):
-        spec = BaseSpec('float', width=4)
+        spec = Spec('float', width=4)
         model = HMJE()
         cfun = LCf(model)
         net = DenseDelayNetwork(model, cfun)
-        cg = NetGen2(net)
-        code = cg.generate_code(CfunGen1(cfun), spec)
+        code = net.generate_code(spec)
         dll = self.comp('dense_delay_net', code)
-        cg.func.fn = getattr(dll, cg.kernel_name)
-        cg.func.annot_types(cg.func.fn)
+        net.func.fn = getattr(dll, net.kernel_name)
+        net.func.annot_types(net.func.fn)
         nnode = 64
         nblck = int(nnode / spec.width)
         _, input, _, _, _, obsrv = model.prep_arrays(nblck, spec)
@@ -246,7 +223,7 @@ class TestNetwork(TestCase):
         i_t = 75
         obsrv[:] = robsrv
         # import pdb; pdb.set_trace()
-        cg.func(nnode, i_t, delays, weights, input, obsrv)
+        net.func(nnode, i_t, delays, weights, input, obsrv)
         input1 = input.copy()
         _, input, _, _, _, obsrv = model.prep_arrays(nblck, spec)
         obsrv = np.zeros((100, ) + obsrv.shape, obsrv.dtype)
@@ -256,17 +233,17 @@ class TestNetwork(TestCase):
         numpy.testing.assert_allclose(input1, input2, 1e-5, 1e-6)
 
 
+@unittest.skip('reimpl')
 class TestScheme(TestModel):
 
     def setUp(self):
         super().setUp()
-        self.spec = BaseSpec('float', 8, openmp=True)
+        self.spec = Spec('float', 8, openmp=True)
         self.comp = Compiler(openmp=True)
 
-    def _test(self, model: BaseModel, spec: BaseSpec):
+    def _test(self, model: BaseModel, spec: Spec):
         comp = Compiler()
-        modelcg = ModelGen1(model)
-        eulercg = EulerSchemeGen(modelcg)
+        eulercg = EulerSchemeGen(model)
         code = eulercg.generate_c(self.spec)
         lib = comp(eulercg.kernel_name, code)
         eulercg.func.fn = getattr(lib, eulercg.kernel_name)
@@ -286,6 +263,7 @@ class TestScheme(TestModel):
         numpy.testing.assert_allclose(o0, o1, 1e-5, 1e-6)
 
 
+@unittest.skip('reimpl')
 class TestHarness(TestCase):
 
     def test_hmje(self):

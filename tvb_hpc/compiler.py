@@ -21,121 +21,221 @@ which can be loaded via ctypes.
 
 import os
 import os.path
-import sys
 import logging
 import ctypes
 import tempfile
+import weakref
 import subprocess
-from tvb_hpc.utils import which, NoSuchExecutable
+from typing import List
+import numpy as np
+import loopy as lp
+from loopy.target.c import CTarget, generate_header
+import cgen
+from tvb_hpc.utils import which
 
 
 LOG = logging.getLogger(__name__)
 
+class Spec:
+    """
+    Spec handles details dtype, vectorization, alignment, etc which affect
+    code generation but not the math.
 
-CC = os.environ.get('CC', 'gcc')
-LOG.debug('defaulting to %r as C compiler, set CC otherwise' % CC)
+    """
 
-CXX = os.environ.get('CXX', 'g++')
-LOG.debug('defaulting to %r as C compiler, set CXX otherwise' % CXX)
+    def __init__(self, float='float', width=8, align=None, openmp=False,
+                 layout=None, debug=False):
+        self.float = float
+        self.width = width
+        self.align = align
+        self.openmp = openmp
+        # TODO refactor this
+        self.layout = layout
+        self.debug = debug
 
-CFLAGS = os.environ.get('CFLAGS', '-std=c99 -Wall -Wextra').split()
-LOG.debug('defaulting to %r as C flags, set CFLAGS otherwise' % CFLAGS)
+    # TODO refactor using loopy et al
+    @property
+    def dtype(self):
+        return self.float
 
-CXXFLAGS = os.environ.get('CXXFLAGS', '-std=c++11 -Wall -Wextra').split()
-LOG.debug('defaulting to %r as CXX flags, set CXXFLAGS otherwise' % CXXFLAGS)
+    @property
+    def np_dtype(self):
+        return {'float': np.float32}[self.dtype]
 
-LDFLAGS = os.environ.get('LDFLAGS', '').split()
-LOG.debug('defaulting to %r as linker flags, set LDFLAGS otherwise' % LDFLAGS)
+    @property
+    def ct_dtype(self):
+        return {'float': ct.c_float}[self.dtype]
 
-
-OPENMP = False
-if sys.platform == 'darwin':
-    os.environ['PATH'] = '/usr/local/bin:' + os.environ['PATH']
-    try:
-        CC = which('gcc-6')
-        CXX = which('g++-6')
-        LOG.debug('switched to CC=%r, CXX=%r' % (CC, CXX))
-    except NoSuchExecutable:
-        LOG.warning('Please brew install gcc-6 if you wish to use OpenMP.')
-
-
-_DEFAULT_SANFLAGS = '-g -fsanitize=address -fsanitize=undefined'
-SANFLAGS = os.environ.get('SANFLAGS', _DEFAULT_SANFLAGS).split()
-if SANFLAGS:
-    CFLAGS += SANFLAGS
-    CXXFLAGS += SANFLAGS
+    # TODO refactor so not needed
+    @property
+    def dict(self):
+        return {
+            'float': self.float,
+            'width': self.width,
+            'align': self.align,
+            'openmp': self.openmp
+        }
 
 
 class Compiler:
     """
-    Handles compiler configuration & building code
+    Wraps a C compiler to build and load shared libraries.
 
     """
+
     source_suffix = 'c'
-    default_compiler = CC
-    default_compiler_flags = CFLAGS
+    default_exe = 'gcc'
+    default_compile_flags = '-std=c99 -g -O3 -fPIC'.split()
+    default_link_flags = '-shared'.split()
 
-    def __init__(self, cc=None, cflags=None, ldflags=LDFLAGS, gen_asm=False,
-                 openmp=OPENMP):
-        """
-
-        :param cc: compiler to use
-        :param cflags: list of flags to pass to compiler
-        :param ldflags: list of linker flags
-        :param gen_asm: bool, generate and store assembly
-        :param openmp: bool, use OpenMP
-
-        """
-        self.cc = which(cc or self.default_compiler)
-        self.cflags = cflags or self.default_compiler_flags
-        self.ldflags = ldflags
-        self.cache = {}
-        self.gen_asm = gen_asm
-        self.openmp = openmp
+    def __init__(self, cc: str=None,
+                 cflags: List[str]=None,
+                 ldflags: List[str]=None):
+        self.exe = which(cc) if cc else self.default_exe
+        self.cflags = cflags or self.default_compile_flags[:]
+        self.ldflags = ldflags or self.default_link_flags[:]
         self.tempdir = tempfile.TemporaryDirectory()
-        if self.openmp:
-            self.cflags.append('-fopenmp')
 
-    def __call__(self, name: str, code: str) -> ctypes.CDLL:
-        key = name
-        if key not in self.cache:
-            self.cache[key] = self._build(name, code)
-        return self.cache[key]['dll']
-
-    def tempname(self, name):
+    def _tempname(self, name):
+        "Build temporary filename path in tempdir."
         return os.path.join(self.tempdir.name, name)
 
-    def _build(self, name, code):
-        linocode = '\n'.join(['%05d\t%s' % (i + 1, l)
-                              for i, l in enumerate(code.split('\n'))])
-        LOG.debug('compiling unit %r with code\n%s' % (name, linocode))
-        c_fname = self.tempname(name + '.' + self.source_suffix)
-        S_fname = self.tempname(name + '.S')
-        obj_fname = self.tempname(name + '.o')
-        dll_fname = self.tempname(name + '.so')
+    def _call(self, args, **kwargs):
+        "Invoke compiler with arguments."
+        cwd = self.tempdir.name
+        args_ = [self.exe] + args
+        LOG.debug(args_)
+        subprocess.check_call(args_, cwd=cwd, **kwargs)
+
+    def build(self, code: str) -> ctypes.CDLL:
+        "Compile code, build and load shared library."
+        LOG.debug(code)
+        c_fname = self._tempname('code.' + self.source_suffix)
+        obj_fname = self._tempname('code.o')
+        dll_fname = self._tempname('code.so')
         with open(c_fname, 'w') as fd:
             fd.write(code)
-        self._run([self.cc] + self.cflags + ['-fPIC', '-c', c_fname])
-        if self.gen_asm:
-            self._run([self.cc] + self.cflags + ['-S', c_fname])
-            with open(S_fname, 'r') as fd:
-                asm = fd.read()
-        self._run([self.cc] + self.cflags + self.ldflags +
-                  ['-shared', obj_fname, '-o', dll_fname])
-        dll = ctypes.CDLL(dll_fname)
-        return locals()
+        self._call(self.compile_args(c_fname))
+        self._call(self.link_args(obj_fname, dll_fname))
+        return ctypes.CDLL(dll_fname)
 
-    def __del__(self):
-        self.tempdir.cleanup()
+    def compile_args(self, c_fname):
+        "Construct args for compile command."
+        return self.cflags + ['-c', c_fname]
 
-    def _run(self, args, **kwargs):
-        LOG.debug(args)
-        subprocess.check_call(
-            args, cwd=self.tempdir.name, **kwargs
-        )
+    def link_args(self, obj_fname, dll_fname):
+        "Construct args for link command."
+        return self.ldflags + ['-shared', obj_fname, '-o', dll_fname]
 
 
 class CppCompiler(Compiler):
+    "Subclass of Compiler to invoke a C++ compiler."
     source_suffix = 'c++'
-    default_compiler = CXX
-    default_compiler_flags = CXXFLAGS
+    default_exe = 'g++'
+    default_compile_flags = '-g -O3'.split()
+
+
+class PreparedCall:
+    "Wraps a ctypes function and prepared arguments, lowering call overhead."
+
+    # TODO allow by keyword, so we can ignore argument order
+
+    def __init__(self, fn, args):
+        self._fn = fn
+        assert len(args) == len(self._fn.argtypes)
+        self._prepared_args = [None] * len(self._fn.argtypes)
+        for i, arg in enumerate(args):
+            self.set_arg(i, arg)
+
+    def set_arg(self, idx, arg):
+        "Set argument at idx to arg."
+        arg_t = self._fn.argtypes[idx]
+        if hasattr(arg, 'ctypes'):
+            arg_ = arg.ctypes.data_as(arg_t)
+        else:
+            arg_ = arg_t(arg)
+        self._prepared_args[idx] = arg_
+
+    def __call__(self):
+        "Invoked function with perpared arguments."
+        return self._fn(*self._prepared_args)
+
+
+class CompiledKernel:
+    """
+    A CompiledKernel wraps a loop kernel, compiling it and loading the
+    result as a shared library, and provides access to the kernel as a
+    ctypes function object, wrapped by the __call__ method, which attempts
+    to automatically map argument types.
+
+    """
+
+    def __init__(self, knl: lp.LoopKernel, comp: Compiler=None):
+        assert isinstance(knl.target, CTarget)
+        self.knl = knl
+        self.code, _ = lp.generate_code(knl)
+        self.comp = comp or Compiler()
+        self.dll = self.comp.build(self.code)
+        self.func_decl, = generate_header(knl)
+        self._arg_info = []
+        self._visit_func_decl(self.func_decl)
+        self.name = self.func_decl.subdecl.name
+        restype = self.func_decl.subdecl.typename
+        if restype == 'void':
+            self.restype = None
+        else:
+            raise ValueError('Unhandled restype %r' % (restype, ))
+        self._fn = getattr(self.dll, self.name)
+        self._fn.restype = self.restype
+        self._fn.argtypes = [ctype for name, ctype in self._arg_info]
+        self._prepared_call_cache = weakref.WeakKeyDictionary()
+
+    def prepare_call(self, args):
+        "Prepare arguments for function call, reducing overhead."
+        return PreparedCall(self._fn, args)
+
+    def __call__(self, *args):
+        "Execute kernel with given args mapped to ctypes equivalents."
+        return self.prepare_call(args)()
+
+    def _append_arg(self, name, dtype, pointer=False):
+        "Append arg info to current argument list."
+        self._arg_info.append((
+            name,
+            self._dtype_to_ctype(dtype, pointer=pointer)
+        ))
+
+    def _visit_const(self, node: cgen.Const):
+        "Visit const arg of kernel."
+        if isinstance(node.subdecl, cgen.RestrictPointer):
+            self._visit_pointer(node.subdecl)
+        else:
+            pod = node.subdecl  # type: cgen.POD
+            self._append_arg(pod.name, pod.dtype)
+
+    def _visit_pointer(self, node: cgen.RestrictPointer):
+        "Visit pointer argument of kernel."
+        pod = node.subdecl  # type: cgen.POD
+        self._append_arg(pod.name, pod.dtype, pointer=True)
+
+    def _visit_func_decl(self, func_decl: cgen.FunctionDeclaration):
+        "Visit nodes of function declaration of kernel."
+        for i, arg in enumerate(func_decl.arg_decls):
+            if isinstance(arg, cgen.Const):
+                self._visit_const(arg)
+            elif isinstance(arg, cgen.RestrictPointer):
+                self._visit_pointer(arg)
+            else:
+                raise ValueError('unhandled type for arg %r' % (arg, ))
+
+    def _dtype_to_ctype(self, dtype, pointer=False):
+        "Map NumPy dtype to equivalent ctypes type."
+        target = self.knl.target  # type: CTarget
+        registry = target.get_dtype_registry().wrapped_registry
+        typename = registry.dtype_to_ctype(dtype)
+        typename = {'unsigned': 'uint'}.get(typename, typename)
+        basetype = getattr(ctypes, 'c_' + typename)
+        if pointer:
+            return ctypes.POINTER(basetype)
+        return basetype
+

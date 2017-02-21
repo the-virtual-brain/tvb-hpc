@@ -14,17 +14,17 @@
 
 
 """
-Harnesses hold things in place.
+Harnesses coordinate multiple kernels for a given use case.
+
+While time stepping is the only harness currently implemented,
+two important use cases to be added are parallel parameter sweeps
+and log-p & gradients for Bayesian inversion.
 
 """
 
-from tvb_hpc.codegen.cfun import CfunGen1
-from tvb_hpc.codegen.model import ModelGen1
-from tvb_hpc.codegen.scheme import EulerSchemeGen
-from tvb_hpc.codegen.network import NetGen1
-from tvb_hpc.codegen.base import BaseSpec
-from tvb_hpc.compiler import Compiler
-from tvb_hpc.utils import getLogger
+from .compiler import Compiler, Spec
+from .utils import getLogger
+from .scheme import EulerSchemeGen
 
 
 class BaseHarness:
@@ -33,7 +33,7 @@ class BaseHarness:
 
 class SimpleTimeStep(BaseHarness):
     """
-    Simple time-stepping single simulation.
+    Simple time-stepping for a single simulation.
 
     """
 
@@ -41,23 +41,19 @@ class SimpleTimeStep(BaseHarness):
         self.model = model
         self.cfun = cfun
         self.net = net
-        # setup code generators
-        model_cg = ModelGen1(model)
-        cfun_cg = CfunGen1(cfun)
-        step_cg = EulerSchemeGen(model_cg)
-        net_cg = NetGen1(net)
-        # generate code (less than ideal api)
-        spec = spec or BaseSpec(openmp=True)
+        self.step = EulerSchemeGen(model)
+        # TODO improve API on this stuff
+        spec = spec or Spec(openmp=True)
         comp = comp or Compiler(openmp=True)
-        comp.cflags += '-O3 -ffast-math -march=native'.split()
-        net_c = net_cg.generate_c(cfun_cg, spec)
-        net_cg.func.fn = getattr(comp('net', net_c), net_cg.kernel_name)
-        net_cg.func.annot_types(net_cg.func.fn)
-        step_c = step_cg.generate_c(spec)
-        step_cg.func.fn = getattr(comp('step', step_c), step_cg.kernel_name)
-        step_cg.func.annot_types(step_cg.func.fn)
-        self.net_cg = net_cg
-        self.step_cg = step_cg
+        comp.cflags = comp.cflags + '-O3 -ffast-math -march=native'.split()
+        net_c = self.net.generate_c(spec)
+        self.net.func.fn = getattr(comp('net', net_c),
+                                   self.net.kernel_name)
+        self.net.func.annot_types(self.net.func.fn)
+        step_c = self.step.generate_c(spec)
+        self.step.func.fn = getattr(comp('step', step_c),
+                                    self.step.kernel_name)
+        self.step.func.annot_types(self.step.func.fn)
         self.spec = spec
         self.comp = comp
         self.logger = getLogger(self.__class__.__name__)
@@ -78,5 +74,5 @@ class SimpleTimeStep(BaseHarness):
         dt = self.model.dt
         x, i, p, f, g, o = self.arrs
         for _ in range(n_iter):
-            self.net_cg.func(self.nnode, self.weights, i, o)
-            self.step_cg.func(dt, self.nnode, x, i, p, f, g, o)
+            self.net.func(self.nnode, self.weights, i, o)
+            self.step.func(dt, self.nnode, x, i, p, f, g, o)
