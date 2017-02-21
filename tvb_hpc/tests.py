@@ -20,7 +20,7 @@ from loopy.target.c import CTarget
 import numpy as np
 import numpy.testing
 from scipy.stats import kstest
-# from .bold import BalloonWindkessel
+from .bold import BalloonWindkessel
 from .compiler import Compiler, CppCompiler, CompiledKernel, Spec
 # from .coupling import Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
@@ -90,7 +90,6 @@ class TestModel(TestCase):
         nblock, _, width = arrs[0].shape
         cknl(nblock, width, *arrs)
 
-    @unittest.skip('reimpl')
     def test_balloon_model(self):
         model = BalloonWindkessel()
         self._test(model, self.spec)

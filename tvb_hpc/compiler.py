@@ -151,7 +151,11 @@ class PreparedCall:
         "Set argument at idx to arg."
         arg_t = self._fn.argtypes[idx]
         if hasattr(arg, 'ctypes'):
-            arg_ = arg.ctypes.data_as(arg_t)
+            if arg.size == 0:
+                # TODO eliminate unused arguments from kernel
+                arg_ = arg_t(0.0)
+            else:
+                arg_ = arg.ctypes.data_as(arg_t)
         else:
             arg_ = arg_t(arg)
         self._prepared_args[idx] = arg_
