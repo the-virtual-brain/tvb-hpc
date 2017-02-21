@@ -242,4 +242,3 @@ class CompiledKernel:
         if pointer:
             return ctypes.POINTER(basetype)
         return basetype
-
