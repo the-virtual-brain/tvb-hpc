@@ -20,14 +20,16 @@ not fancy for the moment, only one-step schemes.
 
 """
 
+from typing import Union
 import numpy as np
 import pymbolic as pm
+from .base import BaseKernel
 
 
-def euler(x, dx, dt=None):
+def euler(x, f, dt=None):
     "Construct standard Euler step."
     dt = dt or pm.var('dt')
-    return x + dt * dx
+    return x + dt * f
 
 
 def euler_maruyama(x, f, g, dt=None, dWt=None):
@@ -46,52 +48,64 @@ def euler_maruyama_logp(x, f, g, xn=None, dt=None, step=euler):
     return -(xn - mu) ** 2 / (2 * sd ** 2)
 
 
-class EulerSchemeGen:
+class EulerStep(BaseKernel):
 
-    template = """
-{model_code}
+    # TODO merge with model dfun kernel to do multiple steps
 
-{func_code}
-"""
+    def __init__(self, dt: Union[pm.var, float]):
+        self.dt = dt
 
-    model_call = """
-{model_name}(nnode, state, input, param, drift, diffs, obsrv);
-"""
+    def kernel_dtypes(self):
+        dtypes = {
+            'nblock': np.uintc,
+            'nsvar': np.uintc,
+            'width': np.uintc,
+            'next': np.float32,
+            'state': np.float32,
+            'drift': np.float32
+        }
+        if isinstance(self.dt, pm.var):
+            dtypes['dt'] = np.float32
+        return dtypes
 
-    chunk_template = """
-unsigned int idx = i * {width} * {nsvar} + j * {width} + l;
-state[idx] += dt * drift[idx];
-"""
+    def kernel_data(self):
+        data = 'nblock nsvar width next state drift'.split()
+        if isinstance(self.dt, pm.var):
+            data.insert(0, self.dt.name)
+        return data
 
-    def __init__(self, model):
-        self.model = model
+    def kernel_domains(self):
+        bounds = ' and '.join([
+            '0 <= i < nblock',
+            '0 <= j < nsvar',
+            '0 <= k < width'
+        ])
+        return "{ [i, j, k]: %s }" % (bounds, )
 
-    @property
-    def kernel_name(self):
-        return 'tvb_Euler_%s' % (
-            self.model.__class__.__name__, )
+    def kernel_isns(self):
+        fmt = 'next[i, j, k] = state[i, j, k] + %s * drift[i, j, k]'
+        return [ fmt % ( self.dt, ) ]
 
-    def generate_c(self, spec):
-        model_code = self.model.generate_code(spec, Storage.static)
-        model_name = self.model.kernel_name
-        nsvar = self.model.state_sym.size
-        chunk = Loop('l', spec.width,
-                     self.chunk_template.format(nsvar=nsvar, **spec.dict))
-        inner = Loop('j', nsvar, chunk)
-        outer = Loop('i', 'nnode/%d' % spec.width, inner)
-        if spec.openmp:
-            chunk.pragma = '#pragma omp simd'
-            outer.pragma = '#pragma omp parallel for'
-        body = self.model_call.format(model_name=model_name)
-        body += outer.generate_c(spec)
-        args = 'float dt, unsigned int nnode, '
-        argnames = 'state input param drift diffs obsrv'.split()
-        args += ', '.join(['{float} *{0}'.format(name, **spec.dict)
-                           for name in argnames])
-        self.func = Func(self.kernel_name, indent(body),
-                         args, storage=storage)
-        return self.template.format(
-            model_code=model_code,
-            func_code=self.func.generate_c(spec),
-            **spec.dict
-        )
+
+class EulerMaryuyamaStep(EulerStep):
+
+    def kernel_isns(self):
+        lhs = 'next[{i}] = '
+        rhs = 'state[{i}] + {dt}*drift[{i}] + sqrt_dt*dWt[{i}]*diffs[{i}]'
+        return [
+            '<> sqrt_dt = sqrtf({dt})'.format(dt=self.dt),
+            (lhs + rhs).format(i='i, j, k', dt=self.dt)
+        ]
+
+    def kernel_data(self):
+        data = super().kernel_data()
+        data += ['dWt', 'diffs']
+        return data
+
+    def kernel_dtypes(self):
+        dtypes = super().kernel_dtypes()
+        dtypes.update({
+            'dWt': np.float32,
+            'diffs': np.float32,
+        })
+        return dtypes

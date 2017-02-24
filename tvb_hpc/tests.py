@@ -17,6 +17,7 @@ import logging
 import unittest
 import loopy as lp
 from loopy.target.c import CTarget
+import pymbolic as pm
 import numpy as np
 import numpy.testing
 from scipy.stats import kstest
@@ -28,7 +29,7 @@ from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
 # from .network import DenseNetwork, DenseDelayNetwork
 from .rng import RNG
-from .scheme import euler_maruyama_logp
+from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
 from .utils import getLogger
 
@@ -42,6 +43,18 @@ class TestCase(unittest.TestCase):
         super().setUp()
         self.tic = time.time()
         self.logger = getLogger(self.id())
+        self._time_limit = 0.1
+
+    def timeit(self, fn, *args, **kwds):
+        niter = 0
+        tic = toc = time.time()
+        while ((toc - tic) < self._time_limit):
+            fn(*args, **kwds)
+            toc = time.time()
+            niter += 1
+        per_iter = self._time_limit / niter
+        self.logger.info('%r requires %.3f ms / iter',
+                         fn, per_iter * 1e3)
 
     def tearDown(self):
         super().tearDown()
@@ -62,7 +75,7 @@ class TestCompiledKernel(TestCase):
         np.testing.assert_allclose(out, a * 2)
 
 
-    class TestLogProb(TestCase):
+class TestLogProb(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -87,8 +100,11 @@ class TestModel(TestCase):
     def _test(self, model: BaseModel, spec: Spec, log_code=False):
         knl = model.kernel(target=CTarget())
         cknl = CompiledKernel(knl)
-        arrs = model.prep_arrays(256, self.spec)
+        arrs = model.prep_arrays(2048, self.spec)
         nblock, _, width = arrs[0].shape
+        self.timeit(self._to_time, cknl, nblock, width, arrs)
+
+    def _to_time(self, cknl, nblock, width, arrs):
         cknl(nblock, width, *arrs)
 
     def test_balloon_model(self):
@@ -227,75 +243,24 @@ class TestNetwork(TestCase):
         numpy.testing.assert_allclose(input1, input2, 1e-5, 1e-6)
 
 
-@unittest.skip('reimpl')
-class TestScheme(TestModel):
+class TestScheme(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.spec = Spec('float', 8, openmp=True)
-        self.comp = Compiler(openmp=True)
+    def test_euler_dt_literal(self):
+        scheme = EulerStep(0.1)
+        knl = scheme.kernel(target=CTarget())
+        CompiledKernel(knl)
 
-    def _test(self, model: BaseModel, spec: Spec):
-        comp = Compiler()
-        eulercg = EulerSchemeGen(model)
-        code = eulercg.generate_c(self.spec)
-        lib = comp(eulercg.kernel_name, code)
-        eulercg.func.fn = getattr(lib, eulercg.kernel_name)
-        eulercg.func.annot_types(eulercg.func.fn)
-        arrs = model.prep_arrays(256, self.spec)
-        xr = np.random.randn(*arrs[0].shape).astype('f')
-        arrs[0][:] = xr
-        nnode = arrs[0].shape[0] * arrs[0].shape[-1]
-        eulercg.func(model.dt, nnode, *arrs)
-        x0, _, _, _, _, o0 = arrs
-        arrs = model.prep_arrays(256, self.spec)
-        arrs[0][:] = xr
-        model.npeval(arrs)
-        x, i, p, f, g, o1 = arrs
-        x1 = x + model.dt * f
-        numpy.testing.assert_allclose(x0, x1, 1e-5, 1e-6)
-        numpy.testing.assert_allclose(o0, o1, 1e-5, 1e-6)
+    def test_euler_dt_var(self):
+        scheme = EulerStep(pm.var('dt'))
+        knl = scheme.kernel(target=CTarget())
+        CompiledKernel(knl)
 
+    def test_em_dt_literal(self):
+        scheme = EulerMaryuyamaStep(0.1)
+        knl = scheme.kernel(target=CTarget())
+        CompiledKernel(knl)
 
-@unittest.skip('reimpl')
-class TestHarness(TestCase):
-
-    def test_hmje(self):
-        model = HMJE()
-        cfun = LCf(model)
-        net = DenseNetwork(model, cfun)
-        stepper = SimpleTimeStep(model, cfun, net)
-        nnode = 64
-        dtype = stepper.spec.np_dtype
-        weights = np.random.randn(nnode, nnode).astype(dtype)
-        stepper.prep_data(weights)
-        xr = np.random.randn(*stepper.arrs[0].shape).astype(dtype)
-        stepper.arrs[0][:] = xr
-        x, i, p, f, g, o = [a.copy() for a in stepper.arrs]
-        niter = 100
-        stepper.run(niter)
-        obs1 = stepper.obsrv
-        for _ in range(niter):
-            net.npeval(weights, o, i)
-            model.npeval((x, i, p, f, g, o))
-            x += model.dt * f
-        obs2 = o.copy()
-        numpy.testing.assert_allclose(obs1, obs2, 1e-5, 1e-6)
-
-
-if __name__ == '__main__':
-    # list cases or methods
-    import sys
-    if len(sys.argv) > 1:
-        cmd = sys.argv[1]
-        if cmd in ('cases', 'methods'):
-            for key in dir():
-                val = globals().get(key)
-                if isinstance(val, type) and issubclass(val, TestCase):
-                    if cmd == 'cases':
-                        print('tvb_hpc.tests.%s' % (val.__name__, ))
-                    elif cmd == 'methods':
-                        for key in dir(val):
-                            if key.startswith('test_'):
-                                print('tvb_hpc.tests.%s.%s' % (
-                                    val.__name__, key))
+    def test_em_dt_var(self):
+        scheme = EulerMaryuyamaStep(pm.var('dt'))
+        knl = scheme.kernel(target=CTarget())
+        CompiledKernel(knl)

@@ -26,17 +26,12 @@ A connection is specified node to node, so applies to all cvars.
 """
 
 import enum
-from typing import List, Union
 import numpy as np
 import pymbolic as pm
 from pymbolic.mapper.dependency import DependencyMapper
 from .utils import exprs
 from .model import BaseModel
 from .utils import getLogger
-
-
-# list of Loopy instructions
-Isns = List[str]
 
 
 class PostSumStat(enum.Enum):

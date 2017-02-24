@@ -18,16 +18,17 @@ The model module describes neural mass models.
 
 """
 
+from typing import List
+import itertools
 import numpy as np
-import pymbolic as pm
 import loopy as lp
 from pymbolic.mapper.differentiator import DifferentiationMapper
-from pymbolic.mapper.c_code import CCodeMapper
+from .base import BaseKernel
 from .compiler import Spec
 from .utils import simplify, vars, exprs
 
 
-class BaseModel:
+class BaseModel(BaseKernel):
     """
     BaseModel parses attributes on subclasses, defining a networked SDE.
 
@@ -68,7 +69,7 @@ class BaseModel:
         Prepare arrays for use with this model.
 
         """
-        dtype = spec.np_dtype
+        dtype = np.float32
         arrs = []
         for key in 'state input param drift diffs obsrv'.split():
             shape = nnode, len(getattr(self, key + '_sym')), spec.width
@@ -82,28 +83,26 @@ class BaseModel:
             param[:, i, :] = self.const[psym.name]
         return arrs
 
-    def kernel(self, target=None, typed=True):
-        domains = self._kernel_domains()
-        body = '\n'.join(self.instructions())
-        data = self._kernel_data()
-        knl = lp.make_kernel(domains, body, data, target=target)
-        if typed:
-            dtypes = self._kernel_dtypes()
-            knl = lp.add_dtypes(knl, dtypes)
-        return knl
-
-    def _kernel_domains(self):
+    def kernel_domains(self) -> str:
         return "{ [i, j]: 0 <= i < nblock and 0 <= j < width }"
 
-    def _kernel_data(self):
+    def kernel_data(self) -> List[str]:
         data = 'nblock width state input param drift diffs obsrv'.split()
         return data
 
-    def _kernel_dtypes(self):
-        dtypes = {key: np.float32 for key in self._kernel_data()[2:]}
+    def kernel_dtypes(self):
+        dtypes = {key: np.float32 for key in self.kernel_data()[2:]}
         dtypes['nblock'] = np.uintc
         dtypes['width'] = np.uintc
         return dtypes
+
+    def kernel_isns(self):
+        return itertools.chain(
+            self._insn_constants(),
+            self._insn_unpack(),
+            self._insn_auxex(),
+            self._insn_store(),
+        )
 
     def _insn_constants(self):
         fmt = '<> {key} = {val}'
@@ -131,11 +130,6 @@ class BaseModel:
             for i, expr in enumerate(exprs):
                 yield fmt.format(kind=kind, expr=str(expr), i=i)
 
-    def instructions(self):
-        lines = []
-        for section in 'constants unpack auxex store'.split():
-            lines += list(getattr(self, '_insn_' + section)())
-        return lines
 
 class _TestModel(BaseModel):
     state = 'y1 y2'
