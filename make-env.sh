@@ -81,7 +81,6 @@ EOF
     done
 
     # latest loopy and its latest deps
-    $PREFIX/bin/pip3 install Mercurial
     git clone https://github.com/inducer/loopy
     pushd loopy
     $PREFIX/bin/pip3 install -r requirements.txt
