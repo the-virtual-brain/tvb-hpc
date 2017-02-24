@@ -22,7 +22,7 @@ fi
 set -eu
 set -o pipefail
 
-export PREFIX=${PREFIX:-"/work/env"}
+export PREFIX=${PREFIX:-"$(pwd)/env-tvb-hpc"}
 mkdir -p $PREFIX/src
 pushd $PREFIX/src
 
