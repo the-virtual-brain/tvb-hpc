@@ -44,8 +44,6 @@ class BaseModel:
     auxex = []
     limit = []
 
-    template = "#include <math.h>\n{func_code}"
-
     def __init__(self):
         # TODO check dependencies etc
         self.state_sym = vars(self.state)

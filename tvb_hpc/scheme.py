@@ -22,7 +22,6 @@ not fancy for the moment, only one-step schemes.
 
 import numpy as np
 import pymbolic as pm
-from .codegen import BaseCodeGen, Loop, indent, Storage, Func
 
 
 def euler(x, dx, dt=None):
@@ -47,7 +46,7 @@ def euler_maruyama_logp(x, f, g, xn=None, dt=None, step=euler):
     return -(xn - mu) ** 2 / (2 * sd ** 2)
 
 
-class EulerSchemeGen(BaseCodeGen):
+class EulerSchemeGen:
 
     template = """
 {model_code}
@@ -72,7 +71,7 @@ state[idx] += dt * drift[idx];
         return 'tvb_Euler_%s' % (
             self.model.__class__.__name__, )
 
-    def generate_c(self, spec, storage=Storage.default):
+    def generate_c(self, spec):
         model_code = self.model.generate_code(spec, Storage.static)
         model_name = self.model.kernel_name
         nsvar = self.model.state_sym.size

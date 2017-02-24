@@ -22,12 +22,13 @@ import numpy.testing
 from scipy.stats import kstest
 from .bold import BalloonWindkessel
 from .compiler import Compiler, CppCompiler, CompiledKernel, Spec
-# from .coupling import Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf
+from .coupling import (Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
+    PostSumStat, BaseCoupling)
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
 # from .network import DenseNetwork, DenseDelayNetwork
 from .rng import RNG
-# from .scheme import euler_maruyama_logp, EulerSchemeGen
+from .scheme import euler_maruyama_logp
 # from .harness import SimpleTimeStep
 from .utils import getLogger
 
@@ -61,7 +62,7 @@ class TestCompiledKernel(TestCase):
         np.testing.assert_allclose(out, a * 2)
 
 
-class TestLogProb(TestCase):
+    class TestLogProb(TestCase):
 
     def setUp(self):
         super().setUp()
@@ -74,7 +75,7 @@ class TestLogProb(TestCase):
             self.model.diffs_sym).sum()
         for var, expr in zip(self.model.indvars,
                              self.model.partial(logp)):
-            pass
+            LOG.debug('%s -> %s', var, expr)
 
 
 class TestModel(TestCase):
@@ -120,7 +121,6 @@ class TestRNG(TestCase):
     def test_r123_normal(self):
         rng = RNG()
         rng.build(Spec())
-        # LOG.debug(list(comp.cache.values())[0]['asm'])
         array = np.zeros((1024 * 1024, ), np.float32)
         rng.fill(array)
         d, p = kstest(array, 'norm')
@@ -130,36 +130,31 @@ class TestRNG(TestCase):
         self.assertLess(d, 0.01)
 
 
-@unittest.skip('reimpl')
 class TestCoupling(TestCase):
 
     def setUp(self):
         super().setUp()
         self.spec = Spec('float', 8)
 
-    def _test_cfun_code(self, Cf, model):
-        cf = Cf(model, storage=Storage.default)
-        comp = Compiler()
-        # TODO improve API here:
-        dll = comp(cf.__class__.__name__, cf.generate_code(self.spec))
-        for name in cf.kernel_names:
-            getattr(dll, name)
-
     def test_linear(self):
         model = G2DO()
-        self._test_cfun_code(LCf, model)
+        cf: BaseCoupling = LCf(model)
+        self.assertEqual(cf.post_stat(0), PostSumStat.sum)
 
     def test_diff(self):
         model = G2DO()
-        self._test_cfun_code(Diff, model)
+        cf = Diff(model)
+        self.assertEqual(cf.post_stat(0), PostSumStat.sum)
 
     def test_sigm(self):
         model = JansenRit()
-        self._test_cfun_code(Sigmoidal, model)
+        cf = Sigmoidal(model)
+        self.assertEqual(cf.post_stat(0), PostSumStat.sum)
 
     def test_kura(self):
         model = Kuramoto()
-        self._test_cfun_code(KCf, model)
+        cf = KCf(model)
+        self.assertEqual(cf.post_stat(0), PostSumStat.mean)
 
 
 @unittest.skip('reimpl')

@@ -25,47 +25,42 @@ A connection is specified node to node, so applies to all cvars.
 
 """
 
+import enum
+from typing import List, Union
 import numpy as np
 import pymbolic as pm
 from pymbolic.mapper.dependency import DependencyMapper
-from .codegen import BaseCodeGen, Storage
-from .compiler import Spec
 from .utils import exprs
 from .model import BaseModel
 from .utils import getLogger
 
 
-class BaseCoupling(BaseCodeGen):
+# list of Loopy instructions
+Isns = List[str]
+
+
+class PostSumStat(enum.Enum):
+    sum = 'sum'
+    mean = 'mean'
+
+
+class BaseCoupling:
+    """
+    A coupling function describe pre- and post-summation expressions
+    which compute the coupling from model observables to mode inputs,
+    weighted by connectivity.
+
+    This class is only concerned with describing those functions, not
+    producing a kernel which employs these expressions.  For this, please see
+    the network classes.
+
+    """
 
     param = {}
     pre_sum = ''
     post_sum = ''
 
-    template = """
-#include <math.h>
-{pre_funcs}
-{post_funcs}
-"""
-
-    pre_template = """
-{func_pragma}
-{storage} {float} {pre_sum_name}({float} pre_syn, {float} post_syn)
-{{
-    {pre_decls}
-    return {pre_sum};
-}}
-"""
-
-    post_template = """
-{func_pragma}
-{storage} {float} {post_sum_name}({float} {stat})
-{{
-    {post_decls}
-    return {post_sum};
-}}
-"""
-
-    def __init__(self, model: BaseModel, storage=Storage.static):
+    def __init__(self, model: BaseModel):
         self.model = model
         self.param_sym = np.array([pm.var(name) for name in self.param.keys()])
         self.pre_sum_sym = exprs(self.pre_sum)
@@ -74,8 +69,6 @@ class BaseCoupling(BaseCodeGen):
         lname %= self.__class__.__name__, model.__class__.__name__
         self.logger = getLogger(lname)
         self._check_io()
-        self.kernel_names = []
-        self.storage = storage
 
     def _check_io(self):
         obsrv_sym = self.model.obsrv_sym
@@ -95,98 +88,21 @@ class BaseCoupling(BaseCodeGen):
         for i, parts in enumerate(self.io):
             self.logger.debug(fmt, i, *parts)
 
-    @property
-    def stat(self):
-        # TODO replace by dep analysis
-        if 'mean' in self.post_sum[0]:
-            return 'mean'
-        if 'sum' in self.post_sum[0]:
-            return 'sum'
-        raise AttributeError('unknown stat in %r' % (self.post_sum, ))
-
-    def func_pragma(self, spec):
-        func_pragma = ''
-        if spec.openmp:
-            func_pragma = '#pragma omp declare simd'
-        return func_pragma
-
-    # TODO use classes for pre/psot functions, so we can have API
-    # to ask things like, does it use post_syn value etc..
-
-    def generate_pre(self, i, expr, spec: Spec):
-        expr_c = self.generate_c(expr, spec)
-        pre_decls = ''
-        if 'post_syn' not in str(expr):
-            pre_decls += '(void) post_syn;\n    '
-        pre_decls += self.declarations(self.pre_sum_sym[0], spec)
-        code = self.pre_template.format(
-            func_pragma=self.func_pragma(spec),
-            pre_sum_name=self.kernel_name_pre_sum(i),
-            pre_decls=pre_decls,
-            pre_sum=expr_c,
-            storage=self.storage.value,
-            **spec.dict,
-        )
-        return code
-
-    def generate_post(self, i, expr, spec: Spec):
-        expr_c = self.generate_c(expr, spec)
-        post_decls = self.declarations(expr, spec)
-        code = self.post_template.format(
-            func_pragma=self.func_pragma(spec),
-            post_sum_name=self.kernel_name_post_sum(i),
-            post_decls=post_decls,
-            post_sum=expr_c,
-            stat=self.stat,
-            storage=self.storage.value,
-            **spec.dict
-        )
-        return code
-
-    def generate_code(self, spec: Spec):
+    def post_stat(self, i: int) -> PostSumStat:
         """
-        Generate kernels for each unique pre/post expression.
-
+        Post-summation expressions can refer to 'sum' or 'mean' special
+        names referring to the summation or its average.
+        This function looks at variables used in the i'th post-summation
+        expression and returns 'sum' if found, 'mean' if found, otherwise
+        raises an exception.
         """
-        self.pre_expr_kname = {}
-        self.post_expr_kname = {}
-        pre_funcs = []
-        for i, expr in enumerate(self.pre_sum_sym):
-            if expr == 0:
-                continue
-            pre_funcs.append(self.generate_pre(i, expr, spec))
-            self.pre_expr_kname[str(expr)] = self.kernel_name_pre_sum(i)
-        post_funcs = []
-        for i, expr in enumerate(self.post_sum_sym):
-            post_funcs.append(self.generate_post(i, expr, spec))
-            self.post_expr_kname[str(expr)] = self.kernel_name_post_sum(i)
-        code = self.template.format(
-            pre_funcs='\n\n'.join(pre_funcs),
-            post_funcs='\n\n'.join(post_funcs),
-        )
-        return code
-
-    def kernel_name_pre_sum(self, i):
-        return 'tvb_%s_pre_sum_%d' % (self.__class__.__name__, i)
-
-    def kernel_name_post_sum(self, i):
-        return 'tvb_%s_post_sum_%d' % (self.__class__.__name__, i)
-
-    def declarations(self, expr, spec):
-        lines = []
         mapper = DependencyMapper(include_calls=False)
-        for dep in mapper(expr):
-            if dep.name in ('pre_syn', 'post_syn', 'mean', 'sum'):
-                continue
-            if dep.name in self.math_names:
-                continue
-            fmt = '{float} {name} = (({float}) {value});'
-            lines.append(fmt.format(
-                name=dep.name,
-                value=self.param[dep.name],
-                **spec.dict
-            ))
-        return '\n    '.join(lines)
+        dep_names = [dep.name for dep in mapper(self.post_sum_sym[i])]
+        if 'mean' in dep_names:
+            return PostSumStat('mean')
+        if 'sum' in dep_names:
+            return PostSumStat('sum')
+        raise ValueError('unknown stat in %r' % (self.post_sum, ))
 
 
 class Linear(BaseCoupling):
