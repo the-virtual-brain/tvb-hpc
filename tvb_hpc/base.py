@@ -36,7 +36,7 @@ class BaseKernel:
 
     def kernel_data(self) -> List[str]:
         "Return arguments / data to kernel."
-        return []
+        return [key for key in self.kernel_dtypes().keys()]
 
     def kernel_dtypes(self) -> Dict[str, dtype]:
         "Return map of identifiers to Numpy dtypes."

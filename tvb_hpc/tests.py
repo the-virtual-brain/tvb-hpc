@@ -27,7 +27,7 @@ from .coupling import (Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
     PostSumStat, BaseCoupling)
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
-from .network import DenseNetwork
+from .network import DenseNetwork, DelayNetwork
 from .rng import RNG
 from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
@@ -187,6 +187,10 @@ class TestNetwork(TestCase):
         model = Model()
         cfun = Cfun(model)
         net = DenseNetwork(model, cfun)
+        knl = net.kernel(target=CTarget())
+        CompiledKernel(knl)
+
+        net = DelayNetwork(model, cfun)
         knl = net.kernel(target=CTarget())
         CompiledKernel(knl)
 

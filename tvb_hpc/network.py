@@ -46,14 +46,20 @@ class DenseNetwork(BaseKernel):
         self.model = model
         self.cfun = cfun
 
+    # _insn_cfun uses these expressions to determine how the presynaptic
+    # expression is formed.  It is not inlined so that the delay network
+    # subclass can trivially override to implement delays.
+    _pre_syn_fmt = 'obsrv[j, k]'
+    _post_syn_fmt = 'obsrv[i, k]'
+
     def _insn_cfun(self, k, pre, post):
         "Generates an instruction for a single coupling function."
         # TODO add loopy hints to make more efficient
         # substitute pre_syn and post_syn for obsrv data
         pre_expr = subst_vars(
             expr=pre,
-            pre_syn=pm.parse('obsrv[j, k]'),  # k -> var idx
-            post_syn=pm.parse('obsrv[i, k]'),
+            pre_syn=pm.parse(self._pre_syn_fmt),  # k -> var idx
+            post_syn=pm.parse(self._post_syn_fmt),
         )
         # build weighted sum over nodes
         sum = subst_vars(
@@ -76,9 +82,6 @@ class DenseNetwork(BaseKernel):
     def kernel_domains(self):
         return '{ [i, j]: 0 <= i, j < nnode }'
 
-    def kernel_data(self):
-        return ['nnode', 'input', 'obsrv', 'weights']
-
     def kernel_dtypes(self):
         return {
             'nnode': np.uintc,
@@ -88,10 +91,9 @@ class DenseNetwork(BaseKernel):
         }
 
 
-
-class DenseDelayNetwork(DenseNetwork):
+class DelayNetwork(DenseNetwork):
     """
-    Dense network with delays.
+    Subclass of dense network implementing time delays.
 
     In TVB, we use circular indexing, but this incurs penalty in terms of
     complexity of data structures, always performing integer modulo, etc.  Far
@@ -101,95 +103,23 @@ class DenseDelayNetwork(DenseNetwork):
 
     """
 
-    def __init__(self, model: BaseModel, cfun: BaseCoupling):
-        self.model = model
-        self.cfun = cfun
+    _post_syn_fmt = 'obsrv[t, i, k]'
+    _pre_syn_fmt = 'obsrv[t - delays[i, j], j, k]'
 
-    def _obsrv_reshape(self, obsrv):
-        # 0      1      2     3
-        ntime, nblck, nvar, width = obsrv.shape
-        perm = 2, 0, 1, 3
-        shape = nvar, ntime, nblck * width
-        obsrv_ = np.transpose(obsrv, perm).reshape(shape)
-        return obsrv_
+    def kernel_data(self):
+        data = super().kernel_data()
+        # need to reassure loopy that obsrv has a bound on first index
+        ncvar = len(self.cfun.io)
+        nnode = pm.var('nnode')
+        ntime = pm.var('ntime')
+        from loopy import GlobalArg
+        obsrv = GlobalArg('obsrv', shape=(ntime, nnode, ncvar))
+        data[data.index('obsrv')] = obsrv
+        return data
 
-    def npeval(self, i_t, delays, weights, obsrv, input, debug=False):
-        """
-        Unlike DenseNetwork.npeval, obsrv here is the history of observables
-        used to compute time-delayed coupling.
-
-        Delays is expected to be array of integers; conversion from real values
-        is up to the user.
-
-        """
-        nt, nb, nv, w = obsrv.shape
-        nn = nb * w
-        inodes = np.tile(np.r_[:nn], (nn, 1))
-        obsrv_ = self._obsrv_reshape(obsrv)
-        ns = {}
-        for key in dir(np):
-            ns[key] = getattr(np, key)
-        ns.update(self.cfun.param)
-        obsmat = self._npeval_mat(obsrv[i_t])
-        if debug:
-            self._debug(obsrv, obsrv_, nn, i_t, delays, inodes, w)
-        for i, (_, pre, post, _) in enumerate(self.cfun.io):
-            ns['pre_syn'] = obsrv_[i, i_t - delays, inodes]
-            ns['post_syn'] = obsmat[i].reshape((-1, 1))
-            weighted = eval(str(pre), ns) * weights
-            ns[self.cfun.stat] = getattr(weighted, self.cfun.stat)(axis=1)
-            input[:, i, :] = eval(str(post), ns).reshape((nb, w))
-
-    def _debug(self, obsrv, obsrv_, nn, i_t, delays, inodes, w):
-            LOG.debug(obsrv.shape)
-            pre_syn = obsrv_[:, i_t - delays, inodes]
-            for i in range(nn):
-                for j in range(nn):
-                    dij = (i_t - delays)[i, j]
-                    for k in range(len(self.cfun.io)):
-                        oij = obsrv[dij, int(j/w), k, j % w]
-                        assert oij == pre_syn[k, i, j]
-                        flatidx = (j % w) + obsrv.shape[-1] * (
-                                k + obsrv.shape[-2] * (
-                                    int(j/w) + obsrv.shape[-3]*dij))
-                        LOG.debug('%d\t%d\t%d\t%d\t%d\t%f',
-                                  i, j, k, dij, flatidx, oij)
-
-    dbg_fmt = """
-printf("%d\\t%d\\t%d\\t%d\\t%d\\t%f\\n", i, j,
-       {ivar}, i_t - delays[i*nnode + j],
-       pre_idx_{ivar},
-       obsrv[pre_idx_{ivar}]);
-"""
-
-    def build_inner(self, spec, cfun, cfcg):
-        pre_idxs = []
-        dbgs = []
-        accs = []
-        nvar = self.net.model.obsrv_sym.size
-        for i, (obsrv, pre, post, input) in enumerate(cfun.io):
-            pre_idxs.append('unsigned int pre_idx_{i} = {idx};'.format(
-                    i=i, idx=self._pre_idx(spec, 'j', i, nvar)))
-            if spec.debug:
-                dbgs.append(self.dbg_fmt.format(ivar=i))
-            accs.append(
-                self.generate_acc(
-                    spec, 'input', 'obsrv', i,
-                    cfcg.pre_expr_kname[str(pre)]))
-        return Loop('j', 'nnode', Block(
-            '\n'.join(pre_idxs),
-            '\n'.join(dbgs),
-            '\n'.join(accs),
-        ))
-
-    def _pre_idx(self, spec, idx, i, nvar):
-        fmt = "(i_t - delays[i*nnode + j])*(nnode * %s) + %s"
-        fmt %= nvar, super()._acc_from_idx_expr(spec, idx, i, nvar)
-        return fmt
-
-    def _acc_from_idx_expr(self, spec, idx, i, nvar):
-        return 'pre_idx_{i}'.format(i=i)
-
-    def _base_args(self):
-        extra = ['unsigned int i_t', 'unsigned int *delays']
-        return super()._base_args() + extra
+    def kernel_dtypes(self):
+        dtypes = super().kernel_dtypes()
+        dtypes['t'] = np.uintc
+        dtypes['ntime'] = np.uintc
+        dtypes['delays'] = np.uintc
+        return dtypes
