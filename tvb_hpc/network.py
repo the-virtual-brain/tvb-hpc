@@ -25,6 +25,7 @@ For the moment, they are not yet implemented.
 """
 
 import numpy as np
+import loopy as lp
 import pymbolic as pm
 from .base import BaseKernel
 from .compiler import Spec
@@ -108,13 +109,9 @@ class DelayNetwork(DenseNetwork):
 
     def kernel_data(self):
         data = super().kernel_data()
-        # need to reassure loopy that obsrv has a bound on first index
-        ncvar = len(self.cfun.io)
-        nnode = pm.var('nnode')
-        ntime = pm.var('ntime')
-        from loopy import GlobalArg
-        obsrv = GlobalArg('obsrv', shape=(ntime, nnode, ncvar))
-        data[data.index('obsrv')] = obsrv
+        # loopy can't infer bound on first dim of obsrv
+        shape = pm.var('ntime'), pm.var('nnode'), len(self.cfun.io)
+        data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
         return data
 
     def kernel_dtypes(self):
