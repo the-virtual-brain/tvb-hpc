@@ -152,12 +152,6 @@ class TestModel(TestCase):
     def _test(self, model: BaseModel, spec: Spec, log_code=False):
         knl = model.kernel(target=CTarget())
         cknl = CompiledKernel(knl)
-        arrs = model.prep_arrays(2048, self.spec)
-        nblock, _, width = arrs[0].shape
-        self.timeit(self._to_time, cknl, nblock, width, arrs)
-
-    def _to_time(self, cknl, nblock, width, arrs):
-        cknl(nblock, width, *arrs)
 
     def test_balloon_model(self):
         model = BalloonWindkessel()

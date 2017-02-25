@@ -64,36 +64,32 @@ class BaseModel(BaseKernel):
             exprs.append(simplify(DifferentiationMapper(var)(expr)))
         return np.array(exprs)
 
-    def prep_arrays(self, nnode, spec: Spec):
+    def prep_arrays(self, nnode: int) -> List[np.ndarray]:
         """
         Prepare arrays for use with this model.
 
         """
         dtype = np.float32
-        arrs = []
+        arrs: List[np.ndarray] = []
         for key in 'state input param drift diffs obsrv'.split():
-            shape = nnode, len(getattr(self, key + '_sym')), spec.width
+            shape = nnode, len(getattr(self, key + '_sym'))
             arrs.append(np.zeros(shape, dtype))
         state = arrs[0]
         for i, (lo, hi) in enumerate(self.limit):
-            state[:, i, :] = np.random.uniform(float(lo), float(hi),
-                                               size=(nnode, spec.width))
+            state[:, i] = np.random.uniform(float(lo), float(hi),
+                                            size=(nnode, ))
         param = arrs[2]
         for i, psym in enumerate(self.param_sym):
-            param[:, i, :] = self.const[psym.name]
+            param[:, i] = self.const[psym.name]
         return arrs
 
     def kernel_domains(self) -> str:
-        return "{ [i, j]: 0 <= i < nblock and 0 <= j < width }"
-
-    def kernel_data(self) -> List[str]:
-        data = 'nblock width state input param drift diffs obsrv'.split()
-        return data
+        return "{ [i]: 0 <= i < nnode }"
 
     def kernel_dtypes(self):
-        dtypes = {key: np.float32 for key in self.kernel_data()[2:]}
-        dtypes['nblock'] = np.uintc
-        dtypes['width'] = np.uintc
+        dtypes = {'nnode': np.uintc}
+        for key in 'state input param drift diffs obsrv'.split():
+            dtypes[key] = np.float32
         return dtypes
 
     def kernel_isns(self):
@@ -111,7 +107,7 @@ class BaseModel(BaseKernel):
                 yield fmt.format(key=key, val=val)
 
     def _insn_unpack(self):
-        fmt = '<> {var} = {kind}[i, {i}, j]'
+        fmt = '<> {var} = {kind}[i, {i}]'
         for kind in 'state input param'.split():
             vars = getattr(self, kind + '_sym')
             for i, var in enumerate(vars):
@@ -123,7 +119,7 @@ class BaseModel(BaseKernel):
             yield fmt.format(lhs=lhs, rhs=rhs)
 
     def _insn_store(self):
-        fmt = '{kind}[i, {i}, j] = {expr}'
+        fmt = '{kind}[i, {i}] = {expr}'
         for kind in 'drift diffs obsrv'.split():
             exprs = getattr(self, kind + '_sym')
             nvar = len(getattr(self, kind + '_sym'))
