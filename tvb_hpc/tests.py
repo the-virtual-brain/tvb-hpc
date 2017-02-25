@@ -70,6 +70,50 @@ class TestUtils(TestCase):
         self.assertEqual(str(expr), 'a + b[i, j]*pre_syn[i, j]')
 
 
+class TestLoopTransforms(TestCase):
+    """
+    These are more tests to check that our use of Loopy is correct.
+
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.knl = lp.make_kernel('{[i]:0<=i<n}', "out[i] = in[i]", target=CTarget())
+
+    def _dtype_and_code(self, knl):
+        knl = lp.add_dtypes(knl, {'in': np.float32, 'out': np.float32})
+        code, _ = lp.generate_code(knl)
+        return code
+
+    def test_chunk_iname(self):
+        "Chunk useful to split work for e.g. omp par for"
+        knl = lp.chunk_iname(self.knl, 'i', 8)
+        print(self._dtype_and_code(knl))
+
+    def test_split_iname2(self):
+        "Split useful for omp simd inner loop"
+        knl = lp.split_iname(self.knl, 'i', 8)
+        knl = lp.tag_inames(knl, [('i_inner', 'ilp.unr',)])
+        print(self._dtype_and_code(knl))
+
+    def test_wrap_loop(self):
+        "Take kernel, place in larger loop, offsetting certain vars"
+        knl = lp.make_kernel("{[i,j]:0<=i,j<n}",
+                             "out[i] = sum(j, (i/j)*in[i, j])",
+                             target=CTarget())
+        # in will depend on t
+        knl2 = lp.to_batched(knl, 'T', ['in'], 't')
+        print(self._dtype_and_code(knl2))
+
+    def test_split_iname2(self):
+        "Split one of two inames."
+        knl = lp.make_kernel("{[i,j]:0<=i,j<n}",
+                             "out[i, j] = in[i, j]",
+                             target=CTarget())
+        knl = lp.split_iname(knl, 'i', 8)
+        knl = lp.prioritize_loops(knl, ['i_outer', 'j', 'i_inner'])
+        print(self._dtype_and_code(knl))
+
 class TestCompiledKernel(TestCase):
 
     def test_simple_kernel(self):

@@ -66,6 +66,7 @@ class RNG:
     def __init__(self, comp: CppCompiler=None):
         self.comp = comp or CppCompiler()  # type: Compiler
 
+    # TODO consider loopy support for calling user functions / preamble
     def generate_c(self, spec: Spec=None):
         spec = spec or Spec()
         self.comp.cflags += ['-I' + include_dir]
