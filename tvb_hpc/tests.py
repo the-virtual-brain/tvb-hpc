@@ -27,11 +27,11 @@ from .coupling import (Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
     PostSumStat, BaseCoupling)
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
-# from .network import DenseNetwork, DenseDelayNetwork
+from .network import DenseNetwork
 from .rng import RNG
 from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
-from .utils import getLogger
+from .utils import getLogger, VarSubst
 
 
 LOG = logging.getLogger(__name__)
@@ -60,6 +60,14 @@ class TestCase(unittest.TestCase):
         super().tearDown()
         msg = 'required %.3fs'
         self.logger.info(msg, time.time() - self.tic)
+
+
+class TestUtils(TestCase):
+
+    def test_var_subst(self):
+        subst = VarSubst(b=pm.parse('b[i, j]'))
+        expr = subst(pm.parse('a + b * pre_syn[i, j]'))
+        self.assertEqual(str(expr), 'a + b[i, j]*pre_syn[i, j]')
 
 
 class TestCompiledKernel(TestCase):
@@ -173,35 +181,14 @@ class TestCoupling(TestCase):
         self.assertEqual(cf.post_stat(0), PostSumStat.mean)
 
 
-@unittest.skip('reimpl')
 class TestNetwork(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.spec = Spec('float', 8)
-        self.comp = Compiler()
-
-    def _test_dense(self, model_cls, cfun_cls):
-        model = model_cls()
-        cfun = cfun_cls(model)
+    def _test_dense(self, Model, Cfun):
+        model = Model()
+        cfun = Cfun(model)
         net = DenseNetwork(model, cfun)
-        code = net.generate_code(self.spec)
-        dll = self.comp('dense_net', code)
-        net.func.fn = getattr(dll, net.kernel_name)
-        net.func.annot_types(net.func.fn)
-        nnode = 128
-        nblck = int(nnode / self.spec.width)
-        _, input, _, _, _, obsrv = model.prep_arrays(nblck, self.spec)
-        robsrv = np.random.randn(*obsrv.shape).astype(self.spec.np_dtype)
-        weights = np.random.randn(nnode, nnode).astype(self.spec.np_dtype)
-        obsrv[:] = robsrv
-        net.func(nnode, weights, input, obsrv)
-        input1 = input.copy()
-        _, input, _, _, _, obsrv = model.prep_arrays(nblck, self.spec)
-        obsrv[:] = robsrv
-        net.npeval(weights, obsrv, input)
-        input2 = input.copy()
-        numpy.testing.assert_allclose(input1, input2, 1e-5, 1e-6)
+        knl = net.kernel(target=CTarget())
+        CompiledKernel(knl)
 
     def test_hmje(self):
         self._test_dense(HMJE, LCf)
@@ -211,36 +198,6 @@ class TestNetwork(TestCase):
 
     def test_jr(self):
         self._test_dense(JansenRit, Sigmoidal)
-
-    def test_delay(self):
-        spec = Spec('float', width=4)
-        model = HMJE()
-        cfun = LCf(model)
-        net = DenseDelayNetwork(model, cfun)
-        code = net.generate_code(spec)
-        dll = self.comp('dense_delay_net', code)
-        net.func.fn = getattr(dll, net.kernel_name)
-        net.func.annot_types(net.func.fn)
-        nnode = 64
-        nblck = int(nnode / spec.width)
-        _, input, _, _, _, obsrv = model.prep_arrays(nblck, spec)
-        # robsrv = np.tile(np.random.randn(*obsrv.shape), (100, 1, 1, 1))
-        obsrv = np.zeros((100, ) + obsrv.shape, obsrv.dtype)
-        np.random.seed(42)
-        robsrv = np.random.randn(*obsrv.shape).astype(spec.np_dtype)
-        weights = np.abs(np.random.randn(nnode, nnode).astype(spec.np_dtype))
-        delays = np.random.uniform(0, 50, size=(nnode, nnode)).astype(np.uintc)
-        i_t = 75
-        obsrv[:] = robsrv
-        # import pdb; pdb.set_trace()
-        net.func(nnode, i_t, delays, weights, input, obsrv)
-        input1 = input.copy()
-        _, input, _, _, _, obsrv = model.prep_arrays(nblck, spec)
-        obsrv = np.zeros((100, ) + obsrv.shape, obsrv.dtype)
-        obsrv[:] = robsrv
-        net.npeval(i_t, delays, weights, obsrv, input, debug=spec.debug)
-        input2 = input.copy()
-        numpy.testing.assert_allclose(input1, input2, 1e-5, 1e-6)
 
 
 class TestScheme(TestCase):

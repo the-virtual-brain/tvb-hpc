@@ -17,8 +17,4 @@ import logging
 logging.basicConfig(level=getattr(logging,
                                   os.environ.get('TVB_LOG', 'DEBUG')))
 
-from .model import HMJE, RWW  # noqa: F401
-from .coupling import Linear as LinearCfun  # noqa: F401
-from .network import DenseNetwork  # noqa: F401
-from .harness import SimpleTimeStep  # noqa: F401
-from .utils import timer  # noqa: F401
+

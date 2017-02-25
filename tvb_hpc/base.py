@@ -8,7 +8,8 @@ Base classes.
 
 from typing import List, Union, Dict
 from numpy import dtype
-from loopy import TargetBase, LoopKernel, make_kernel, add_dtypes
+from loopy import (TargetBase, LoopKernel, make_kernel, add_dtypes,
+    make_reduction_inames_unique, )
 
 
 # list of Loopy instructions
@@ -23,6 +24,7 @@ class BaseKernel:
         body = '\n'.join(self.kernel_isns())
         data = self.kernel_data()
         knl = make_kernel(domains, body, data, target=target)
+        knl = make_reduction_inames_unique(knl)
         if typed:
             dtypes = self.kernel_dtypes()
             knl = add_dtypes(knl, dtypes)

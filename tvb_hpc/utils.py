@@ -19,6 +19,7 @@ import time
 import pymbolic as pm
 from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
+from pymbolic.mapper import IdentityMapper
 from sympy.parsing.sympy_parser import parse_expr
 
 
@@ -96,3 +97,22 @@ class timer:
         self.elapsed = toc - self.tic
         msg = 'elapsed %.3fs'
         self.logger.info(msg, self.elapsed)
+
+
+
+class VarSubst(IdentityMapper):
+    "Substitute variables by name for expressions."
+
+    def __init__(self, verbose=False, **substs):
+        self.verbose = verbose
+        self.substs = substs
+
+    def map_variable(self, var: pm.var, *args, **kwargs):
+        if self.verbose:
+            print(var.name)
+        return self.substs.get(var.name, var)
+
+
+def subst_vars(expr, **var_name_to_exprs):
+    expr = pm.parse(str(expr))
+    return VarSubst(**var_name_to_exprs)(expr)

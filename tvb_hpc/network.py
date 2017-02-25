@@ -25,144 +25,68 @@ For the moment, they are not yet implemented.
 """
 
 import numpy as np
-from .codegen import BaseCodeGen, Loop, Func, Block, Storage
+import pymbolic as pm
+from .base import BaseKernel
 from .compiler import Spec
 from .model import BaseModel
-from .coupling import BaseCoupling
-from .utils import getLogger
+from .coupling import BaseCoupling, PostSumStat
+from .utils import getLogger, subst_vars
 
 
 LOG = getLogger(__name__)
 
 
-class DenseNetwork(BaseCodeGen):
+class DenseNetwork(BaseKernel):
     """
     Simple dense weights network, no delays.
 
     """
 
-    template = "{cfun_code}\n{func_code}"
-
-    acc_template = "{acc} += {wij}*{cfun_pre}({pre_syn}, {post_syn});"
-
-    zero_template = "{acc} = (({float}) 0);"
-
-    post_template = "{post} = {cfun_post}({post}{norm});"
-
     def __init__(self, model: BaseModel, cfun: BaseCoupling):
         self.model = model
         self.cfun = cfun
 
-    def _npeval_mat(self, a):
-        if a.shape[1] == 0:
-            return []
-        return np.transpose(a, (1, 0, 2)).reshape((a.shape[1], -1))
-
-    def npeval(self, weights, obsrv, input):
-        """
-        Evaluate network (obsrv -> weights*cfun -> input) on arrays
-        using NumPy.
-
-        """
-        # TODO generalize layout.. xarray?
-        nn, _, w = obsrv.shape
-        ns = {}
-        for key in dir(np):
-            ns[key] = getattr(np, key)
-        ns.update(self.cfun.param)
-        obsmat = self._npeval_mat(obsrv)
-        for i, (_, pre, post, _) in enumerate(self.cfun.io):
-            ns['pre_syn'] = obsmat[i]
-            ns['post_syn'] = obsmat[i].reshape((-1, 1))
-            weighted = eval(str(pre), ns) * weights
-            ns[self.cfun.stat] = getattr(weighted, self.cfun.stat)(axis=1)
-            input[:, i, :] = eval(str(post), ns).reshape((nn, w))
-
-    @property
-    def kernel_name(self):
-        return 'tvb_network'
-
-    def _acc_from_idx_expr(self, spec, idx, i, nvar):
-        return spec.layout.generate_idx_expr('j', i, nvar)
-
-    def generate_zero(self, spec, input, i):
-        nivar = self.model.input_sym.size
-        acc_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
-        return self.zero_template.format(
-            acc='%s[%s]' % (input, acc_idx_expr),
-            float=spec.float)
-
-    def generate_acc(self, spec, input, obsrv, i, fname):
-        nvar = self.model.obsrv_sym.size
-        nivar = self.model.input_sym.size
-        from_idx_expr = self._acc_from_idx_expr(spec, 'j', i, nvar)
-        to_idx_expr = spec.layout.generate_idx_expr('i', i, nvar)
-        acc_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
-        return self.acc_template.format(
-            wij='weights[i*nnode + j]',
-            acc='%s[%s]' % (input, acc_idx_expr),
-            pre_syn='%s[%s]' % (obsrv, from_idx_expr),
-            post_syn='%s[%s]' % (obsrv, to_idx_expr),
-            cfun_pre=fname)
-
-    def generate_post(self, spec, input, i, fname):
-        nivar = self.model.input_sym.size
-        out_idx_expr = spec.layout.generate_idx_expr('i', i, nivar)
-        norm = ''
-        if self.cfun.stat == 'mean':
-            norm = ' / nnode'
-        return self.post_template.format(
-            post='%s[%s]' % (input, out_idx_expr),
-            norm=norm,
-            cfun_post=fname)
-
-    def generate_c(self, *args):
-        return self.generate_code(*args)
-
-    def build_inner(self, spec, cfun):
-        accs = []
-        for i, (obsrv, pre, post, input) in enumerate(cfun.io):
-            accs.append(
-                self.generate_acc(
-                    spec, 'input', 'obsrv', i,
-                    cfun.pre_expr_kname[str(pre)]))
-        return Loop('j', 'nnode', '\n'.join(accs))
-
-    def generate_code(self, spec: Spec,
-                      storage: Storage=Storage.default):
-        cfun = self.cfun
-        cfun_code = cfun.generate_code(spec)
-        posts = []
-        zeros = []
-        for i, (obsrv, pre, post, input) in enumerate(cfun.io):
-            zeros.append(self.generate_zero(spec, 'input', i))
-            posts.append(
-                self.generate_post(
-                    spec, 'input',  i,
-                    cfun.post_expr_kname[str(post)]))
-        inner = self.build_inner(spec, cfun)
-        outer = Loop('i', 'nnode',
-                     Block('\n'.join(zeros),
-                           inner,
-                           '\n'.join(posts)))
-        if spec.openmp:
-            outer.pragma = '#pragma omp parallel for'
-            inner.pragma = '#pragma omp simd'
-        args = self._base_args()
-        args += ['{0} *{1}'.format(spec.float, name)
-                 for name in 'weights input obsrv'.split()]
-        args = ', '.join(args)
-        self.func = Func(self.kernel_name, outer, args,
-                         storage=storage)
-        code = self.template.format(
-            cfun_code=cfun_code,
-            func_code=self.func.generate_c(spec),
-            **spec.dict
+    def _insn_cfun(self, k, pre, post):
+        "Generates an instruction for a single coupling function."
+        # TODO add loopy hints to make more efficient
+        # substitute pre_syn and post_syn for obsrv data
+        pre_expr = subst_vars(
+            expr=pre,
+            pre_syn=pm.parse('obsrv[j, k]'),  # k -> var idx
+            post_syn=pm.parse('obsrv[i, k]'),
         )
-        return code
+        # build weighted sum over nodes
+        sum = subst_vars(
+            expr=pm.parse('sum(j, weights[i, j] * pre_expr)'),
+            pre_expr=pre_expr,
+        )
+        # mean used by some cfuns
+        mean = sum / pm.var('nnode')
+        # subst mean / sum through post cfun
+        post_expr = subst_vars(post, sum=sum, mean=mean)
+        # generate store instruction for post expr, with params
+        post_expr = subst_vars(post_expr, k=k, **self.cfun.param)
+        return 'input[i, %d] = %s' % ( k, post_expr )
 
-    def _base_args(self):
-        return ['unsigned int nnode']
+    def kernel_isns(self):
+        "Generates instructions for all cfuns"
+        for k, (_, pre, post, _) in enumerate(self.cfun.io):
+            yield self._insn_cfun(k, pre, post)
+
+    def kernel_domains(self):
+        return '{ [i, j]: 0 <= i, j < nnode }'
+
+    def kernel_data(self):
+        return ['nnode', 'input', 'obsrv', 'weights']
+
+    def kernel_dtypes(self):
+        return {
+            'nnode': np.uintc,
+            'input': np.float32,
+            'obsrv': np.float32,
+            'weights': np.float32,
+        }
+
 
 
 class DenseDelayNetwork(DenseNetwork):
