@@ -8,7 +8,7 @@ Base classes.
 
 from typing import List, Union, Dict
 from numpy import dtype
-from loopy import (TargetBase, LoopKernel, make_kernel, add_dtypes,
+from loopy import (TargetBase, LoopKernel, make_kernel, add_and_infer_dtypes,
     make_reduction_inames_unique, )
 
 
@@ -27,7 +27,7 @@ class BaseKernel:
         knl = make_reduction_inames_unique(knl)
         if typed:
             dtypes = self.kernel_dtypes()
-            knl = add_dtypes(knl, dtypes)
+            knl = add_and_infer_dtypes(knl, dtypes)
         return knl
 
     def kernel_domains(self) -> str:
@@ -36,7 +36,9 @@ class BaseKernel:
 
     def kernel_data(self) -> List[str]:
         "Return arguments / data to kernel."
-        return [key for key in self.kernel_dtypes().keys()]
+        # normalize wrt. key set like ['n,out', 'foo,bar']
+        csk = ','.join(self.kernel_dtypes().keys())
+        return [key for key in csk.split(',')]
 
     def kernel_dtypes(self) -> Dict[str, dtype]:
         "Return map of identifiers to Numpy dtypes."

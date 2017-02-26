@@ -37,9 +37,18 @@ from .utils import getLogger, subst_vars
 LOG = getLogger(__name__)
 
 
-class DenseNetwork(BaseKernel):
+class Network(BaseKernel):
     """
-    Simple dense weights network, no delays.
+    Network implementing spare time delay coupling with pre/post summation
+    coupling functions,
+
+      input[i, k] = cfpost[k]( sum(j, w[i,j]*cfpre[k](obsrv[j,k], obsrv[i,k])))
+
+    In TVB, we use circular indexing, but this incurs penalty in terms of
+    complexity of data structures, always performing integer modulo, etc.  Far
+    simpler to assume contiguous time and periodically reconstruct as memory
+    constraints require, which can be done in a background thread to minimize
+    overhead.
 
     """
 
@@ -47,24 +56,18 @@ class DenseNetwork(BaseKernel):
         self.model = model
         self.cfun = cfun
 
-    # _insn_cfun uses these expressions to determine how the presynaptic
-    # expression is formed.  It is not inlined so that the delay network
-    # subclass can trivially override to implement delays.
-    _pre_syn_fmt = 'obsrv[j, k]'
-    _post_syn_fmt = 'obsrv[i, k]'
-
     def _insn_cfun(self, k, pre, post):
         "Generates an instruction for a single coupling function."
         # TODO add loopy hints to make more efficient
         # substitute pre_syn and post_syn for obsrv data
         pre_expr = subst_vars(
             expr=pre,
-            pre_syn=pm.parse(self._pre_syn_fmt),  # k -> var idx
-            post_syn=pm.parse(self._post_syn_fmt),
+            pre_syn=pm.parse('obsrv[t - delays[col[j]], col[j], k]'),  # k is var idx
+            post_syn=pm.parse('obsrv[t, i, k]'),
         )
         # build weighted sum over nodes
         sum = subst_vars(
-            expr=pm.parse('sum(j, weights[i, j] * pre_expr)'),
+            expr=pm.parse('sum(j, weights[j] * pre_expr)'),
             pre_expr=pre_expr,
         )
         # mean used by some cfuns
@@ -77,46 +80,30 @@ class DenseNetwork(BaseKernel):
 
     def kernel_isns(self):
         "Generates instructions for all cfuns"
+        yield '<> j_lo = row[i]'
+        yield '<> j_hi = row[i + 1]'
         for k, (_, pre, post, _) in enumerate(self.cfun.io):
             yield self._insn_cfun(k, pre, post)
 
     def kernel_domains(self):
-        return '{ [i, j]: 0 <= i, j < nnode }'
+        return [
+            '{ [i]: 0 <= i < nnode }',
+            '{ [j]: j_lo <= j < j_hi }'
+        ]
 
     def kernel_dtypes(self):
         return {
-            'nnode': np.uintc,
-            'input': np.float32,
-            'obsrv': np.float32,
-            'weights': np.float32,
+            't,ntime,nnode,nnz,delays,row,col': np.uintc,
+            'input,obsrv,weights': np.float32,
         }
-
-
-class DelayNetwork(DenseNetwork):
-    """
-    Subclass of dense network implementing time delays.
-
-    In TVB, we use circular indexing, but this incurs penalty in terms of
-    complexity of data structures, always performing integer modulo, etc.  Far
-    simpler to assume contiguous time and periodically reconstruct as memory
-    constraints require, which can be done in a background thread to minimize
-    overhead. This isn't yet implemented, but to be looked at.
-
-    """
-
-    _post_syn_fmt = 'obsrv[t, i, k]'
-    _pre_syn_fmt = 'obsrv[t - delays[i, j], j, k]'
 
     def kernel_data(self):
         data = super().kernel_data()
         # loopy can't infer bound on first dim of obsrv
         shape = pm.var('ntime'), pm.var('nnode'), len(self.cfun.io)
         data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
+        # nor that of nnz length vectors
+        nnz_shape = pm.var('nnz'),
+        for key in 'col delays weights'.split():
+            data[data.index(key)] = lp.GlobalArg(key, shape=nnz_shape)
         return data
-
-    def kernel_dtypes(self):
-        dtypes = super().kernel_dtypes()
-        dtypes['t'] = np.uintc
-        dtypes['ntime'] = np.uintc
-        dtypes['delays'] = np.uintc
-        return dtypes

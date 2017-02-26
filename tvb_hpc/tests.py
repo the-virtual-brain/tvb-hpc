@@ -27,7 +27,7 @@ from .coupling import (Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
     PostSumStat, BaseCoupling)
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
-from .network import DenseNetwork, DelayNetwork
+from .network import DenseNetwork
 from .rng import RNG
 from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
@@ -119,11 +119,14 @@ class TestLoopTransforms(TestCase):
         print(self._dtype_and_code(knl))
 
     def test_sparse_matmul(self):
+        "Tests how to do sparse indexing w/ loop."
         knl = lp.make_kernel(
             [
                 '{[i]: 0   <= i <   n}',
+                # note loop bounded by jlo jhi
                 '{[j]: jlo <= j < jhi}'
             ],
+            # which are set as instructions
             """
             <> jlo = row[i]
             <> jhi = row[i + 1]
@@ -131,14 +134,9 @@ class TestLoopTransforms(TestCase):
             """,
             'n nnz row col dat vec out'.split(),
             target=CTarget())
-        knl = lp.add_dtypes(knl, {
-            'out': np.float32,
-            'dat': np.float32,
-            'vec': np.float32,
-            'col': np.uintc,
-            'row': np.uintc,
-            'n': np.uintc,
-            'nnz': np.uintc,
+        knl = lp.add_and_infer_dtypes(knl, {
+            'out,dat,vec': np.float32,
+            'col,row,n,nnz': np.uintc,
         })
         # col and dat have uninferrable shape
         knl.args[3].shape = pm.var('nnz'),
@@ -269,10 +267,6 @@ class TestNetwork(TestCase):
         model = Model()
         cfun = Cfun(model)
         net = DenseNetwork(model, cfun)
-        knl = net.kernel(target=CTarget())
-        CompiledKernel(knl)
-
-        net = DelayNetwork(model, cfun)
         knl = net.kernel(target=CTarget())
         CompiledKernel(knl)
 
