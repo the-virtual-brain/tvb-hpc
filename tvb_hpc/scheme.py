@@ -57,33 +57,24 @@ class EulerStep(BaseKernel):
 
     def kernel_dtypes(self):
         dtypes = {
-            'nblock': np.uintc,
-            'nsvar': np.uintc,
-            'width': np.uintc,
-            'next': np.float32,
-            'state': np.float32,
-            'drift': np.float32
+            'nnode,nsvar': np.uintc,
+            'next,state,drift': np.float32,
         }
         if isinstance(self.dt, pm.var):
             dtypes['dt'] = np.float32
         return dtypes
 
     def kernel_data(self):
-        data = 'nblock nsvar width next state drift'.split()
+        data = 'nnode nsvar next state drift'.split()
         if isinstance(self.dt, pm.var):
             data.insert(0, self.dt.name)
         return data
 
     def kernel_domains(self):
-        bounds = ' and '.join([
-            '0 <= i < nblock',
-            '0 <= j < nsvar',
-            '0 <= k < width'
-        ])
-        return "{ [i, j, k]: %s }" % (bounds, )
+        return "{ [i, j]: 0 <= i < nnode and 0 <= j < nsvar }"
 
     def kernel_isns(self):
-        fmt = 'next[i, j, k] = state[i, j, k] + %s * drift[i, j, k]'
+        fmt = 'next[i, j] = state[i, j] + %s * drift[i, j]'
         return [ fmt % ( self.dt, ) ]
 
 
@@ -104,8 +95,5 @@ class EulerMaryuyamaStep(EulerStep):
 
     def kernel_dtypes(self):
         dtypes = super().kernel_dtypes()
-        dtypes.update({
-            'dWt': np.float32,
-            'diffs': np.float32,
-        })
+        dtypes['dWt,diffs'] = np.float32
         return dtypes

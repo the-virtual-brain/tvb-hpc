@@ -88,6 +88,9 @@ def exprs(sexprs):
 class timer:
     logger = getLogger('tvb_hpc.utils.timer')
 
+    def __init__(self, msg=''):
+        self.msg = msg
+
     def __enter__(self, *args):
         self.tic = time.time()
         return self
@@ -95,8 +98,8 @@ class timer:
     def __exit__(self, *args):
         toc = time.time()
         self.elapsed = toc - self.tic
-        msg = 'elapsed %.3fs'
-        self.logger.info(msg, self.elapsed)
+        msg = '%s elapsed %.3fs'
+        self.logger.info(msg, self.msg, self.elapsed)
 
 
 

@@ -135,36 +135,6 @@ class CppCompiler(Compiler):
     default_compile_flags = '-g -O3'.split()
 
 
-class PreparedCall:
-    "Wraps a ctypes function and prepared arguments, lowering call overhead."
-
-    # TODO allow by keyword, so we can ignore argument order
-
-    def __init__(self, fn, args):
-        self._fn = fn
-        assert len(args) == len(self._fn.argtypes)
-        self._prepared_args = [None] * len(self._fn.argtypes)
-        for i, arg in enumerate(args):
-            self.set_arg(i, arg)
-
-    def set_arg(self, idx, arg):
-        "Set argument at idx to arg."
-        arg_t = self._fn.argtypes[idx]
-        if hasattr(arg, 'ctypes'):
-            if arg.size == 0:
-                # TODO eliminate unused arguments from kernel
-                arg_ = arg_t(0.0)
-            else:
-                arg_ = arg.ctypes.data_as(arg_t)
-        else:
-            arg_ = arg_t(arg)
-        self._prepared_args[idx] = arg_
-
-    def __call__(self):
-        "Invoked function with perpared arguments."
-        return self._fn(*self._prepared_args)
-
-
 class CompiledKernel:
     """
     A CompiledKernel wraps a loop kernel, compiling it and loading the
@@ -182,6 +152,7 @@ class CompiledKernel:
         self.dll = self.comp.build(self.code)
         self.func_decl, = generate_header(knl)
         self._arg_info = []
+        # TODO knl.args[:].dtype is sufficient
         self._visit_func_decl(self.func_decl)
         self.name = self.func_decl.subdecl.name
         restype = self.func_decl.subdecl.typename
@@ -194,13 +165,21 @@ class CompiledKernel:
         self._fn.argtypes = [ctype for name, ctype in self._arg_info]
         self._prepared_call_cache = weakref.WeakKeyDictionary()
 
-    def prepare_call(self, args):
-        "Prepare arguments for function call, reducing overhead."
-        return PreparedCall(self._fn, args)
-
-    def __call__(self, *args):
+    def __call__(self, **kwargs):
         "Execute kernel with given args mapped to ctypes equivalents."
-        return self.prepare_call(args)()
+        args_ = []
+        for knl_arg, arg_t in zip(self.knl.args, self._fn.argtypes):
+            arg = kwargs[knl_arg.name]
+            if hasattr(arg, 'ctypes'):
+                if arg.size == 0:
+                    # TODO eliminate unused arguments from kernel
+                    arg_ = arg_t(0.0)
+                else:
+                    arg_ = arg.ctypes.data_as(arg_t)
+            else:
+                arg_ = arg_t(arg)
+            args_.append(arg_)
+        self._fn(*args_)
 
     def _append_arg(self, name, dtype, pointer=False):
         "Append arg info to current argument list."
