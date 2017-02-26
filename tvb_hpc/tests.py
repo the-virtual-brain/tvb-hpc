@@ -153,7 +153,7 @@ class TestLoopTransforms(TestCase):
         out, vec = np.random.rand(2, n).astype(np.float32)
         nnz = mat.nnz
         cknl(n, nnz, row, col, dat, vec, out)
-        np.testing.assert_allclose(out, mat * vec, )
+        np.testing.assert_allclose(out, mat * vec, 1e-5, 1e-6)
 
 
 
