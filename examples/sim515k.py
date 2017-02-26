@@ -5,9 +5,10 @@ Run single simulation w/ 515k connectivity.
 """
 
 from typing import Tuple
+import loopy as lp
 import numpy as np
 from scipy import io, sparse
-from loopy.target.c import CTarget
+from loopy.target.c import CTarget, CASTBuilder
 from tvb_hpc import model, coupling, network, utils, compiler, scheme
 
 
@@ -47,22 +48,50 @@ def build_components():
     return osc, cfun, net, scm
 
 
+
+class MyCASTBuilder(CASTBuilder):
+    def emit_sequential_loop(self, codegen_state, iname, iname_dtype,
+            lbound, ubound, inner):
+        from cgen import Pragma, Block
+        loop = super().emit_sequential_loop(codegen_state, iname, iname_dtype,
+            lbound, ubound, inner)
+        if iname == 'i':
+            return Block(contents=[
+                Pragma('omp parallel for'),
+                loop,
+            ])
+        return loop
+
+
+class MyCTarget(CTarget):
+    def get_device_ast_builder(self):
+        return MyCASTBuilder(self)
+
 def build_kernels(osc, net, scm):
     LOG.info('building kernels')
     target = CTarget()
+    comp = compiler.Compiler()#cc='/usr/local/bin/gcc-6')
+    #comp.cflags += '-march=native -ffast-math'.split()
+    #comp.ldflags += ''.split()
+
     osc_knl = osc.kernel(target)
-    osc_fn = compiler.CompiledKernel(osc_knl)
+    osc_fn = compiler.CompiledKernel(osc_knl, comp)
+
     net_knl = net.kernel(target)
-    net_fn = compiler.CompiledKernel(net_knl)
+    net_fn = compiler.CompiledKernel(net_knl, comp)
+
     scm_knl = scm.kernel(target)
-    scm_fn = compiler.CompiledKernel(scm_knl)
-    return osc_fn, net_fn, scm_fn
+    scm_knl = lp.prioritize_loops(scm_knl, ['i', 'j'])
+    scm_knl = lp.fix_parameters(scm_knl, nsvar=2)
+    scm_knl = lp.tag_inames(scm_knl, [('j', 'ilp')])
+    scm_fn = compiler.CompiledKernel(scm_knl, comp)
+    return osc_fn, net_fn, scm_fn, comp
 
 
 if __name__ == '__main__':
 
     osc, cfun, net, scm = build_components()
-    osc_fn, net_fn, scm_fn = build_kernels(osc, net, scm)
+    osc_fn, net_fn, scm_fn, comp = build_kernels(osc, net, scm)
 
     W, L = get_weights_lengths()
     D = (L.data / osc.dt).astype(np.uint32)
@@ -76,13 +105,16 @@ if __name__ == '__main__':
 
     for i in range(10):
         with utils.timer('time step %d' % (i, )):
-            net_fn(t=Dmax + 1, ntime=Dmax + 2, nnode=nnode, nnz=W.nnz,
-                   row=W.indptr, col=W.indices,
-                   delays=D, weights=W.data,
-                   input=input, obsrv=obsrv
-                   )
-            osc_fn(nnode=nnode,
-                   state=state, input=input, param=param,
-                   drift=drift, diffs=diffs, obsrv=obsrv)
-            scm_fn(nnode=nnode, nsvar=2, next=next, state=state, drift=drift)
+            if 1:
+                net_fn(t=Dmax + 1, ntime=Dmax + 2, nnode=nnode, nnz=W.nnz,
+                       row=W.indptr, col=W.indices,
+                       delays=D, weights=W.data,
+                       input=input, obsrv=obsrv
+                       )
+            if 1:
+                osc_fn(nnode=nnode,
+                       state=state, input=input, param=param,
+                       drift=drift, diffs=diffs, obsrv=obsrv)
+            if 0:
+                scm_fn(nnode=nnode, nsvar=2, next=next, state=state, drift=drift)
 
