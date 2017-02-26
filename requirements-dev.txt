@@ -1,6 +1,0 @@
-numpy==1.12.0
-sympy==1.0
-scipy
-sphinx
-flake8
-git+https://github.com/inducer/loopy

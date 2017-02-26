@@ -78,7 +78,10 @@ class TestLoopTransforms(TestCase):
 
     def setUp(self):
         super().setUp()
-        self.knl = lp.make_kernel('{[i]:0<=i<n}', "out[i] = in[i]", target=CTarget())
+        from loopy.target.ispc import ISPCTarget
+        target = ISPCTarget()
+        self.knl = lp.make_kernel('{[i]:0<=i<n}', "out[i] = in[i]",
+                                  target=target)
 
     def _dtype_and_code(self, knl):
         knl = lp.add_dtypes(knl, {'in': np.float32, 'out': np.float32})
@@ -107,12 +110,53 @@ class TestLoopTransforms(TestCase):
 
     def test_split_iname2(self):
         "Split one of two inames."
+        from loopy.target.ispc import ISPCTarget as CTarget
         knl = lp.make_kernel("{[i,j]:0<=i,j<n}",
                              "out[i, j] = in[i, j]",
                              target=CTarget())
         knl = lp.split_iname(knl, 'i', 8)
         knl = lp.prioritize_loops(knl, ['i_outer', 'j', 'i_inner'])
         print(self._dtype_and_code(knl))
+
+    def test_sparse_matmul(self):
+        knl = lp.make_kernel(
+            [
+                '{[i]: 0   <= i <   n}',
+                '{[j]: jlo <= j < jhi}'
+            ],
+            """
+            <> jlo = row[i]
+            <> jhi = row[i + 1]
+            out[i] = sum(j, dat[j] * vec[col[j]])
+            """,
+            'n nnz row col dat vec out'.split(),
+            target=CTarget())
+        knl = lp.add_dtypes(knl, {
+            'out': np.float32,
+            'dat': np.float32,
+            'vec': np.float32,
+            'col': np.uintc,
+            'row': np.uintc,
+            'n': np.uintc,
+            'nnz': np.uintc,
+        })
+        # col and dat have uninferrable shape
+        knl.args[3].shape = pm.var('nnz'),
+        knl.args[4].shape = pm.var('nnz'),
+        cknl = CompiledKernel(knl)
+        from scipy.sparse import csr_matrix
+        n = 64
+        mat = csr_matrix(np.ones((64, 64)) * (np.random.rand(64, 64) < 0.1))
+        row = mat.indptr.astype(np.uintc)
+        col = mat.indices.astype(np.uintc)
+        dat = mat.data.astype(np.float32)
+        out, vec = np.random.rand(2, n).astype(np.float32)
+        nnz = mat.nnz
+        cknl(n, nnz, row, col, dat, vec, out)
+        np.testing.assert_allclose(out, mat * vec, )
+
+
+
 
 class TestCompiledKernel(TestCase):
 

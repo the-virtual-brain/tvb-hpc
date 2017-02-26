@@ -2,6 +2,12 @@
 
 # bootstrap recent Python, assuming sane dev env & ssl headers
 
+if [[ ! -f tvb_hpc/__init__.py ]]
+then
+    echo "Please run this script from the root of the tvb_hpc repo."
+    exit 1
+fi
+
 # if on macos check for ssl header, suggest install
 if [[ "$(uname)" == "Darwin" ]]
 then
@@ -23,6 +29,11 @@ set -eu
 set -o pipefail
 
 export PREFIX=${PREFIX:-"$(pwd)/env-tvb-hpc"}
+
+echo "will build environment in '$PREFIX'. 5 seconds to cancel.."
+sleep 5
+
+# ok go
 mkdir -p $PREFIX/src
 pushd $PREFIX/src
 
@@ -72,7 +83,7 @@ EOF
     done
 
 
-    py_pkgs="numpy scipy sympy ipython six"
+    py_pkgs="$(cat requirements.txt)"
 
     for pkg in $py_pkgs
     do
@@ -80,12 +91,14 @@ EOF
         $PREFIX/bin/pip3 install $pkg
     done
 
-    # latest loopy and its latest deps
-    git clone https://github.com/inducer/loopy
-    pushd loopy
-    $PREFIX/bin/pip3 install -r requirements.txt
-    $PREFIX/bin/python3 setup.py install
-    popd # loopy
+    extra_pkgs="pytools f2py cgen genpy islpy pymbolic pyopencl loopy"
+    for pkg in $extra_pkgs
+    do
+        echo "setting up $pkg for dev"
+        pushd env/$pkg
+        $PREFIX/bin/python3 setup.py develop
+        popd
+    done
 
     cat > $PREFIX/activate <<EOF
 export PATH=$PREFIX/bin:$PATH
