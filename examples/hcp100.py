@@ -19,9 +19,9 @@ L = npz['lengths'].astype(np.float32)
 nsubj, nnode, _ = W.shape
 LOG.info('nsubj %d nnode %d', nsubj, nnode)
 
-# enforce sparsity across subject weights
+# enforce sparsity across subject weights (all: 15% sparse, any: 48%)
 W_nz: np.ndarray = ~(W == 0)
-W_nzmask = W_nz.any(axis=0)
+W_nzmask = W_nz.all(axis=0)
 
 W_ = np.array([((w + 1e-3) * W_nzmask) for w in W])
 L_ = np.array([((l + 1e-3) * W_nzmask) for l in L])
@@ -50,7 +50,7 @@ for i, (w, l) in enumerate(zip(W_, L_)):
         np.testing.assert_allclose(sw.indptr, sW_row)
     np.testing.assert_allclose(sl.indices, sW_col)
     np.testing.assert_allclose(sl.indptr, sW_row)
-sD_data = (sL_data / 1.0).astype('i')
+sD_data = (sL_data / 0.1).astype('i')
 Dmax = sD_data.max()
 
 
