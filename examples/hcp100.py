@@ -75,7 +75,7 @@ def comp():
 def batch_knl(knl):
     varying = 'weights delays state input obsrv drift diffs next'.split()
     # wait for bug fix
-    varying.remove('delays')
+    #varying.remove('delays')
     return lp.to_batched(knl, 'nsubj', varying, 'i_subj',
                          sequential=True)
 
@@ -114,7 +114,8 @@ def step(n_step=1):
                drift=drift, diffs=diffs, obsrv=obsrv[t])
         scm_fn(nsubj=nsubj, nnode=nnode, nsvar=2, next=next, state=state,
                drift=drift)
-
+    # TODO
+    # obsrv[:Dmax] = obsrv[-Dmax:]
 
 # warm up
 step(20)

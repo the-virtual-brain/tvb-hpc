@@ -11,9 +11,12 @@ Get the code and make a env to work in
 
 ```bash
 git clone --recursive https://github.com/the-virtual-brain/tvb-hpc
-tvb-hpc/env/make-env.sh
-source env-tvb-hpc/activate
+PREFIX=$(pwd)/venv tvb-hpc/env/make-env.sh
+source venv/activate
 ```
+
+Be sure your git clone is recursive, otherwise some dependencies will not
+be correctly obtained.
 
 ### Code
 
