@@ -12,6 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
+import enum
 import os.path
 import numpy as np
 import logging
@@ -119,3 +120,12 @@ class VarSubst(IdentityMapper):
 def subst_vars(expr, **var_name_to_exprs):
     expr = pm.parse(str(expr))
     return VarSubst(**var_name_to_exprs)(expr)
+
+
+def scaling(ary):
+    "Heuristic for linear vs log scaling of array."
+    lin, _ = np.histogram(ary.flat[:], 5)
+    log, _ = np.histogram(np.log(ary.flat[:] + 1), 5)
+    if np.std(lin/lin.max()) > np.std(log/log.max()):
+        return 'log'
+    return 'linear'

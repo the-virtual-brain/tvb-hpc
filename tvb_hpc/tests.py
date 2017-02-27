@@ -27,7 +27,7 @@ from .coupling import (Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
     PostSumStat, BaseCoupling)
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
-from .network import DenseNetwork
+from .network import Network
 from .rng import RNG
 from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
@@ -106,6 +106,18 @@ class TestLoopTransforms(TestCase):
                              target=CTarget())
         # in will depend on t
         knl2 = lp.to_batched(knl, 'T', ['in'], 't')
+        print(self._dtype_and_code(knl2))
+
+    #@unittest.skip('question asked on mailing list')
+    def test_wrap_loop_with_param(self):
+        knl = lp.make_kernel("{[i,j]:0<=i,j<n}",
+                             """
+                             <> a = a_values[i]
+                             out[i] = a * sum(j, (i/j)*in[i, j])
+                             """,
+                             target=CTarget())
+        # in will depend on t
+        knl2 = lp.to_batched(knl, 'T', ['in'], 't', sequential=True)
         print(self._dtype_and_code(knl2))
 
     def test_split_iname2(self):

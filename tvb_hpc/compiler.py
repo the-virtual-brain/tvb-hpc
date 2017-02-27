@@ -224,19 +224,26 @@ class CompiledKernel:
 
 
 class OpenMPCASTBuilder(CASTBuilder):
+
     def emit_sequential_loop(self, codegen_state, iname, iname_dtype,
                              lbound, ubound, inner):
         from cgen import Pragma, Block
         loop = super().emit_sequential_loop(codegen_state, iname, iname_dtype,
                                             lbound, ubound, inner)
-        if iname == 'i':
+
+        pragma = self.target.iname_pragma_map.get(iname)
+        if pragma:
             return Block(contents=[
-                Pragma('omp parallel for'),
+                Pragma(pragma),
                 loop,
             ])
         return loop
 
 
 class OpenMPCTarget(CTarget):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.iname_pragma_map = {}
+
     def get_device_ast_builder(self):
         return OpenMPCASTBuilder(self)
