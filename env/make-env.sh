@@ -113,12 +113,25 @@ do
     popd # env/$pkg
 done
 
+# PyOpenCL needs to find CL headers if not present
+pushd env/pyopencl
+if [[ ! -d CL ]]; then git clone https://github.com/KhronosGroup/OpenCL-Headers CL; fi
+pushd CL
+git checkout opencl12
+popd
+$PREFIX/bin/python3 configure.py
+echo "CL_INC_DIR = ['$(pwd)']" >> siteconf.py
+$PREFIX/bin/python3 setup.py build
+$PREFIX/bin/python3 setup.py install
+popd
+
 # may develop these
-extra_pkgs="cgen genpy islpy pymbolic pyopencl loopy"
+extra_pkgs="cgen genpy islpy pymbolic loopy"
 for pkg in $extra_pkgs
 do
     echo "setting up $pkg for dev"
     pushd env/$pkg
+        if [[ "$pkg" == "islpy" ]]; then $PREFIX/bin/python3 setup.py build; fi
         $PREFIX/bin/python3 setup.py develop
     popd # env/$pkg
 done
