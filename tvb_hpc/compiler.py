@@ -29,7 +29,7 @@ import subprocess
 from typing import List
 import numpy as np
 import loopy as lp
-from loopy.target.c import CTarget, generate_header
+from loopy.target.c import CTarget, generate_header, CASTBuilder
 import cgen
 from tvb_hpc.utils import which
 
@@ -221,3 +221,22 @@ class CompiledKernel:
         if pointer:
             return ctypes.POINTER(basetype)
         return basetype
+
+
+class OpenMPCASTBuilder(CASTBuilder):
+    def emit_sequential_loop(self, codegen_state, iname, iname_dtype,
+                             lbound, ubound, inner):
+        from cgen import Pragma, Block
+        loop = super().emit_sequential_loop(codegen_state, iname, iname_dtype,
+                                            lbound, ubound, inner)
+        if iname == 'i':
+            return Block(contents=[
+                Pragma('omp parallel for'),
+                loop,
+            ])
+        return loop
+
+
+class OpenMPCTarget(CTarget):
+    def get_device_ast_builder(self):
+        return OpenMPCASTBuilder(self)
