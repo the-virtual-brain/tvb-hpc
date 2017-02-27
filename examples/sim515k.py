@@ -6,6 +6,7 @@ Run single simulation w/ 515k connectivity.
 
 from typing import Tuple
 import loopy as lp
+lp.set_caching_enabled(False)
 import numpy as np
 from scipy import io, sparse
 from loopy.target.c import CTarget, CASTBuilder
@@ -69,22 +70,26 @@ class MyCTarget(CTarget):
 
 def build_kernels(osc, net, scm):
     LOG.info('building kernels')
-    target = CTarget()
-    comp = compiler.Compiler()#cc='/usr/local/bin/gcc-6')
-    #comp.cflags += '-march=native -ffast-math'.split()
-    #comp.ldflags += ''.split()
+    target = MyCTarget()
+
+    # TODO make compiler reusable..
+    def comp():
+        comp = compiler.Compiler(cc='/usr/local/bin/gcc-6')
+        comp.cflags += '-fopenmp -march=native -ffast-math'.split()
+        comp.ldflags += '-fopenmp'.split()
+        return comp
 
     osc_knl = osc.kernel(target)
-    osc_fn = compiler.CompiledKernel(osc_knl, comp)
+    osc_fn = compiler.CompiledKernel(osc_knl, comp())
 
     net_knl = net.kernel(target)
-    net_fn = compiler.CompiledKernel(net_knl, comp)
+    net_fn = compiler.CompiledKernel(net_knl, comp())
 
     scm_knl = scm.kernel(target)
     scm_knl = lp.prioritize_loops(scm_knl, ['i', 'j'])
     scm_knl = lp.fix_parameters(scm_knl, nsvar=2)
     scm_knl = lp.tag_inames(scm_knl, [('j', 'ilp')])
-    scm_fn = compiler.CompiledKernel(scm_knl, comp)
+    scm_fn = compiler.CompiledKernel(scm_knl, comp())
     return osc_fn, net_fn, scm_fn, comp
 
 
@@ -94,7 +99,7 @@ if __name__ == '__main__':
     osc_fn, net_fn, scm_fn, comp = build_kernels(osc, net, scm)
 
     W, L = get_weights_lengths()
-    D = (L.data / osc.dt).astype(np.uint32)
+    D = (L.data / 1.0).astype(np.uint32)
     Dmax = D.max()
     nnode = W.shape[0]
 
@@ -103,18 +108,21 @@ if __name__ == '__main__':
     obsrv = np.zeros((Dmax + 2, nnode, 2), np.float32)
     LOG.info('obsrv %r %.3f MB', obsrv.shape, obsrv.nbytes / 2**20)
 
+    with utils.timer('10x sp mat vec'):
+        vec = obsrv[0, :, 0].copy()
+        for i in range(10):
+            W * vec
+
     for i in range(10):
         with utils.timer('time step %d' % (i, )):
-            if 1:
-                net_fn(t=Dmax + 1, ntime=Dmax + 2, nnode=nnode, nnz=W.nnz,
-                       row=W.indptr, col=W.indices,
-                       delays=D, weights=W.data,
-                       input=input, obsrv=obsrv
-                       )
-            if 1:
-                osc_fn(nnode=nnode,
-                       state=state, input=input, param=param,
-                       drift=drift, diffs=diffs, obsrv=obsrv)
-            if 0:
-                scm_fn(nnode=nnode, nsvar=2, next=next, state=state, drift=drift)
+            # net kernel dominates run time
+            net_fn(t=Dmax + 1, ntime=Dmax + 2, nnode=nnode, nnz=W.nnz,
+                   row=W.indptr, col=W.indices,
+                   delays=D, weights=W.data,
+                   input=input, obsrv=obsrv
+                   )
+            osc_fn(nnode=nnode,
+                   state=state, input=input, param=param,
+                   drift=drift, diffs=diffs, obsrv=obsrv)
+            scm_fn(nnode=nnode, nsvar=2, next=next, state=state, drift=drift)
 

@@ -18,6 +18,7 @@ Isns = List[str]
 
 class BaseKernel:
 
+
     def kernel(self, target: TargetBase, typed: bool=True) -> LoopKernel:
         "Build and return loop kernel."
         domains = self.kernel_domains()
@@ -25,6 +26,8 @@ class BaseKernel:
         data = self.kernel_data()
         knl = make_kernel(domains, body, data, target=target)
         knl = make_reduction_inames_unique(knl)
+        fmt = 'tvb_kernel_%s' % (self.__class__.__name__,)
+        knl.name = fmt
         if typed:
             dtypes = self.kernel_dtypes()
             knl = add_and_infer_dtypes(knl, dtypes)

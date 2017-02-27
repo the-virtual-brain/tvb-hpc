@@ -154,7 +154,7 @@ class CompiledKernel:
         self._arg_info = []
         # TODO knl.args[:].dtype is sufficient
         self._visit_func_decl(self.func_decl)
-        self.name = self.func_decl.subdecl.name
+        self.name = self.knl.name
         restype = self.func_decl.subdecl.typename
         if restype == 'void':
             self.restype = None
