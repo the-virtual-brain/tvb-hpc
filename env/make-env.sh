@@ -55,10 +55,12 @@ EOF
 
     sql_url=https://sqlite.org/2017/sqlite-autoconf-3160200.tar.gz
 
+    libffi_url=ftp://sourceware.org/pub/libffi/libffi-3.2.1.tar.gz
+
     pyver=3.6.0
     Py_url=https://www.python.org/ftp/python/$pyver/Python-$pyver.tgz
 
-    for pkg in zlib bzip sql Py
+    for pkg in libffi zlib bzip sql Py
     do
         if [[ -z "$(which curl)" ]]
         then
@@ -82,28 +84,43 @@ EOF
         popd
     done
 
+popd #  $PREFIX/src
 
-    py_pkgs="$(cat requirements.txt)"
-
-    for pkg in $py_pkgs
-    do
-        echo "pip installing $pkg"
-        $PREFIX/bin/pip3 install $pkg
-    done
-
-    extra_pkgs="pytools f2py cgen genpy islpy pymbolic pyopencl loopy"
-    for pkg in $extra_pkgs
-    do
-        echo "setting up $pkg for dev"
-        pushd env/$pkg
-        $PREFIX/bin/python3 setup.py develop
-        popd
-    done
-
-    cat > $PREFIX/activate <<EOF
+cat > $PREFIX/activate <<EOF
 export PATH=$PREFIX/bin:$PATH
 EOF
 
-    echo "done! use by issuing 'source $PREFIX/activate'"
+# cffi needs to find libffi..
+CFLAGS="-I$PREFIX/lib/libffi-3.2.1/include" \
+LDFLAGS="-L$PREFIX/lib64 -L$PREFIX/lib -lpython3.6m" \
+$PREFIX/bin/pip3 install cffi
 
-popd # $PREFIX/src
+py_pkgs="$(cat requirements.txt)"
+
+for pkg in $py_pkgs
+do
+    echo "pip installing $pkg"
+    $PREFIX/bin/pip3 install $pkg
+done
+
+# unlikely to change, install
+extra_pkgs="pytools f2py"
+for pkg in $extra_pkgs
+do
+    echo "setting up $pkg for dev"
+    pushd env/$pkg
+        $PREFIX/bin/python3 setup.py install
+    popd # env/$pkg
+done
+
+# may develop these
+extra_pkgs="cgen genpy islpy pymbolic pyopencl loopy"
+for pkg in $extra_pkgs
+do
+    echo "setting up $pkg for dev"
+    pushd env/$pkg
+        $PREFIX/bin/python3 setup.py develop
+    popd # env/$pkg
+done
+
+echo "done! use by issuing 'source $PREFIX/activate'"
