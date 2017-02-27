@@ -74,20 +74,21 @@ nnode = W.shape[0]
 
 next, state, drift = np.zeros((3, nnode, 2), np.float32)
 input, param, diffs = np.zeros((3, nnode, 2), np.float32)
-obsrv = np.zeros((Dmax + 2, nnode, 2), np.float32)
+obsrv = np.zeros((Dmax + 3, nnode, 2), np.float32)
 LOG.info('obsrv %r %.3f MB', obsrv.shape, obsrv.nbytes / 2**20)
 
 
 def step(n_step=1):
     for _ in range(n_step):
-        net_fn(t=Dmax + 1, ntime=Dmax + 2, nnode=nnode, nnz=W.nnz,
+        t = Dmax + 1
+        net_fn(t=t, ntime=Dmax + 3, nnode=nnode, nnz=W.nnz,
                row=W.indptr, col=W.indices,
                delays=D, weights=W.data,
                input=input, obsrv=obsrv
                )
         osc_fn(nnode=nnode,
                state=state, input=input, param=param,
-               drift=drift, diffs=diffs, obsrv=obsrv)
+               drift=drift, diffs=diffs, obsrv=obsrv[t])
         scm_fn(nnode=nnode, nsvar=2, next=next, state=state, drift=drift)
 
 
