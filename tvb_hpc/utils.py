@@ -129,3 +129,15 @@ def scaling(ary):
     if np.std(lin/lin.max()) > np.std(log/log.max()):
         return 'log'
     return 'linear'
+
+
+def loadtxt_many(fnames):
+    "Multiprocess np.loadtxt.  If fnames is str, glob it."
+    if isinstance(fnames, str):
+        import glob
+        fnames = glob.glob(fnames)
+    import multiprocessing, numpy
+    pool = multiprocessing.Pool()
+    arrays = pool.map(numpy.loadtxt, fnames)
+    pool.close()
+    return arrays
