@@ -28,7 +28,7 @@ fi
 set -eu
 set -o pipefail
 
-export PREFIX=${PREFIX:-"$(pwd)/env-tvb-hpc"}
+export PREFIX=${PREFIX:-"$(pwd)/../env-tvb-hpc"}
 
 echo "will build environment in '$PREFIX'. 5 seconds to cancel.."
 sleep 5
@@ -87,7 +87,7 @@ EOF
 popd #  $PREFIX/src
 
 cat > $PREFIX/activate <<EOF
-export PATH=$PREFIX/bin:$PATH
+export PATH=$PREFIX/bin:\$PATH
 EOF
 
 # cffi needs to find libffi..
