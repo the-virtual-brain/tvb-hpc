@@ -87,12 +87,6 @@ sD_data = (sL_data / 0.1).astype('i')
 Dmax = sD_data.max()
 
 
-# build other data arrays
-next, state, drift = np.zeros((3, nsubj, nnode, 2), np.float32)
-input, param, diffs = np.zeros((3, nsubj, nnode, 2), np.float32)
-obsrv = np.zeros((Dmax + 3, nsubj, nnode, 2), np.float32)
-LOG.info('obsrv %r %.3f MB', obsrv.shape, obsrv.nbytes / 2**20)
-
 
 # build kernels
 target = compiler.OpenMPCTarget()
@@ -112,13 +106,13 @@ def batch_knl(knl):
     return lp.to_batched(knl, 'nsubj', varying, 'i_subj',
                          sequential=True)
 
-osc = model.G2DO()
+osc = model.HMJE()
 osc.dt = 0.1
 osc_knl = osc.kernel(target)
 osc_knl = batch_knl(osc_knl)
 osc_fn = compiler.CompiledKernel(osc_knl, comp())
 
-cfun = coupling.Linear(osc)
+cfun = coupling.Diff(osc)
 net = network.Network(osc, cfun)
 net_knl = net.kernel(target)
 net_knl = batch_knl(net_knl)
@@ -128,9 +122,15 @@ scm = scheme.EulerStep(osc.dt)
 scm_knl = scm.kernel(target)
 scm_knl = batch_knl(scm_knl)
 scm_knl = lp.prioritize_loops(scm_knl, ['i_subj', 'i', 'j'])
-scm_knl = lp.fix_parameters(scm_knl, nsvar=2)
+scm_knl = lp.fix_parameters(scm_knl, nsvar=len(osc.state_sym))
 scm_knl = lp.tag_inames(scm_knl, [('j', 'ilp')])
 scm_fn = compiler.CompiledKernel(scm_knl, comp())
+
+# build other data arrays
+next, state, drift = np.zeros((3, nsubj, nnode, osc.state_sym.size), np.float32)
+input, param, diffs = np.zeros((3, nsubj, nnode, 6), np.float32)
+obsrv = np.zeros((Dmax + 3, nsubj, nnode, 2), np.float32)
+LOG.info('obsrv %r %.3f MB', obsrv.shape, obsrv.nbytes / 2**20)
 
 
 # step function
@@ -148,11 +148,17 @@ def step(n_step=1):
         scm_fn(nsubj=nsubj, nnode=nnode, nsvar=2, next=next, state=state,
                drift=drift)
     # TODO
+    # ballon_fn()
+    # cov_fn()
     # obsrv[:Dmax] = obsrv[-Dmax:]
 
 # warm up
 step(20)
 
-# time it
+# time it (45 s for G2DO, 50 RWW, 100 Kura)
+# 1000 -> 100 ms, need 5 min BOLD, 300s, 3000 * 45s / 3600 -> 37h..
 with utils.timer('1000 time steps'):
     step(1000)
+
+
+# TODO check against _fmri
