@@ -2,8 +2,8 @@ language: python
 python:
     - "3.6"
 env:
-  - CC=clang CXX=clang++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG PREFIX=./test-env
-  - CC=gcc CXX=g++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS="" PREFIX=./test-env
+  - CC=clang CXX=clang++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG PREFIX=$(pwd)/test-env
+  - CC=gcc CXX=g++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS="" PREFIX=$(pwd)/test-env
 install:
     - env/make-env.sh
 script:
