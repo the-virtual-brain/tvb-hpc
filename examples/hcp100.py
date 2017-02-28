@@ -77,7 +77,7 @@ def batch_knl(knl):
     # wait for bug fix
     #varying.remove('delays')
     return lp.to_batched(knl, 'nsubj', varying, 'i_subj',
-                         sequential=True)
+                         sequential=False)
 
 osc = model.G2DO()
 osc.dt = 0.1
