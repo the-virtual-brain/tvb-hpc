@@ -2,10 +2,13 @@ language: python
 python:
     - "3.6"
 env:
-  - CC=clang CXX=clang++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS=""
-  - CC=gcc CXX=g++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS=""
+  - CC=clang CXX=clang++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG PREFIX=./test-env
+  - CC=gcc CXX=g++ CXXFLAGS="-Wall -Wextra" TVB_LOG=DEBUG SANFLAGS="" PREFIX=./test-env
 install:
-    - "pip install -r requirements-dev.txt"
+    - env/make-env.sh
 script:
-    - "python3 -m unittest tvb_hpc.tests"
-    - "flake8 tvb_hpc"
+    - "$PREFIX/bin/python3 -m unittest tvb_hpc.tests"
+
+#   - "$PREFIX/bin/flake8 tvb_hpc"
+
+# - $PREFIX/bin/mypy --ignore-missing-imports tvb_hpc
