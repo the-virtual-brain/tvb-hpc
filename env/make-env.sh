@@ -95,6 +95,8 @@ EOF
 
 popd #  $PREFIX/src
 
+ln -s $PREFIX/bin/python3 $PREFIX/bin/python
+
 cat > $PREFIX/activate <<EOF
 export PATH=$PREFIX/bin:\$PATH
 export PYTHONPATH=$(pwd):\$PYTHONPATH
@@ -155,15 +157,6 @@ $PREFIX/bin/python3 setup.py build
 $PREFIX/bin/python3 setup.py install
 popd
 
-# may develop these
-extra_pkgs="cgen genpy islpy pymbolic loopy"
-for pkg in $extra_pkgs
-do
-    echo "setting up $pkg for dev"
-    pushd env/$pkg
-        if [[ "$pkg" == "islpy" ]]; then $PREFIX/bin/python3 setup.py build; fi
-        $PREFIX/bin/python3 setup.py develop
-    popd # env/$pkg
-done
+env/update-develop-packages.sh
 
 echo "done! use by issuing 'source $PREFIX/activate'"
