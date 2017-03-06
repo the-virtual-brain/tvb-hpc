@@ -146,7 +146,7 @@ git checkout opencl12
 popd
 $PREFIX/bin/python3 configure.py
 echo "CL_INC_DIR = ['$(pwd)']" >> siteconf.py
-CL_LIB_DIR="${CL_LIB_DIR:-''}"
+CL_LIB_DIR="${CL_LIB_DIR:-}"
 if [[ ! -z "$CL_LIB_DIR" ]]
 then
 	echo "CL_LIB_DIR = ['$CL_LIB_DIR']" >> siteconf.py
