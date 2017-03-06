@@ -109,8 +109,8 @@ then
     else
         echo "AMDCL='$AMDCL' -> setting up AMD CL."
         PREFIX=$PREFIX bash env/amd_sdk.sh
-        export CL_LIB_DIR="$PREFIX/AMDAPPSDK/lib/x86_64"
     fi
+	export CL_LIB_DIR="$PREFIX/AMDAPPSDK/lib/x86_64"
 fi
 
 # Python packages
