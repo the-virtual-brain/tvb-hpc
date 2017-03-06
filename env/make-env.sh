@@ -103,7 +103,7 @@ EOF
 # setup AMD CL if required
 if [[ ! -z "$AMDCL" ]]
 then
-    if [[ ! -f $PREFIX/AMDAPPSDK/bin/x86_64/clinfo ]]
+    if [[ -f $PREFIX/AMDAPPSDK/bin/x86_64/clinfo ]]
     then
         echo "AMD CL already set up."
     else
