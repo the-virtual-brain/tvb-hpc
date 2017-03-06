@@ -105,14 +105,14 @@ EOF
 # setup AMD CL if required
 if [[ ! -z "$AMDCL" ]]
 then
-    if [[ ! -f $PREFIX/AMDAPPSDK/bin/x86_64/clinfo ]]
+    if [[ -f $PREFIX/AMDAPPSDK/bin/x86_64/clinfo ]]
     then
         echo "AMD CL already set up."
     else
         echo "AMDCL='$AMDCL' -> setting up AMD CL."
         PREFIX=$PREFIX bash env/amd_sdk.sh
-        export CL_LIB_DIR="$PREFIX/AMDAPPSDK/lib/x86_64"
     fi
+	export CL_LIB_DIR="$PREFIX/AMDAPPSDK/lib/x86_64"
 fi
 
 # Python packages
