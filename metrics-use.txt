@@ -1,0 +1,2 @@
+achieved_occupancy
+single_precision_fu_utilization

@@ -1,0 +1,75 @@
+INFO:[parsweep_cuda]:caching strategy 'shared_sync'
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:real buf_len 249, using power of 2 256
+INFO:[parsweep_cuda]:history shape (256, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 10121.304 MiB
+INFO:[parsweep_cuda]:nvcc options ['--ptxas-options=-v', '-DWARP_SIZE=32', '-DBLOCK_DIM_X=256', '-DNH=256', '-DRAND123', '-DCACHING_SHARED_SYNC']
+./parsweep.py:68: UserWarning: The CUDA compiler succeeded, but said the following:
+ptxas info    : 0 bytes gmem, 24 bytes cmem[3]
+ptxas info    : Compiling entry function '_Z9integratejjjjjffPfS_S_S_S_' for 'sm_60'
+ptxas info    : Function properties for _Z9integratejjjjjffPfS_S_S_S_
+    88 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 30 registers, 256 bytes smem, 392 bytes cmem[0], 116 bytes cmem[2]
+
+  keep=False,
+INFO:[parsweep_cuda]:elapsed time 0.779
+INFO:[parsweep_cuda]:15.771 M step/s
+==154588== NVPROF is profiling process 154588, command: python3 ./parsweep.py -p -b 256 -g 480 -n 10 --caching shared_sync
+INFO:[parsweep_cuda]:caching strategy 'shared_sync'
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:real buf_len 249, using power of 2 256
+INFO:[parsweep_cuda]:history shape (256, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 10121.304 MiB
+INFO:[parsweep_cuda]:nvcc options ['--ptxas-options=-v', '-DWARP_SIZE=32', '-DBLOCK_DIM_X=256', '-DNH=256', '-DRAND123', '-DCACHING_SHARED_SYNC']
+INFO:[parsweep_cuda]:elapsed time 0.835
+INFO:[parsweep_cuda]:14.717 M step/s
+==154588== Profiling application: python3 ./parsweep.py -p -b 256 -g 480 -n 10 --caching shared_sync
+==154588== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 45.83%  668.48ms        10  66.848ms  66.791ms  66.913ms  integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+ 43.76%  638.29ms         5  127.66ms  3.3600us  635.89ms  [CUDA memcpy HtoD]
+ 10.41%  151.89ms        10  15.189ms  11.852ms  18.027ms  [CUDA memcpy DtoH]
+
+==154588== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 47.40%  822.68ms        10  82.268ms  78.796ms  85.219ms  cuMemcpyDtoH
+ 36.79%  638.56ms         5  127.71ms  16.383us  635.99ms  cuMemcpyHtoD
+  8.16%  141.67ms         1  141.67ms  141.67ms  141.67ms  cuCtxCreate
+  6.85%  118.81ms         1  118.81ms  118.81ms  118.81ms  cuCtxDetach
+  0.35%  6.0155ms         5  1.2031ms  8.6270us  2.9400ms  cuMemAlloc
+  0.30%  5.2582ms         5  1.0516ms  116.31us  4.3024ms  cuMemFree
+  0.07%  1.2080ms        10  120.80us  90.711us  157.38us  cuLaunchKernel
+  0.06%  1.0166ms         1  1.0166ms  1.0166ms  1.0166ms  cuModuleLoadDataEx
+  0.01%  154.38us         1  154.38us  154.38us  154.38us  cuModuleUnload
+  0.00%  49.512us        10  4.9510us  2.1560us  9.5850us  cuFuncSetBlockShape
+  0.00%  25.494us         7  3.6420us     717ns  19.514us  cuCtxPushCurrent
+  0.00%  18.130us        36     503ns     287ns  1.0700us  cuDeviceGetAttribute
+  0.00%  17.969us         7  2.5670us     734ns  12.005us  cuCtxPopCurrent
+  0.00%  9.3510us         1  9.3510us  9.3510us  9.3510us  cuModuleGetFunction
+  0.00%  7.2130us         7  1.0300us     355ns  3.4340us  cuCtxGetDevice
+  0.00%  5.5920us         3  1.8640us     469ns  3.9350us  cuDeviceGetCount
+  0.00%  5.5320us        13     425ns     303ns  1.2150us  cuDeviceComputeCapability
+  0.00%  4.9700us         9     552ns     287ns     987ns  cuDeviceGet
+==154606== NVPROF is profiling process 154606, command: python3 ./parsweep.py -p -b 256 -g 480 -n 10 --caching shared_sync
+INFO:[parsweep_cuda]:caching strategy 'shared_sync'
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:real buf_len 249, using power of 2 256
+INFO:[parsweep_cuda]:history shape (256, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 10121.304 MiB
+INFO:[parsweep_cuda]:nvcc options ['--ptxas-options=-v', '-DWARP_SIZE=32', '-DBLOCK_DIM_X=256', '-DNH=256', '-DRAND123', '-DCACHING_SHARED_SYNC']
+==154606== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+INFO:[parsweep_cuda]:elapsed time 43.910
+INFO:[parsweep_cuda]:0.280 M step/s
+==154606== Profiling application: python3 ./parsweep.py -p -b 256 -g 480 -n 10 --caching shared_sync
+==154606== Profiling result:
+==154606== Metric result:
+Invocations                               Metric Name                           Metric Description         Min         Max         Avg
+Device "Tesla P100-SXM2-16GB (0)"
+    Kernel: integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+         10                            gld_throughput                       Global Load Throughput  344.15GB/s  344.71GB/s  344.37GB/s
+         10                            gld_efficiency                Global Memory Load Efficiency      49.80%      49.81%      49.81%
+         10                        achieved_occupancy                           Achieved Occupancy    0.868244    0.869360    0.868661
+         10           single_precision_fu_utilization   Single-Precision Function Unit Utilization     Mid (6)     Mid (6)     Mid (6)

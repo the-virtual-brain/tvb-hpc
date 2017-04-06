@@ -1,0 +1,66 @@
+INFO:[parsweep_cuda]:caching strategy 'shared'
+INFO:[parsweep_cuda]:single connectome, 240 x 256 parameter space
+INFO:[parsweep_cuda]:61440 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 61440)
+INFO:[parsweep_cuda]:on device mem: 4922.866 MiB
+./parsweep.py:65: UserWarning: The CUDA compiler succeeded, but said the following:
+ptxas info    : 0 bytes gmem, 24 bytes cmem[3]
+ptxas info    : Compiling entry function '_Z9integratejjjjjffPfS_S_S_S_' for 'sm_60'
+ptxas info    : Function properties for _Z9integratejjjjjffPfS_S_S_S_
+    88 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 35 registers, 2048 bytes smem, 392 bytes cmem[0], 116 bytes cmem[2]
+
+  keep=False,
+INFO:[parsweep_cuda]:elapsed time 0.536
+INFO:[parsweep_cuda]:11.453 M step/s
+==138968== NVPROF is profiling process 138968, command: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared
+INFO:[parsweep_cuda]:caching strategy 'shared'
+INFO:[parsweep_cuda]:single connectome, 240 x 256 parameter space
+INFO:[parsweep_cuda]:61440 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 61440)
+INFO:[parsweep_cuda]:on device mem: 4922.866 MiB
+INFO:[parsweep_cuda]:elapsed time 0.586
+INFO:[parsweep_cuda]:10.492 M step/s
+==138968== Profiling application: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared
+==138968== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 54.25%  477.14ms        10  47.714ms  47.589ms  47.788ms  integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+ 34.67%  304.93ms         5  60.987ms  3.3600us  303.71ms  [CUDA memcpy HtoD]
+ 11.08%  97.419ms        10  9.7419ms  2.2523ms  50.370ms  [CUDA memcpy DtoH]
+
+==138968== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 52.98%  579.70ms        10  57.970ms  49.929ms  102.60ms  cuMemcpyDtoH
+ 27.89%  305.18ms         5  61.036ms  15.557us  303.82ms  cuMemcpyHtoD
+ 12.54%  137.19ms         1  137.19ms  137.19ms  137.19ms  cuCtxCreate
+  5.91%  64.639ms         1  64.639ms  64.639ms  64.639ms  cuCtxDetach
+  0.45%  4.9724ms         5  994.49us  8.7890us  1.9435ms  cuMemAlloc
+  0.15%  1.6111ms         5  322.22us  64.028us  1.0129ms  cuMemFree
+  0.04%  446.06us        10  44.606us  27.291us  185.86us  cuLaunchKernel
+  0.03%  365.53us         1  365.53us  365.53us  365.53us  cuModuleLoadDataEx
+  0.01%  96.952us         1  96.952us  96.952us  96.952us  cuModuleUnload
+  0.00%  29.002us        10  2.9000us  1.0430us  14.766us  cuFuncSetBlockShape
+  0.00%  17.463us        36     485ns     258ns  1.1920us  cuDeviceGetAttribute
+  0.00%  7.0830us         7  1.0110us     457ns  4.1580us  cuCtxPushCurrent
+  0.00%  7.0170us         7  1.0020us     465ns  3.6250us  cuCtxPopCurrent
+  0.00%  6.2180us         7     888ns     414ns  2.3090us  cuCtxGetDevice
+  0.00%  5.2770us         3  1.7590us     455ns  3.5740us  cuDeviceGetCount
+  0.00%  5.1190us        13     393ns     305ns     873ns  cuDeviceComputeCapability
+  0.00%  4.6990us         9     522ns     264ns  1.2010us  cuDeviceGet
+  0.00%  1.9960us         1  1.9960us  1.9960us  1.9960us  cuModuleGetFunction
+==138985== NVPROF is profiling process 138985, command: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared
+INFO:[parsweep_cuda]:caching strategy 'shared'
+INFO:[parsweep_cuda]:single connectome, 240 x 256 parameter space
+INFO:[parsweep_cuda]:61440 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 61440)
+INFO:[parsweep_cuda]:on device mem: 4922.866 MiB
+INFO:[parsweep_cuda]:elapsed time 0.886
+INFO:[parsweep_cuda]:6.933 M step/s
+==138985== Profiling application: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared
+==138985== Profiling result:
+==138985== Metric result:
+Invocations                               Metric Name                           Metric Description         Min         Max         Avg
+Device "Tesla P100-SXM2-16GB (0)"
+    Kernel: integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+         10                        achieved_occupancy                           Achieved Occupancy    0.514952    0.516361    0.515464
+         10           single_precision_fu_utilization   Single-Precision Function Unit Utilization    High (7)    High (7)    High (7)

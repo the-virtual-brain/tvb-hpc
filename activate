@@ -1,0 +1,2 @@
+module load nvidia/cuda/8.0
+source /gpfs/homeb/pcp0/pcp0025/juron/env-tvb-hpc/activate

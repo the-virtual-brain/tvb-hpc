@@ -1,0 +1,60 @@
+INFO:[parsweep_cuda]:cache_shuffle? True
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 9845.679 MiB
+INFO:[parsweep_cuda]:elapsed time 1.307
+INFO:[parsweep_cuda]:9.401 M step/s
+==131845== NVPROF is profiling process 131845, command: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+INFO:[parsweep_cuda]:cache_shuffle? True
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 9845.679 MiB
+INFO:[parsweep_cuda]:elapsed time 1.321
+INFO:[parsweep_cuda]:9.305 M step/s
+==131845== Profiling application: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+==131845== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 65.79%  1.26346s        10  126.35ms  126.03ms  126.59ms  integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+ 31.46%  604.09ms         5  120.82ms  3.3600us  601.74ms  [CUDA memcpy HtoD]
+  2.75%  52.762ms        10  5.2762ms  4.7852ms  8.4474ms  [CUDA memcpy DtoH]
+
+==131845== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 60.27%  1.31608s        10  131.61ms  131.06ms  134.15ms  cuMemcpyDtoH
+ 27.68%  604.36ms         5  120.87ms  16.506us  601.84ms  cuMemcpyHtoD
+  8.67%  189.21ms         1  189.21ms  189.21ms  189.21ms  cuCtxCreate
+  2.96%  64.693ms         1  64.693ms  64.693ms  64.693ms  cuCtxDetach
+  0.27%  5.8755ms         5  1.1751ms  8.7600us  2.8322ms  cuMemAlloc
+  0.11%  2.4518ms         5  490.36us  55.504us  1.8636ms  cuMemFree
+  0.02%  352.69us         1  352.69us  352.69us  352.69us  cuModuleLoadDataEx
+  0.01%  317.91us        10  31.790us  28.764us  41.165us  cuLaunchKernel
+  0.00%  97.511us         1  97.511us  97.511us  97.511us  cuModuleUnload
+  0.00%  17.562us        10  1.7560us     982ns  3.1420us  cuFuncSetBlockShape
+  0.00%  15.241us        36     423ns     270ns  1.3520us  cuDeviceGetAttribute
+  0.00%  7.3670us         7  1.0520us     467ns  4.4100us  cuCtxPushCurrent
+  0.00%  7.3270us         7  1.0460us     449ns  4.0580us  cuCtxPopCurrent
+  0.00%  6.0570us         7     865ns     371ns  2.4380us  cuCtxGetDevice
+  0.00%  5.6670us         3  1.8890us     443ns  3.6290us  cuDeviceGetCount
+  0.00%  5.1750us        13     398ns     311ns     918ns  cuDeviceComputeCapability
+  0.00%  3.9270us         9     436ns     260ns     865ns  cuDeviceGet
+  0.00%  1.9130us         1  1.9130us  1.9130us  1.9130us  cuModuleGetFunction
+==131862== NVPROF is profiling process 131862, command: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+INFO:[parsweep_cuda]:cache_shuffle? True
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 9845.679 MiB
+==131862== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+INFO:[parsweep_cuda]:elapsed time 25.354
+INFO:[parsweep_cuda]:0.485 M step/s
+==131862== Profiling application: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+==131862== Profiling result:
+==131862== Metric result:
+Invocations                               Metric Name                        Metric Description         Min         Max         Avg
+Device "Tesla P100-SXM2-16GB (0)"
+    Kernel: integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+         10                           global_hit_rate                           Global Hit Rate      50.31%      50.84%      50.41%
+         10                            local_hit_rate                            Local Hit Rate      50.18%      50.23%      50.19%
+         10                        l2_read_throughput                     L2 Throughput (Reads)  109.91GB/s  118.53GB/s  111.30GB/s

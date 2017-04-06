@@ -1,0 +1,61 @@
+INFO:[parsweep_cuda]:caching strategy 'shared_sync'
+INFO:[parsweep_cuda]:single connectome, 240 x 256 parameter space
+INFO:[parsweep_cuda]:61440 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 61440)
+INFO:[parsweep_cuda]:on device mem: 4922.866 MiB
+INFO:[parsweep_cuda]:elapsed time 0.448
+INFO:[parsweep_cuda]:13.703 M step/s
+==145699== NVPROF is profiling process 145699, command: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared_sync
+INFO:[parsweep_cuda]:caching strategy 'shared_sync'
+INFO:[parsweep_cuda]:single connectome, 240 x 256 parameter space
+INFO:[parsweep_cuda]:61440 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 61440)
+INFO:[parsweep_cuda]:on device mem: 4922.866 MiB
+INFO:[parsweep_cuda]:elapsed time 0.451
+INFO:[parsweep_cuda]:13.634 M step/s
+==145699== Profiling application: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared_sync
+==145699== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 51.67%  419.53ms        10  41.953ms  41.827ms  42.055ms  integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+ 45.06%  365.87ms         5  73.175ms  3.3600us  364.65ms  [CUDA memcpy HtoD]
+  3.27%  26.572ms        10  2.6572ms  2.4735ms  4.0364ms  [CUDA memcpy DtoH]
+
+==145699== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 41.46%  447.02ms        10  44.702ms  44.469ms  46.170ms  cuMemcpyDtoH
+ 33.96%  366.15ms         5  73.231ms  15.717us  364.78ms  cuMemcpyHtoD
+ 17.44%  188.05ms         1  188.05ms  188.05ms  188.05ms  cuCtxCreate
+  6.37%  68.713ms         1  68.713ms  68.713ms  68.713ms  cuCtxDetach
+  0.46%  4.9761ms         5  995.21us  8.8040us  1.9397ms  cuMemAlloc
+  0.16%  1.7003ms         5  340.06us  36.846us  1.0039ms  cuMemFree
+  0.09%  996.24us         1  996.24us  996.24us  996.24us  cuModuleLoadDataEx
+  0.03%  279.04us        10  27.903us  25.604us  36.311us  cuLaunchKernel
+  0.01%  86.927us         1  86.927us  86.927us  86.927us  cuModuleUnload
+  0.00%  16.963us        36     471ns     277ns  1.1880us  cuDeviceGetAttribute
+  0.00%  15.948us        10  1.5940us  1.0380us  2.0310us  cuFuncSetBlockShape
+  0.00%  15.818us         1  15.818us  15.818us  15.818us  cuModuleGetFunction
+  0.00%  8.3350us         7  1.1900us     505ns  4.9030us  cuCtxPopCurrent
+  0.00%  7.3110us         7  1.0440us     428ns  4.3750us  cuCtxPushCurrent
+  0.00%  6.5480us         7     935ns     367ns  2.8500us  cuCtxGetDevice
+  0.00%  5.2250us        13     401ns     301ns     937ns  cuDeviceComputeCapability
+  0.00%  4.7800us         3  1.5930us     434ns  3.2350us  cuDeviceGetCount
+  0.00%  4.2950us         9     477ns     274ns     707ns  cuDeviceGet
+==145716== NVPROF is profiling process 145716, command: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared_sync
+INFO:[parsweep_cuda]:caching strategy 'shared_sync'
+INFO:[parsweep_cuda]:single connectome, 240 x 256 parameter space
+INFO:[parsweep_cuda]:61440 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 61440)
+INFO:[parsweep_cuda]:on device mem: 4922.866 MiB
+==145716== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+INFO:[parsweep_cuda]:elapsed time 6.640
+INFO:[parsweep_cuda]:0.925 M step/s
+==145716== Profiling application: python3 ./parsweep.py -p -b 256 -g 240 -n 10 --caching shared_sync
+==145716== Profiling result:
+==145716== Metric result:
+Invocations                               Metric Name                           Metric Description         Min         Max         Avg
+Device "Tesla P100-SXM2-16GB (0)"
+    Kernel: integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+         10                            gld_throughput                       Global Load Throughput  273.79GB/s  275.06GB/s  274.26GB/s
+         10                            gld_efficiency                Global Memory Load Efficiency      49.77%      49.78%      49.78%
+         10                        achieved_occupancy                           Achieved Occupancy    0.530059    0.531039    0.530636
+         10           single_precision_fu_utilization   Single-Precision Function Unit Utilization    High (7)    High (7)    High (7)

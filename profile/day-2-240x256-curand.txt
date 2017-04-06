@@ -1,0 +1,67 @@
+python3 parsweep_cuda.py > profile/day-2-240x256-curand.txt 2>&1
+/gpfs/homeb/pcp0/pcp0025/tvb-hpc-hack/parsweep_cuda_data.py:43: UserWarning: The CUDA compiler succeeded, but said the following:
+ptxas info    : 77696 bytes gmem, 96 bytes cmem[3]
+ptxas info    : Compiling entry function '_Z9integrateiiiiiffPfS_S_S_S_' for 'sm_60'
+ptxas info    : Function properties for _Z9integrateiiiiiffPfS_S_S_S_
+    32 bytes stack frame, 0 bytes spill stores, 0 bytes spill loads
+ptxas info    : Used 31 registers, 392 bytes cmem[0], 124 bytes cmem[2]
+
+  keep=True
+single connectome, 240 x 256 parameter space
+61440 total num threads
+history shape (249, 84, 61440)
+on device mem: 4922.866 MiB
+*** compiler output in /tmp/tmp8etjfuo3
+5.745064973831177
+10694396.021604588 steps/sec
+\nnvprof python3 parsweep_cuda.py >> profile/day-2-240x256-curand.txt 2>&1
+==151133== NVPROF is profiling process 151133, command: python3 parsweep_cuda.py
+single connectome, 240 x 256 parameter space
+61440 total num threads
+history shape (249, 84, 61440)
+on device mem: 4922.866 MiB
+5.752970457077026
+10679700.245013336 steps/sec
+==151133== Profiling application: python3 parsweep_cuda.py
+==151133== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 93.72%  5.73228s        10  573.23ms  572.48ms  573.89ms  integrate(int, int, int, int, int, float, float, float*, float*, float*, float*, float*)
+  6.01%  367.87ms         5  73.574ms  3.3600us  366.65ms  [CUDA memcpy HtoD]
+  0.26%  16.206ms        10  1.6206ms  1.3913ms  2.4784ms  [CUDA memcpy DtoH]
+
+==151133== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 90.86%  5.74890s        10  574.89ms  573.90ms  576.45ms  cuMemcpyDtoH
+  5.82%  368.12ms         5  73.623ms  13.506us  366.77ms  cuMemcpyHtoD
+  2.18%  137.65ms         1  137.65ms  137.65ms  137.65ms  cuCtxCreate
+  1.02%  64.722ms         1  64.722ms  64.722ms  64.722ms  cuCtxDetach
+  0.08%  5.0477ms         5  1.0095ms  7.9380us  1.9905ms  cuMemAlloc
+  0.02%  1.5427ms         5  308.53us  13.411us  1.0031ms  cuMemFree
+  0.01%  401.07us        10  40.107us  24.654us  115.43us  cuLaunchKernel
+  0.01%  396.61us         1  396.61us  396.61us  396.61us  cuModuleLoadDataEx
+  0.00%  234.11us         1  234.11us  234.11us  234.11us  cuModuleUnload
+  0.00%  39.393us        10  3.9390us  1.2230us  22.934us  cuFuncSetBlockShape
+  0.00%  15.681us        36     435ns     267ns  1.1190us  cuDeviceGetAttribute
+  0.00%  10.258us         7  1.4650us     469ns  7.1720us  cuCtxPushCurrent
+  0.00%  7.2760us         7  1.0390us     459ns  3.5450us  cuCtxPopCurrent
+  0.00%  5.4990us        13     423ns     323ns     759ns  cuDeviceComputeCapability
+  0.00%  5.3120us         7     758ns     385ns  1.2810us  cuCtxGetDevice
+  0.00%  4.7770us         3  1.5920us     443ns  3.8790us  cuDeviceGetCount
+  0.00%  3.6740us         9     408ns     301ns     479ns  cuDeviceGet
+  0.00%  2.0330us         1  2.0330us  2.0330us  2.0330us  cuModuleGetFunction
+\nnvprof --metrics achieved_occupancy,single_precision_fu_utilization python3 parsweep_cuda.py >> profile/day-2-240x256-curand.txt 2>&1
+==151151== NVPROF is profiling process 151151, command: python3 parsweep_cuda.py
+single connectome, 240 x 256 parameter space
+61440 total num threads
+history shape (249, 84, 61440)
+on device mem: 4922.866 MiB
+5.940898895263672
+10341869.316945031 steps/sec
+==151151== Profiling application: python3 parsweep_cuda.py
+==151151== Profiling result:
+==151151== Metric result:
+Invocations                               Metric Name                           Metric Description         Min         Max         Avg
+Device "Tesla P100-SXM2-16GB (0)"
+    Kernel: integrate(int, int, int, int, int, float, float, float*, float*, float*, float*, float*)
+         10                        achieved_occupancy                           Achieved Occupancy    0.529275    0.529373    0.529331
+         10           single_precision_fu_utilization   Single-Precision Function Unit Utilization     Mid (6)     Mid (6)     Mid (6)

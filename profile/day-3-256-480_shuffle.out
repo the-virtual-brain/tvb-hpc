@@ -1,0 +1,58 @@
+INFO:[parsweep_cuda]:cache_shuffle? True
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 9845.679 MiB
+INFO:[parsweep_cuda]:elapsed time 1.794
+INFO:[parsweep_cuda]:6.851 M step/s
+==131594== NVPROF is profiling process 131594, command: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+INFO:[parsweep_cuda]:cache_shuffle? True
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 9845.679 MiB
+INFO:[parsweep_cuda]:elapsed time 1.406
+INFO:[parsweep_cuda]:8.737 M step/s
+==131594== Profiling application: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+==131594== Profiling result:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 43.25%  859.58ms        10  85.958ms  85.685ms  86.116ms  integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+ 30.78%  611.70ms         5  122.34ms  3.3600us  609.36ms  [CUDA memcpy HtoD]
+ 25.97%  516.03ms        10  51.603ms  4.3739ms  106.50ms  [CUDA memcpy DtoH]
+
+==131594== API calls:
+Time(%)      Time     Calls       Avg       Min       Max  Name
+ 62.57%  1.39113s        10  139.11ms  90.364ms  196.05ms  cuMemcpyDtoH
+ 27.52%  611.95ms         5  122.39ms  16.220us  609.47ms  cuMemcpyHtoD
+  6.30%  140.06ms         1  140.06ms  140.06ms  140.06ms  cuCtxCreate
+  3.13%  69.499ms         1  69.499ms  69.499ms  69.499ms  cuCtxDetach
+  0.27%  5.9326ms         5  1.1865ms  8.9240us  2.9068ms  cuMemAlloc
+  0.11%  2.5163ms         5  503.26us  59.079us  1.9099ms  cuMemFree
+  0.05%  1.1308ms        10  113.08us  29.717us  210.77us  cuLaunchKernel
+  0.04%  806.15us         1  806.15us  806.15us  806.15us  cuModuleLoadDataEx
+  0.01%  181.93us         1  181.93us  181.93us  181.93us  cuModuleUnload
+  0.00%  84.836us        10  8.4830us  1.2810us  16.740us  cuFuncSetBlockShape
+  0.00%  17.379us        36     482ns     254ns  1.6460us  cuDeviceGetAttribute
+  0.00%  15.902us         1  15.902us  15.902us  15.902us  cuModuleGetFunction
+  0.00%  8.1860us         7  1.1690us     529ns  3.8750us  cuCtxPopCurrent
+  0.00%  7.3860us         7  1.0550us     444ns  4.1410us  cuCtxPushCurrent
+  0.00%  6.7360us         7     962ns     352ns  2.7110us  cuCtxGetDevice
+  0.00%  5.5300us        13     425ns     297ns  1.0280us  cuDeviceComputeCapability
+  0.00%  4.9860us         3  1.6620us     457ns  3.4370us  cuDeviceGetCount
+  0.00%  4.3960us         9     488ns     254ns     899ns  cuDeviceGet
+==131611== NVPROF is profiling process 131611, command: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+INFO:[parsweep_cuda]:cache_shuffle? True
+INFO:[parsweep_cuda]:single connectome, 480 x 256 parameter space
+INFO:[parsweep_cuda]:122880 total num threads
+INFO:[parsweep_cuda]:history shape (249, 84, 122880)
+INFO:[parsweep_cuda]:on device mem: 9845.679 MiB
+INFO:[parsweep_cuda]:elapsed time 1.102
+INFO:[parsweep_cuda]:11.153 M step/s
+==131611== Profiling application: python3 ./parsweep.py -p -b 256 -g 480 -n 10
+==131611== Profiling result:
+==131611== Metric result:
+Invocations                               Metric Name                           Metric Description         Min         Max         Avg
+Device "Tesla P100-SXM2-16GB (0)"
+    Kernel: integrate(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, float, float, float*, float*, float*, float*, float*)
+         10                        achieved_occupancy                           Achieved Occupancy    0.647060    0.648636    0.647600
+         10           single_precision_fu_utilization   Single-Precision Function Unit Utilization     Mid (6)     Mid (6)     Mid (6)
