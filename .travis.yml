@@ -7,4 +7,4 @@ before_install:
 - docker pull maedoc/tvb-hpc
 
 script:
-- docker run --rm -it -v $(pwd):/root/hpc maedoc/tvb-hpc python -m unittest tvb_hpc.tests
+- docker run --rm -it --env TVB_LOG=INFO -v $(pwd):/root/hpc maedoc/tvb-hpc python -m unittest tvb_hpc.tests
