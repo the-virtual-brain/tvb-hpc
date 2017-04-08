@@ -65,7 +65,7 @@ trace = np.zeros((400, ) + state.shape, np.float32)
 import time
 tic = time.time()
 for i in range(400):
-    knl(100, nnode, obsrv.shape[0], state, input, param, drift, diffs, obsrv, nnz, lnz, row, col, wnz)
+    knl(10, nnode, obsrv.shape[0], state, input, param, drift, diffs, obsrv, nnz, lnz, row, col, wnz)
     trace[i] = state
 
 toc = time.time()
