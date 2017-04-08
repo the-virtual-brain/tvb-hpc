@@ -65,7 +65,7 @@ class EulerStep(BaseKernel):
         return dtypes
 
     def kernel_data(self):
-        data = 'nnode nsvar next state drift'.split()
+        data = 'nnode nsvar state drift'.split()
         if isinstance(self.dt, pm.var):
             data.insert(0, self.dt.name)
         return data
@@ -81,7 +81,7 @@ class EulerStep(BaseKernel):
 class EulerMaryuyamaStep(EulerStep):
 
     def kernel_isns(self):
-        lhs = 'next[i_node, i_svar] = '
+        lhs = 'state[i_node, i_svar] = '
         rhs = 'state[i_node, i_svar] + {dt}*drift[i_node, i_svar] '\
               '+ sqrt_dt*dWt[i_node, i_svar]*diffs[i_node, i_svar]'
         return [
