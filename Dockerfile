@@ -24,3 +24,6 @@ RUN apt-get remove --purge -y build-essential git curl vim $(apt-mark showauto) 
 WORKDIR /root/hpc
 
 RUN pip install pudb
+
+ENV LANG=en_US.UTF-8
+RUN locale-gen $LANG

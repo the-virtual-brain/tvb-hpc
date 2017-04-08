@@ -16,6 +16,7 @@ target = NumbaTarget()
 # build individual kernels
 osc = model.Kuramoto()
 osc.dt = 1.0
+osc.const['omega'] = 10.0 * 2.0 * np.pi / 1e3
 osc_knl = osc.kernel(target)
 
 cfun = coupling.Kuramoto(osc)
@@ -34,7 +35,11 @@ knl = lp.fuse_kernels(knls, data_flow=data_flow)
 
 # and time step
 knl = lp.to_batched(knl, 'nstep', [], 'i_step', sequential=True)
-knl = lp.fix_parameters(knl, i_time=pm.parse('i_step % ntime'))
+knl = lp.fix_parameters(knl, i_time=pm.parse('(i_step + i_step_0) % ntime'))
+knl.args.append(lp.ValueArg('i_step_0', np.uintc))
+knl = lp.add_dtypes(knl, {'i_step_0': np.uintc})
+
+# TODO add outer time loop & prange over subjects?
 
 # load connectivity TODO util function / class
 npz = np.load('data/hcp0.npz')
@@ -50,7 +55,7 @@ col = sw.indices.astype(np.uintc)
 row = sw.indptr.astype(np.uintc)
 
 # choose param space
-ng = 4
+ng = 32
 couplings = np.logspace(1.6, 3.0, ng)
 speeds = np.logspace(0.0, 2.0, ng)
 
@@ -63,7 +68,7 @@ for j, (speed, coupling) in enumerate(itertools.product(speeds, couplings)):
     for i in range(trace.shape[1]):
         knl(10, nnode, obsrv.shape[0], state, input, param,
                 drift, diffs, obsrv, nnz, lnz, row, col, wnz,
-                a=coupling)
+                a=coupling, i_step_0=i*10)
         trace[j, i] = state[:, 0]
     print(j)
 
