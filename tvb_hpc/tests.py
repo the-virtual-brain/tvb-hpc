@@ -31,6 +31,7 @@ from .network import Network
 from .rng import RNG
 from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
+from .numba import NumbaTarget
 from .utils import getLogger, VarSubst
 
 
@@ -110,7 +111,6 @@ class TestLoopTransforms(TestCase):
         knl2 = lp.to_batched(knl, 'T', ['in'], 't')
         print(self._dtype_and_code(knl2))
 
-    #@unittest.skip('question asked on mailing list')
     def test_wrap_loop_with_param(self):
         knl = lp.make_kernel("{[i,j]:0<=i,j<n}",
                              """
@@ -132,9 +132,9 @@ class TestLoopTransforms(TestCase):
         knl = lp.prioritize_loops(knl, ['i_outer', 'j', 'i_inner'])
         print(self._dtype_and_code(knl))
 
-    @unittest.skip
     def test_sparse_matmul(self):
         "Tests how to do sparse indexing w/ loop."
+        target = NumbaTarget()
         knl = lp.make_kernel(
             [
                 '{[i]: 0   <= i <   n}',
@@ -148,7 +148,7 @@ class TestLoopTransforms(TestCase):
             out[i] = sum(j, dat[j] * vec[col[j]])
             """,
             'n nnz row col dat vec out'.split(),
-            target=CTarget())
+            target=target)
         knl = lp.add_and_infer_dtypes(knl, {
             'out,dat,vec': np.float32,
             'col,row,n,nnz': np.uintc,
@@ -156,7 +156,6 @@ class TestLoopTransforms(TestCase):
         # col and dat have uninferrable shape
         knl.args[3].shape = pm.var('nnz'),
         knl.args[4].shape = pm.var('nnz'),
-        cknl = CompiledKernel(knl)
         from scipy.sparse import csr_matrix
         n = 64
         mat = csr_matrix(np.ones((64, 64)) * (np.random.rand(64, 64) < 0.1))
@@ -165,10 +164,20 @@ class TestLoopTransforms(TestCase):
         dat = mat.data.astype(np.float32)
         out, vec = np.random.rand(2, n).astype(np.float32)
         nnz = mat.nnz
-        cknl(n, nnz, row, col, dat, vec, out)
+        knl(n, nnz, row, col, dat, vec, out)
         np.testing.assert_allclose(out, mat * vec, 1e-5, 1e-6)
 
 
+class TestNumbaTarget(TestCase):
+
+    def test_simple(self):
+        target = NumbaTarget()
+        knl = lp.make_kernel("{ [i]: 0<=i<n }", "out[i] = 2*a[i]", target=target)
+        typed = lp.add_dtypes(knl, {'a': np.float32})
+        a, out = np.zeros((2, 10), np.float32)
+        a[:] = np.r_[:a.size]
+        typed(a, 10, out)
+        np.testing.assert_allclose(out, a * 2)
 
 
 class TestCompiledKernel(TestCase):
@@ -201,7 +210,6 @@ class TestLogProb(TestCase):
             LOG.debug('%s -> %s', var, expr)
 
 
-@unittest.skip
 class TestModel(TestCase):
 
     def setUp(self):
@@ -209,8 +217,9 @@ class TestModel(TestCase):
         self.spec = Spec('float', 8)
 
     def _test(self, model: BaseModel, spec: Spec, log_code=False):
-        knl = model.kernel(target=CTarget())
-        cknl = CompiledKernel(knl)
+        target = NumbaTarget()
+        knl = model.kernel(target=target)
+        target.get_kernel_executor(knl)
 
     def test_balloon_model(self):
         model = BalloonWindkessel()
@@ -239,6 +248,7 @@ class TestModel(TestCase):
 
 class TestRNG(TestCase):
 
+    # Trickier to use Numba. Can we port one of them?
     @unittest.skip
     def test_r123_normal(self):
         rng = RNG()
@@ -279,15 +289,15 @@ class TestCoupling(TestCase):
         self.assertEqual(cf.post_stat(0), PostSumStat.mean)
 
 
-@unittest.skip
 class TestNetwork(TestCase):
 
     def _test_dense(self, Model, Cfun):
         model = Model()
         cfun = Cfun(model)
-        net = DenseNetwork(model, cfun)
-        knl = net.kernel(target=CTarget())
-        CompiledKernel(knl)
+        net = Network(model, cfun)
+        target = NumbaTarget()
+        knl = net.kernel(target=target)
+        target.get_kernel_executor(knl)
 
     def test_hmje(self):
         self._test_dense(HMJE, LCf)
@@ -301,26 +311,19 @@ class TestNetwork(TestCase):
 
 class TestScheme(TestCase):
 
-    @unittest.skip
+    def _test_scheme(self, scheme):
+        target = NumbaTarget()
+        knl = scheme.kernel(target=target)
+        target.get_kernel_executor(knl)
+
     def test_euler_dt_literal(self):
-        scheme = EulerStep(0.1)
-        knl = scheme.kernel(target=CTarget())
-        CompiledKernel(knl)
+        self._test_scheme(EulerStep(0.1))
 
-    @unittest.skip
     def test_euler_dt_var(self):
-        scheme = EulerStep(pm.var('dt'))
-        knl = scheme.kernel(target=CTarget())
-        CompiledKernel(knl)
+        self._test_scheme(EulerStep(pm.var('dt')))
 
-    @unittest.skip
     def test_em_dt_literal(self):
-        scheme = EulerMaryuyamaStep(0.1)
-        knl = scheme.kernel(target=CTarget())
-        CompiledKernel(knl)
+        self._test_scheme(EulerMaryuyamaStep(0.1))
 
-    @unittest.skip
     def test_em_dt_var(self):
-        scheme = EulerMaryuyamaStep(pm.var('dt'))
-        knl = scheme.kernel(target=CTarget())
-        CompiledKernel(knl)
+        self._test_scheme(EulerMaryuyamaStep(pm.var('dt')))

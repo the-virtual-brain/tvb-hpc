@@ -81,11 +81,11 @@ class EulerStep(BaseKernel):
 class EulerMaryuyamaStep(EulerStep):
 
     def kernel_isns(self):
-        lhs = 'next[{i}] = '
-        rhs = 'state[{i}] + {dt}*drift[{i}] + sqrt_dt*dWt[{i}]*diffs[{i}]'
+        lhs = 'next[i, j] = '
+        rhs = 'state[i, j] + {dt}*drift[i, j] + sqrt_dt*dWt[i, j]*diffs[i, j]'
         return [
             '<> sqrt_dt = sqrtf({dt})'.format(dt=self.dt),
-            (lhs + rhs).format(i='i, j, k', dt=self.dt)
+            (lhs + rhs).format(dt=self.dt)
         ]
 
     def kernel_data(self):

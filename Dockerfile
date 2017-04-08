@@ -22,3 +22,5 @@ RUN apt-get remove --purge -y build-essential git curl vim $(apt-mark showauto) 
 # run from root dir of repo, e.g.
 # docker run --rm -it -v ./:/root/hpc python -m unittest tvb_hpc.tests
 WORKDIR /root/hpc
+
+RUN pip install pudb
