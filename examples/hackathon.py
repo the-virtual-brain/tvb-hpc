@@ -31,8 +31,27 @@ data_flow = [
 ]
 knl = lp.fuse_kernels(knls, data_flow=data_flow)
 
-knl = lp.to_batched(knl, 'nstep', [], 'i_step', sequential=True)
+knl = lp.to_batched(knl, 'nstep', [], 'i_time', sequential=True)
 
 # TODO next -> state, i_step -> i_time
 
 target.get_kernel_executor(knl)
+
+# load connectivity
+npz = np.load('data/hcp0.npz')
+weights = npz['weights']
+lengths = npz['lengths']
+weights /= weights.max()
+nnode = weights.shape[0]
+nnz = ~(weights == 0)
+wnz = weights[nnz]
+lnz = (lengths[nnz] / osc.dt).astype(np.uintc)
+
+# build other data arrays
+next, state, drift = np.zeros((3, nnode, 2), np.float32)
+input, param, diffs = np.zeros((3, nnode, 2), np.float32)
+obsrv = np.zeros((lnz.max() + 3, nnode, 2), np.float32)
+LOG.info('obsrv %r %.3f MB', obsrv.shape, obsrv.nbytes / 2**20)
+
+# nstep, nnode, i_time, ntime, state, input, param, drift, diffs, obsrv, nnz, delays, row, col, weights
+
