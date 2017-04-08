@@ -12,7 +12,7 @@ LOG = utils.getLogger('hackathon')
 target = NumbaTarget()
 
 osc = model.Kuramoto()
-osc.dt = 0.1
+osc.dt = 1.0
 osc_knl = osc.kernel(target)
 
 cfun = coupling.Kuramoto(osc)
@@ -47,15 +47,26 @@ weights = npz['weights']
 lengths = npz['lengths']
 weights /= weights.max()
 nnode = weights.shape[0]
-nnz = ~(weights == 0)
-wnz = weights[nnz]
-lnz = (lengths[nnz] / osc.dt).astype(np.uintc)
+nz = ~(weights == 0)
+nnz = nz.sum()
+wnz = weights[nz]
+lnz = (lengths[nz] / osc.dt).astype(np.uintc)
+sw = sparse.csr_matrix(weights)
+col = sw.indices.astype(np.uintc)
+row = sw.indptr.astype(np.uintc)
 
 # build other data arrays
-next, state, drift = np.zeros((3, nnode, 2), np.float32)
-input, param, diffs = np.zeros((3, nnode, 2), np.float32)
-obsrv = np.zeros((lnz.max() + 3, nnode, 2), np.float32)
+state, input, param, drift, diffs, _ = osc.prep_arrays(nnode)
+obsrv = np.zeros((lnz.max() + 3, nnode, 1), np.float32)
 LOG.info('obsrv %r %.3f MB', obsrv.shape, obsrv.nbytes / 2**20)
 
-# nstep, nnode, i_time, ntime, state, input, param, drift, diffs, obsrv, nnz, delays, row, col, weights
+# nstep, nnode, ntime, state, input, param, drift, diffs, obsrv, nnz, delays, row, col, weights
+trace = np.zeros((400, ) + state.shape, np.float32)
+import time
+tic = time.time()
+for i in range(400):
+    knl(100, nnode, obsrv.shape[0], state, input, param, drift, diffs, obsrv, nnz, lnz, row, col, wnz)
+    trace[i] = state
 
+toc = time.time()
+print(toc - tic, 's elapsed')
