@@ -58,7 +58,7 @@ class EulerStep(BaseKernel):
     def kernel_dtypes(self):
         dtypes = {
             'nnode,nsvar': np.uintc,
-            'next,state,drift': np.float32,
+            'state,drift': np.float32,
         }
         if isinstance(self.dt, pm.var):
             dtypes['dt'] = np.float32
@@ -74,7 +74,7 @@ class EulerStep(BaseKernel):
         return "{ [i_node, i_svar]: 0 <= i_node < nnode and 0 <= i_svar < nsvar }"
 
     def kernel_isns(self):
-        fmt = 'next[i_node, i_svar] = state[i_node, i_svar] + %s * drift[i_node, i_svar]'
+        fmt = 'state[i_node, i_svar] = state[i_node, i_svar] + %s * drift[i_node, i_svar]'
         return [ fmt % ( self.dt, ) ]
 
 
