@@ -22,6 +22,7 @@ from typing import List
 import itertools
 import numpy as np
 import loopy as lp
+import pymbolic as pm
 from pymbolic.mapper.differentiator import DifferentiationMapper
 from .base import BaseKernel
 from .compiler import Spec
@@ -84,13 +85,21 @@ class BaseModel(BaseKernel):
         return arrs
 
     def kernel_domains(self) -> str:
-        return "{ [i]: 0 <= i < nnode }"
+        return "{ [i_node]: 0 <= i_node < nnode }"
 
     def kernel_dtypes(self):
-        dtypes = {'nnode': np.uintc}
+        dtypes = {'nnode,i_time,ntime': np.uintc}
         for key in 'state input param drift diffs obsrv'.split():
             dtypes[key] = np.float32
         return dtypes
+
+    def kernel_data(self):
+        data = super().kernel_data()
+        # loopy can't infer bound on first dim of obsrv
+        nobs = min(len(self.input_sym), len(self.obsrv_sym))
+        shape = pm.var('ntime'), pm.var('nnode'), nobs
+        data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
+        return data
 
     def kernel_isns(self):
         return itertools.chain(
@@ -107,7 +116,7 @@ class BaseModel(BaseKernel):
                 yield fmt.format(key=key, val=val)
 
     def _insn_unpack(self):
-        fmt = '<> {var} = {kind}[i, {i}]'
+        fmt = '<> {var} = {kind}[i_node, {i}]'
         for kind in 'state input param'.split():
             vars = getattr(self, kind + '_sym')
             for i, var in enumerate(vars):
@@ -119,12 +128,16 @@ class BaseModel(BaseKernel):
             yield fmt.format(lhs=lhs, rhs=rhs)
 
     def _insn_store(self):
-        fmt = '{kind}[i, {i}] = {expr}'
+        fmt = {
+            'drift': '{kind}[i_node, {i}] = {expr}',
+            'diffs': '{kind}[i_node, {i}] = {expr}',
+            'obsrv': '{kind}[i_time, i_node, {i}] = {expr}',
+        }
         for kind in 'drift diffs obsrv'.split():
             exprs = getattr(self, kind + '_sym')
             nvar = len(getattr(self, kind + '_sym'))
             for i, expr in enumerate(exprs):
-                yield fmt.format(kind=kind, expr=str(expr), i=i)
+                yield fmt[kind].format(kind=kind, expr=str(expr), i=i)
 
 
 class _TestModel(BaseModel):

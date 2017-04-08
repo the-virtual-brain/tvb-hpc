@@ -71,18 +71,19 @@ class EulerStep(BaseKernel):
         return data
 
     def kernel_domains(self):
-        return "{ [i, j]: 0 <= i < nnode and 0 <= j < nsvar }"
+        return "{ [i_node, i_svar]: 0 <= i_node < nnode and 0 <= i_svar < nsvar }"
 
     def kernel_isns(self):
-        fmt = 'next[i, j] = state[i, j] + %s * drift[i, j]'
+        fmt = 'next[i_node, i_svar] = state[i_node, i_svar] + %s * drift[i_node, i_svar]'
         return [ fmt % ( self.dt, ) ]
 
 
 class EulerMaryuyamaStep(EulerStep):
 
     def kernel_isns(self):
-        lhs = 'next[i, j] = '
-        rhs = 'state[i, j] + {dt}*drift[i, j] + sqrt_dt*dWt[i, j]*diffs[i, j]'
+        lhs = 'next[i_node, i_svar] = '
+        rhs = 'state[i_node, i_svar] + {dt}*drift[i_node, i_svar] '\
+              '+ sqrt_dt*dWt[i_node, i_svar]*diffs[i_node, i_svar]'
         return [
             '<> sqrt_dt = sqrtf({dt})'.format(dt=self.dt),
             (lhs + rhs).format(dt=self.dt)

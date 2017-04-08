@@ -62,12 +62,12 @@ class Network(BaseKernel):
         # substitute pre_syn and post_syn for obsrv data
         pre_expr = subst_vars(
             expr=pre,
-            pre_syn=pm.parse('obsrv[t - delays[j], col[j], k]'),  # k is var idx
-            post_syn=pm.parse('obsrv[t, i, k]'),
+            pre_syn=pm.parse('obsrv[i_time - delays[j_node], col[j_node], k]'),  # k is var idx
+            post_syn=pm.parse('obsrv[i_time, i_node, k]'),
         )
         # build weighted sum over nodes
         sum = subst_vars(
-            expr=pm.parse('sum(j, weights[j] * pre_expr)'),
+            expr=pm.parse('sum(j_node, weights[j_node] * pre_expr)'),
             pre_expr=pre_expr,
         )
         # mean used by some cfuns
@@ -76,24 +76,24 @@ class Network(BaseKernel):
         post_expr = subst_vars(post, sum=sum, mean=mean)
         # generate store instruction for post expr, with params
         post_expr = subst_vars(post_expr, k=k, **self.cfun.param)
-        return 'input[i, %d] = %s' % ( k, post_expr )
+        return 'input[i_node, %d] = %s' % ( k, post_expr )
 
     def kernel_isns(self):
         "Generates instructions for all cfuns"
-        yield '<> j_lo = row[i]'
-        yield '<> j_hi = row[i + 1]'
+        yield '<> j_node_lo = row[i_node]'
+        yield '<> j_node_hi = row[i_node + 1]'
         for k, (_, pre, post, _) in enumerate(self.cfun.io):
             yield self._insn_cfun(k, pre, post)
 
     def kernel_domains(self):
         return [
-            '{ [i]: 0 <= i < nnode }',
-            '{ [j]: j_lo <= j < j_hi }'
+            '{ [i_node]: 0 <= i_node < nnode }',
+            '{ [j_node]: j_node_lo <= j_node < j_node_hi }'
         ]
 
     def kernel_dtypes(self):
         return {
-            't,ntime,nnode,nnz,delays,row,col': np.uintc,
+            'i_time,ntime,nnode,nnz,delays,row,col': np.uintc,
             'input,obsrv,weights': np.float32,
         }
 
