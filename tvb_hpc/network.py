@@ -92,10 +92,15 @@ class Network(BaseKernel):
         ]
 
     def kernel_dtypes(self):
-        return {
+        dtypes = {
             'i_time,ntime,nnode,nnz,delays,row,col': np.uintc,
             'input,obsrv,weights': np.float32,
         }
+        for name, val in self.cfun.param.items():
+            from pymbolic.primitives import Variable
+            if isinstance(val, Variable):
+                dtypes[name] = np.float32
+        return dtypes
 
     def kernel_data(self):
         data = super().kernel_data()
