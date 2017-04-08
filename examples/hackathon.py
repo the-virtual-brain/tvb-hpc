@@ -31,7 +31,11 @@ data_flow = [
 ]
 knl = lp.fuse_kernels(knls, data_flow=data_flow)
 
-knl = lp.to_batched(knl, 'nstep', [], 'i_time', sequential=True)
+
+knl = lp.to_batched(knl, 'nstep', [], 'i_step', sequential=True)
+
+import pymbolic as pm
+knl = lp.fix_parameters(knl, i_time=pm.parse('i_step % ntime'))
 
 # TODO next -> state, i_step -> i_time
 
