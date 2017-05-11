@@ -140,6 +140,7 @@ def parse_args():#{{{
             )
     parser.add_argument('--dataset',
             help="dataset to use, from ~/data/data/sep/*",
+            default='hcp',
             )
     parser.add_argument('--node_threads', default=1, type=int)
     parser.add_argument('--model',
@@ -313,6 +314,7 @@ if __name__ == '__main__':
     elapsed = time.time() - tic
     # release pinned memory
     bold = np.array(bold_unpinned)
+    tavg = np.array(tavg_unpinned)
     # inform about time
     logger.info('elapsed time %0.3f', elapsed)
     logger.info('%0.3f M step/s', 1e-6 * nstep * n_inner_steps * n_work_items / elapsed)#}}}
