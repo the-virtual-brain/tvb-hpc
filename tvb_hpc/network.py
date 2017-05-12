@@ -62,8 +62,8 @@ class Network(BaseKernel):
         # substitute pre_syn and post_syn for obsrv data
         pre_expr = subst_vars(
             expr=pre,
-            pre_syn=pm.parse('obsrv[i_time - delays[j_node], col[j_node], k]'),  # k is var idx
-            post_syn=pm.parse('obsrv[i_time, i_node, k]'),
+            pre_syn=pm.parse('obsrv[(i_time - delays[j_node]) % ntime, col[j_node], k]'),  # k is var idx
+            post_syn=pm.parse('obsrv[i_time % ntime, i_node, k]'),
         )
         # build weighted sum over nodes
         sum = subst_vars(

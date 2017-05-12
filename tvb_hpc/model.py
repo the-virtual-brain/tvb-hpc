@@ -131,7 +131,7 @@ class BaseModel(BaseKernel):
         fmt = {
             'drift': '{kind}[i_node, {i}] = {expr}',
             'diffs': '{kind}[i_node, {i}] = {expr}',
-            'obsrv': '{kind}[i_time, i_node, {i}] = {expr}',
+            'obsrv': '{kind}[i_time % ntime, i_node, {i}] = {expr}',
         }
         for kind in 'drift diffs obsrv'.split():
             exprs = getattr(self, kind + '_sym')
@@ -161,7 +161,15 @@ class Kuramoto(BaseModel):
     drift = 'omega + I',
     diffs = 0,
     obsrv = 'theta', 'sin(theta)'
-    const = {'omega': 1.0}
+    const = {'omega': 1.0, 'pi': np.pi}
+
+    def kernel_isns(self):
+        isns = list(super().kernel_isns())
+        isns.append(
+            'state[i_node, 0] = '
+            ' if(state[i_node, 0]>pi, state[i_node, 0]-2*pi, '
+            '  if(state[i_node, 0]<-pi, state[i_node, 0]+2*pi, state[i_node, 0]))')
+        return isns
 
 
 class HMJE(BaseModel):
