@@ -179,6 +179,28 @@ class TestNumbaTarget(TestCase):
         typed(a, 10, out)
         np.testing.assert_allclose(out, a * 2)
 
+    def test_parallel_batch(self):
+        target = NumbaTarget()
+        knl = lp.make_kernel("{ [i]: 0<=i<n }", "out[i] = out[i] + 2*a[i]", target=target)
+        batched = lp.to_batched(
+            knl,
+            10,
+            ['out'],
+            batch_iname_prefix="j",
+            sequential=False
+        )
+        batched = lp.tag_inames(
+            batched,
+            {'j': 'g.0'}
+        )
+        typed = lp.add_dtypes(batched, {'a': np.float32})
+        a, out = np.zeros((2, 10), np.float32)
+        a[:] = np.r_[:a.size]
+        typed(a, 10, out)
+        np.testing.assert_allclose(out, 10 * a * 2)
+
+
+
 
 class TestCompiledKernel(TestCase):
 
