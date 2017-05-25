@@ -75,7 +75,7 @@ def run_one(args):
 def run():
     nnode, lengths, nnz, row, col, wnz, nz, weights = make_data()
     # choose param space
-    nc, ns = 16, 16
+    nc, ns = 8, 8
     couplings = np.logspace(0, 1.0, nc)
     speeds = np.logspace(0.0, 2.0, ns)
     trace = np.zeros((nc * ns, 400) + (nnode, ), np.float32)
