@@ -139,6 +139,20 @@ class BaseModel(BaseKernel):
             for i, expr in enumerate(exprs):
                 yield fmt[kind].format(kind=kind, expr=str(expr), i=i)
 
+    def _wrap_limit(self, svar_idx):
+        # generate branchless wrap around
+        insn = (
+            '{x} = ({x} < {x0}) * ({x} + {dx}) + ({x} > {x1}) * ({x} - {dx}) '
+            ' + ({x} >= {x0}) * ({x} <= {x1}) * {x}'
+        )
+        x0, x1 = self.limit[svar_idx]
+        yield insn.format(
+            x='state[i_node, %d]' % (svar_idx, ),
+            x0=x0,
+            x1=x1,
+            dx=x1 - x0,
+        )
+
 
 class _TestModel(BaseModel):
     state = 'y1 y2'
@@ -155,13 +169,17 @@ class _TestModel(BaseModel):
 class Kuramoto(BaseModel):
     "Kuramoto model of phase synchronization."
     state = 'theta'
-    limit = (-np.pi, np.pi),
+    limit = (0, 2 * np.pi),
     input = 'I'
     param = 'omega'
     drift = 'omega + I',
     diffs = 0,
     obsrv = 'theta', 'sin(theta)'
     const = {'omega': 1.0}
+
+    def _insn_store(self):
+        yield from self._wrap_limit(0)
+        yield from super()._insn_store()
 
 
 class HMJE(BaseModel):
