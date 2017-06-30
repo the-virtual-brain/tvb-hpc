@@ -1,0 +1,10 @@
+before_script:
+  - echo "hi"
+
+unittest:
+  - python -m unittest tvb_hpc.tests
+
+examples:
+  - python -m unittest tvb_hpc.examples
+
+# vim: sw=2 sts=2 et ai
