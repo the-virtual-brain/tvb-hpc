@@ -18,6 +18,11 @@ Get hacking with the [`examples`](examples) or [tests](tvb_hpc/tests.py).
 
 ## TODO
 
-- fix hackathon example
+- ensure par sweeps etc built as domains
+- rng
+- make high level usage easier (tavg, bold, gain, fcd, etc)
+- test on CUDA
 - parallel numba
 - simple SALib usage?
+- chunking of state & vectorization?
+- reach cuda hackathon performance numbers
