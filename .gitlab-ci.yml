@@ -40,6 +40,9 @@ example_hackathon:
   stage: test
   script:
     - python examples/hackathon.py
+  artifacts:
+    paths:
+      - examples/hackathon.png
 
 wheel:
   stage: package
