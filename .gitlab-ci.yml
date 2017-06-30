@@ -12,6 +12,12 @@ info:
     - whoami
     - which python
     - which pip
+    - docker info
+
+build_image:
+  stage: build
+  script:
+    - docker build -t tvb/hpc .
 
 build_env:
   stage: build
