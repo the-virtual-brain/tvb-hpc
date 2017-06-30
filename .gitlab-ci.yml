@@ -53,4 +53,9 @@ upload_pypi:
   only:
     - tags
 
+push_github:
+  stage: package
+  script:
+    - git remote -v
+
 # vim: sw=2 sts=2 et ai
