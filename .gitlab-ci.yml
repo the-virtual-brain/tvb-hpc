@@ -46,7 +46,7 @@ unittest:
 example_hackathon:
   stage: test
   script:
-    - python -m tvb_hpc.examples.hackathon.py
+    - python -m tvb_hpc.examples.hackathon
   artifacts:
     paths:
       - hackathon.png
