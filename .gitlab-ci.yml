@@ -10,8 +10,4 @@ unittest:
   script:
     - python -m unittest tvb_hpc.tests
 
-examples:
-  script:
-    - python -m unittest tvb_hpc.examples
-
 # vim: sw=2 sts=2 et ai
