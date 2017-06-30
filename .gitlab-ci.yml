@@ -18,6 +18,7 @@ build_image:
   stage: build
   script:
     - docker build -t tvb/hpc .
+  allow_failure: true
 
 build_env:
   stage: build
@@ -45,10 +46,10 @@ unittest:
 example_hackathon:
   stage: test
   script:
-    - python examples/hackathon.py
+    - python -m tvb_hpc.examples.hackathon.py
   artifacts:
     paths:
-      - examples/hackathon.png
+      - hackathon.png
 
 wheel:
   stage: package

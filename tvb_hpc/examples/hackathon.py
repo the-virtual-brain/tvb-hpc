@@ -123,7 +123,7 @@ def plot_err(err):
     mpl.use('Agg')
     import pylab as pl
     pl.imshow(err)
-    pl.savefig('examples/hackathon.png')
+    pl.savefig('hackathon.png')
 
 
 if __name__ == '__main__':
