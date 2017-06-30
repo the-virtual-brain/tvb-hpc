@@ -119,6 +119,8 @@ def run():
 
 
 def plot_err(err):
+    import matplotlib as mpl
+    mpl.use('Agg')
     import pylab as pl
     pl.imshow(err)
     pl.savefig('examples/hackathon.png')
