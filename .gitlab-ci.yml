@@ -56,6 +56,6 @@ upload_pypi:
 push_github:
   stage: package
   script:
-    - git push git@github.com:the-virtual-brain/tvb-hpc.git $(git rev-parse --abbrev-ref HEAD)
+    - git push git@github.com:the-virtual-brain/tvb-hpc.git
 
 # vim: sw=2 sts=2 et ai
