@@ -1,13 +1,3 @@
 #!/bin/bash
 
-if [[ -z "$(which flake8)" ]]
-then
-    echo "pre-commit: Can't find flake8; please pip -r requirements-dev.txt"
-    exit 1
-fi
-
-set -eu
-
-export PYTHONPATH=$(git rev-parse --show-toplevel)
-python3 -m unittest tvb_hpc.tests
 flake8 tvb_hpc
