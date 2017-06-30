@@ -40,11 +40,13 @@ def make_knl():
 
     # and time step
     knl = lp.to_batched(knl, 'nstep', [], 'i_step', sequential=True)
-    knl = lp.fix_parameters(knl, i_time=pm.parse('(i_step + i_step_0) % ntime'))
+    new_i_time = pm.parse('(i_step + i_step_0) % ntime')
+    knl = lp.fix_parameters(knl, i_time=new_i_time)
     knl.args.append(lp.ValueArg('i_step_0', np.uintc))
     knl = lp.add_dtypes(knl, {'i_step_0': np.uintc})
 
     return knl, osc
+
 
 def make_data():
     # load connectivity TODO util function / class
@@ -76,6 +78,7 @@ def run_one(args):
         trace[i] = obsrv[i * 10:(i + 1) * 10, :, 0].sum(axis=0)
     return trace
 
+
 def run():
     nnode, lengths, nnz, row, col, wnz, nz, weights = make_data()
     # choose param space
@@ -85,9 +88,9 @@ def run():
     trace = np.zeros((nc * ns, 400) + (nnode, ), np.float32)
     LOG.info('trace.nbytes %.3f MB', trace.nbytes / 2**20)
     args = []
-    for j, (speed, coupling) in enumerate(itertools.product(speeds, couplings)):
+    for j, (speed, coupl) in enumerate(itertools.product(speeds, couplings)):
         args.append(
-            (j, speed, coupling, nnode, lengths, nz, nnz, row, col, wnz)
+            (j, speed, coupl, nnode, lengths, nz, nnz, row, col, wnz)
         )
     if False:
         from multiprocessing import Pool
@@ -99,7 +102,7 @@ def run():
     # check correctness
     n_work_items = nc * ns
     r, c = np.triu_indices(nnode, 1)
-    win_size = 200 # 2s
+    win_size = 200  # 2s
     tavg = np.transpose(trace, (1, 2, 0))
     win_tavg = tavg.reshape((-1, win_size) + tavg.shape[1:])
     err = np.zeros((len(win_tavg), n_work_items))
