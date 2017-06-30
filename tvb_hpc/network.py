@@ -49,12 +49,14 @@ class Connectivity:
     def __init__(self,
                  nnode: int,
                  nz: int,
+                 nnz: np.ndarray,
                  col: np.ndarray,
                  row: np.ndarray,
                  wnz: np.ndarray,
                  lnz: np.ndarray):
         self.nnode = nnode
         self.nz = nz
+        self.nnz = nnz
         self.col = col
         self.row = row
         self.wnz = wnz
@@ -70,7 +72,7 @@ class Connectivity:
         sw = sparse.csr_matrix(weights)
         col = sw.indices.astype(np.uintc)
         row = sw.indptr.astype(np.uintc)
-        obj = cls(nnode, nnz, col, row, wnz, lnz)
+        obj = cls(nnode, nz, nnz, col, row, wnz, lnz)
         obj.weights = weights
         obj.lengths = lengths
         return obj
