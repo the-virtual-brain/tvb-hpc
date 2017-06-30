@@ -1,67 +1,40 @@
-# WIP toward hackathon kernel
+#     Copyright 2017 TVB-HPC contributors
+#
+#     Licensed under the Apache License, Version 2.0 (the "License");
+#     you may not use this file except in compliance with the License.
+#     You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+#     Unless required by applicable law or agreed to in writing, software
+#     distributed under the License is distributed on an "AS IS" BASIS,
+#     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#     See the License for the specific language governing permissions and
+#     limitations under the License.
 
 import itertools
 import numpy as np
-import loopy as lp
 import pymbolic as pm
-from scipy import sparse
-from tvb_hpc import model, coupling, network, utils, scheme
-from tvb_hpc.numba import NumbaTarget
+from tvb_hpc import model, coupling, network, utils, scheme, transforms
 
 LOG = utils.getLogger('tvb_hpc')
 
 
 def make_knl():
-
-    target = NumbaTarget()
-
-    # build individual kernels
+    # choose network model parts
     osc = model.Kuramoto()
     osc.dt = 1.0
     osc.const['omega'] = 10.0 * 2.0 * np.pi / 1e3
-    osc_knl = osc.kernel(target)
-
     cfun = coupling.Kuramoto(osc)
     cfun.param['a'] = pm.parse('a')
-    net = network.Network(osc, cfun)
-    net_knl = net.kernel(target)
-
     scm = scheme.EulerStep(osc.dt)
-    scm_knl = scm.kernel(target)
-    scm_knl = lp.fix_parameters(scm_knl, nsvar=len(osc.state_sym))
-
-    # fuse kernels
-    knls = osc_knl, net_knl, scm_knl
-    data_flow = [('input', 1, 0),
-                 ('diffs', 0, 2),
-                 ('drift', 0, 2),
-                 ('state', 2, 0)]
-    knl = lp.fuse_kernels(knls, data_flow=data_flow)
-
-    # and time step
-    knl = lp.to_batched(knl, 'nstep', [], 'i_step', sequential=True)
-    new_i_time = pm.parse('(i_step + i_step_0) % ntime')
-    knl = lp.fix_parameters(knl, i_time=new_i_time)
-    knl.args.append(lp.ValueArg('i_step_0', np.uintc))
-    knl = lp.add_dtypes(knl, {'i_step_0': np.uintc})
-
-    return knl, osc
+    # create kernel
+    return transforms.network_time_step(osc, cfun, scm)
 
 
 def make_data():
-    # load connectivity TODO util function / class
-    npz = np.load('data/hcp0.npz')
-    weights = npz['weights']
-    lengths = npz['lengths']
-    weights /= weights.max()
-    nnode = weights.shape[0]
-    nz = ~(weights == 0)
-    nnz = nz.sum()
-    wnz = weights[nz]
-    sw = sparse.csr_matrix(weights)
-    col = sw.indices.astype(np.uintc)
-    row = sw.indptr.astype(np.uintc)
-    return nnode, lengths, nnz, row, col, wnz, nz, weights
+    c = network.Connectivity.hcp0()
+    return c.nnode, c.lengths, c.nnz, c.row, c.col, c.wnz, c.nz, c.weights
 
 
 def run_one(args):

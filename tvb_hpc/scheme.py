@@ -48,7 +48,11 @@ def euler_maruyama_logp(x, f, g, xn=None, dt=None, step=euler):
     return -(xn - mu) ** 2 / (2 * sd ** 2)
 
 
-class EulerStep(BaseKernel):
+class TimeStepScheme(BaseKernel):
+    pass
+
+
+class EulerStep(TimeStepScheme):
 
     # TODO merge with model dfun kernel to do multiple steps
 

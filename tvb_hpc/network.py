@@ -25,6 +25,7 @@ For the moment, they are not yet implemented.
 """
 
 import numpy as np
+from scipy import sparse
 import loopy as lp
 import pymbolic as pm
 from .base import BaseKernel
@@ -34,6 +35,59 @@ from .utils import getLogger, subst_vars
 
 
 LOG = getLogger(__name__)
+
+
+class Connectivity:
+    """
+    Data class, managing sparse connectivity
+
+    """
+
+    # TODO params like normalization mode, etc.
+    # TODO abstraction on data munging, mapping into kernel workspace
+    #      needs a lot of thought
+    def __init__(self,
+                 nnode: int,
+                 nz: int,
+                 col: np.ndarray[int],
+                 row: np.ndarray[int],
+                 wnz: np.ndarray[float],
+                 lnz: np.ndarray[float]):
+        self.nnode = nnode
+        self.nz = nz
+        self.col = col
+        self.row = row
+        self.wnz = wnz
+        self.lnz = lnz
+
+    @classmethod
+    def from_dense(cls, weights, lengths):
+        nnode = weights.shape[0]
+        nz = ~(weights == 0)
+        nnz = nz.sum()
+        wnz = weights[nz]
+        lnz = lengths[nz]
+        sw = sparse.csr_matrix(weights)
+        col = sw.indices.astype(np.uintc)
+        row = sw.indptr.astype(np.uintc)
+        obj = cls(nnode, nnz, col, row, wnz, lnz)
+        obj.weights = weights
+        obj.lengths = lengths
+
+    @classmethod
+    def from_npz(cls,
+                 fname,
+                 weights_key='weights',
+                 lengths_key='lengths'
+                 ):
+        npz = np.load(fname)
+        weights = npz[weights_key]
+        lengths = npz[lengths_key]
+        return cls.from_dense(weights, lengths)
+
+    @classmethod
+    def hcp0(cls):
+        return cls.from_npz('data/hcp0.npz')
 
 
 class Network(BaseKernel):
