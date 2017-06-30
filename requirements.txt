@@ -8,3 +8,4 @@ git+https://github.com/inducer/pymbolic.git
 git+https://github.com/inducer/loopy
 llvmlite
 numba
+yapf

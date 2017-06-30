@@ -1,10 +1,13 @@
+import os
 import setuptools
+
+version = os.environ.get('TVB_HPC_VER', 'git')
 
 setuptools.setup(
     name='tvb-hpc',
-    version='0.0',
+    version=version,
     description='HPC code generation for TVB',
     author='TVB-HPC Contributors',
-    url='https://github.com/the-virtual-brain/tvb-hpc',
+    url='https://gitlab.thevirtualbrain.org/tvb/hpc',
     packages=setuptools.find_packages(),
 )

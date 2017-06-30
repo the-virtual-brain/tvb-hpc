@@ -1,21 +1,48 @@
-before_script:
-  - pwd
-  - whoami
-  - which python
-  - which pip
-  - conda install numpy scipy llvmlite numba scikit-learn
-  - pip install -r requirements.txt
+stages:
+  - info
+  - build
+  - lint
+  - test
+  - package
 
-unittest:
+info:
+  stage: info
   script:
-    - python -m unittest tvb_hpc.tests
+    - pwd
+    - whoami
+    - which python
+    - which pip
 
-style:
+build_env:
+  stage: build
+  script:
+    - conda install numpy scipy llvmlite numba scikit-learn
+    - pip install -r requirements.txt
+    - python setup.py install
+
+flake8:
+  stage: lint
   script:
     - flake8
 
+mypy:
+  stage: lint
+  script:
+    - mypy tvb_hpc
+
+unittest:
+  stage: test
+  script:
+    - python -m unittest tvb_hpc.tests
+
 example_hackathon:
+  stage: test
   script:
     - python examples/hackathon.py
+
+wheel:
+  stage: package
+  script:
+    - python setup.py bdist_wheel
 
 # vim: sw=2 sts=2 et ai
