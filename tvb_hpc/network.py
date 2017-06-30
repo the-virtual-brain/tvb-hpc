@@ -49,10 +49,10 @@ class Connectivity:
     def __init__(self,
                  nnode: int,
                  nz: int,
-                 col: np.ndarray[int],
-                 row: np.ndarray[int],
-                 wnz: np.ndarray[float],
-                 lnz: np.ndarray[float]):
+                 col: np.ndarray,
+                 row: np.ndarray,
+                 wnz: np.ndarray,
+                 lnz: np.ndarray):
         self.nnode = nnode
         self.nz = nz
         self.col = col
