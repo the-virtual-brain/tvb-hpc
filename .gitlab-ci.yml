@@ -12,14 +12,13 @@ info:
     - whoami
     - which python
     - which pip
+    - docker info
 
 build_image:
   stage: build
   script:
     - docker build -t tvb/hpc .
   allow_failure: true
-  tags:
-    - gpu
 
 build_env:
   stage: build
