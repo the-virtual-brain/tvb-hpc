@@ -1,4 +1,6 @@
 before_script:
+  - pwd
+  - whoami
   - conda env list
   - source activate tvb-hpc
 
