@@ -73,6 +73,7 @@ class Connectivity:
         obj = cls(nnode, nnz, col, row, wnz, lnz)
         obj.weights = weights
         obj.lengths = lengths
+        return obj
 
     @classmethod
     def from_npz(cls,
