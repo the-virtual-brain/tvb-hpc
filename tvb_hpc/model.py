@@ -25,7 +25,6 @@ import loopy as lp
 import pymbolic as pm
 from pymbolic.mapper.differentiator import DifferentiationMapper
 from .base import BaseKernel
-from .compiler import Spec
 from .utils import simplify, vars, exprs
 
 
@@ -135,7 +134,6 @@ class BaseModel(BaseKernel):
         }
         for kind in 'drift diffs obsrv'.split():
             exprs = getattr(self, kind + '_sym')
-            nvar = len(getattr(self, kind + '_sym'))
             for i, expr in enumerate(exprs):
                 yield fmt[kind].format(kind=kind, expr=str(expr), i=i)
 
@@ -201,9 +199,9 @@ class HMJE(BaseModel):
     )
     diffs = 0, 0, 0, 0.0003, 0.0003, 0
     obsrv = 'x1', 'x2', 'z', '-x1 + x2'
-    const = {'Iext2': 0.45, 'a': 1.0, 'b': 3.0, 'slope': 0.0, 'tt': 1.0, 'c': 1.0,
-             'd': 5.0, 'Kvf': 0.0, 'Ks': 0.0, 'Kf': 0.0, 'aa': 6.0, 'tau': 10.0,
-             'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}
+    const = {'Iext2': 0.45, 'a': 1.0, 'b': 3.0, 'slope': 0.0, 'tt': 1.0, 'c':
+             1.0, 'd': 5.0, 'Kvf': 0.0, 'Ks': 0.0, 'Kf': 0.0, 'aa': 6.0, 'tau':
+             10.0, 'x0': -1.6, 'Iext': 3.1, 'r': 0.00035}
 
 
 class RWW(BaseModel):

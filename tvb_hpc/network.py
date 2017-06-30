@@ -28,9 +28,8 @@ import numpy as np
 import loopy as lp
 import pymbolic as pm
 from .base import BaseKernel
-from .compiler import Spec
 from .model import BaseModel
-from .coupling import BaseCoupling, PostSumStat
+from .coupling import BaseCoupling
 from .utils import getLogger, subst_vars
 
 
@@ -62,7 +61,8 @@ class Network(BaseKernel):
         # substitute pre_syn and post_syn for obsrv data
         pre_expr = subst_vars(
             expr=pre,
-            pre_syn=pm.parse('obsrv[i_time - delays[j_node], col[j_node], k]'),  # k is var idx
+            #                                                     k is var idx
+            pre_syn=pm.parse('obsrv[i_time - delays[j_node], col[j_node], k]'),
             post_syn=pm.parse('obsrv[i_time, i_node, k]'),
         )
         # build weighted sum over nodes
@@ -76,7 +76,7 @@ class Network(BaseKernel):
         post_expr = subst_vars(post, sum=sum, mean=mean)
         # generate store instruction for post expr, with params
         post_expr = subst_vars(post_expr, k=k, **self.cfun.param)
-        return 'input[i_node, %d] = %s' % ( k, post_expr )
+        return 'input[i_node, %d] = %s' % (k, post_expr)
 
     def kernel_isns(self):
         "Generates instructions for all cfuns"

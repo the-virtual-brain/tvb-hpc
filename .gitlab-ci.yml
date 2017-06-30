@@ -23,12 +23,13 @@ build_env:
 flake8:
   stage: lint
   script:
-    - flake8
+    - flake8 tvb_hpc
 
 mypy:
   stage: lint
   script:
     - mypy tvb_hpc
+  allow_failure: true
 
 unittest:
   stage: test
@@ -44,5 +45,12 @@ wheel:
   stage: package
   script:
     - python setup.py bdist_wheel
+
+upload_pypi:
+  stage: package
+  script:
+    - echo TODO
+  only:
+    - tags
 
 # vim: sw=2 sts=2 et ai

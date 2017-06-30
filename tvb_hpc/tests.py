@@ -19,12 +19,11 @@ import loopy as lp
 from loopy.target.c import CTarget
 import pymbolic as pm
 import numpy as np
-import numpy.testing
 from scipy.stats import kstest
 from .bold import BalloonWindkessel
-from .compiler import Compiler, CppCompiler, Spec
-from .coupling import (Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
-    PostSumStat, BaseCoupling)
+from .coupling import (
+    Linear as LCf, Diff, Sigmoidal, Kuramoto as KCf,
+    PostSumStat)
 from .model import BaseModel, _TestModel, HMJE, RWW, JansenRit, Linear, G2DO
 from .model import Kuramoto
 from .network import Network
@@ -122,7 +121,7 @@ class TestLoopTransforms(TestCase):
         knl2 = lp.to_batched(knl, 'T', ['in'], 't', sequential=True)
         print(self._dtype_and_code(knl2, a_values=np.float32))
 
-    def test_split_iname2(self):
+    def test_split_iname3(self):
         "Split one of two inames."
         from loopy.target.ispc import ISPCTarget as CTarget
         knl = lp.make_kernel("{[i,j]:0<=i,j<n}",
@@ -172,7 +171,11 @@ class TestNumbaTarget(TestCase):
 
     def test_simple(self):
         target = NumbaTarget()
-        knl = lp.make_kernel("{ [i]: 0<=i<n }", "out[i] = 2*a[i]", target=target)
+        knl = lp.make_kernel(
+            "{ [i]: 0<=i<n }",
+            "out[i] = 2*a[i]",
+            target=target
+        )
         typed = lp.add_dtypes(knl, {'a': np.float32})
         a, out = np.zeros((2, 10), np.float32)
         a[:] = np.r_[:a.size]
@@ -184,10 +187,14 @@ class TestCompiledKernel(TestCase):
 
     @unittest.skip
     def test_simple_kernel(self):
-        knl = lp.make_kernel("{ [i]: 0<=i<n }", "out[i] = 2*a[i]", target=CTarget())
+        knl = lp.make_kernel(
+            "{ [i]: 0<=i<n }",
+            "out[i] = 2*a[i]",
+            target=CTarget()
+        )
         typed = lp.add_dtypes(knl, {'a': np.float32})
         code, _ = lp.generate_code(typed)
-        fn = CompiledKernel(typed)
+        fn = CompiledKernel(typed)  # noqa
         a, out = np.zeros((2, 10), np.float32)
         a[:] = np.r_[:a.size]
         fn(a, 10, out)
@@ -212,38 +219,34 @@ class TestLogProb(TestCase):
 
 class TestModel(TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.spec = Spec('float', 8)
-
-    def _test(self, model: BaseModel, spec: Spec, log_code=False):
+    def _test(self, model: BaseModel, log_code=False):
         target = NumbaTarget()
         knl = model.kernel(target=target)
         target.get_kernel_executor(knl)
 
     def test_balloon_model(self):
         model = BalloonWindkessel()
-        self._test(model, self.spec)
+        self._test(model)
 
     def test_hmje(self):
         model = HMJE()
-        self._test(model, self.spec)
+        self._test(model)
 
     def test_rww(self):
         model = RWW()
-        self._test(model, self.spec)
+        self._test(model)
 
     def test_jr(self):
         model = JansenRit()
-        self._test(model, self.spec)
+        self._test(model)
 
     def test_linear(self):
         model = Linear()
-        self._test(model, self.spec)
+        self._test(model)
 
     def test_g2do(self):
         model = G2DO()
-        self._test(model, self.spec)
+        self._test(model)
 
 
 class TestRNG(TestCase):
@@ -252,7 +255,7 @@ class TestRNG(TestCase):
     @unittest.skip
     def test_r123_normal(self):
         rng = RNG()
-        rng.build(Spec())
+        rng.build()
         array = np.zeros((1024 * 1024, ), np.float32)
         rng.fill(array)
         d, p = kstest(array, 'norm')
@@ -263,10 +266,6 @@ class TestRNG(TestCase):
 
 
 class TestCoupling(TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.spec = Spec('float', 8)
 
     def test_linear(self):
         model = G2DO()

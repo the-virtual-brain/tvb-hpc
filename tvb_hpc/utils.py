@@ -12,7 +12,7 @@
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
 
-import enum
+import enum  # noqa
 import os.path
 import numpy as np
 import logging
@@ -103,7 +103,6 @@ class timer:
         self.logger.info(msg, self.msg, self.elapsed)
 
 
-
 class VarSubst(IdentityMapper):
     "Substitute variables by name for expressions."
 
@@ -136,7 +135,8 @@ def loadtxt_many(fnames):
     if isinstance(fnames, str):
         import glob
         fnames = glob.glob(fnames)
-    import multiprocessing, numpy
+    import multiprocessing
+    import numpy
     pool = multiprocessing.Pool()
     arrays = pool.map(numpy.loadtxt, fnames)
     pool.close()

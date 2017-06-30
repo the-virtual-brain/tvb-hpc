@@ -6,9 +6,10 @@ Base classes.
 """
 
 
-from typing import List, Union, Dict
+from typing import List, Dict
 from numpy import dtype
-from loopy import (TargetBase, LoopKernel, make_kernel, add_and_infer_dtypes,
+from loopy import (
+    TargetBase, LoopKernel, make_kernel, add_and_infer_dtypes,
     make_reduction_inames_unique, )
 
 
@@ -17,7 +18,6 @@ Isns = List[str]
 
 
 class BaseKernel:
-
 
     def kernel(self, target: TargetBase, typed: bool=True) -> LoopKernel:
         "Build and return loop kernel."

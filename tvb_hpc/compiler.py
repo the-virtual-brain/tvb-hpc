@@ -36,6 +36,7 @@ from tvb_hpc.utils import which
 
 LOG = logging.getLogger(__name__)
 
+
 class Spec:
     """
     Spec handles details dtype, vectorization, alignment, etc which affect
@@ -64,6 +65,7 @@ class Spec:
 
     @property
     def ct_dtype(self):
+        import ctypes as ct
         return {'float': ct.c_float}[self.dtype]
 
     # TODO refactor so not needed
