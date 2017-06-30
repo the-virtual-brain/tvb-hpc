@@ -14,7 +14,9 @@
 
 import os
 import logging
+
+_loopy_logger = logging.getLogger('loopy')
+_loopy_logger.setLevel(logging.WARNING)
+
 logging.basicConfig(level=getattr(logging,
-                                  os.environ.get('TVB_LOG', 'DEBUG')))
-
-
+                                  os.environ.get('TVB_LOG', 'INFO')))

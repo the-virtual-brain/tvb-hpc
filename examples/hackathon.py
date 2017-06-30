@@ -5,14 +5,12 @@ import numpy as np
 import loopy as lp
 import pymbolic as pm
 from scipy import sparse
-lp.set_caching_enabled(False)
 from tvb_hpc import model, coupling, network, utils, compiler, scheme
 from tvb_hpc.numba import NumbaTarget
 
-LOG = utils.getLogger('hackathon')
+LOG = utils.getLogger('tvb_hpc')
 
-def make_knl():
-    target = NumbaTarget()
+def make_knl(target):
 
     # build individual kernels
     osc = model.Kuramoto()
@@ -59,8 +57,8 @@ def make_data():
 
 
 def run_one(args):
-    j, speed, coupling, nnode, lengths, nz, nnz, row, col, wnz = args
-    knl, osc = make_knl()
+    j, speed, coupling, nnode, lengths, nz, nnz, row, col, wnz, target = args
+    knl, osc = make_knl(target)
     lnz = (lengths[nz] / speed / osc.dt).astype(np.uintc)
     state, input, param, drift, diffs, _ = osc.prep_arrays(nnode)
     obsrv = np.zeros((lnz.max() + 3 + 4000, nnode, 2), np.float32)
@@ -80,10 +78,11 @@ def run():
     speeds = np.logspace(0.0, 2.0, ns)
     trace = np.zeros((nc * ns, 400) + (nnode, ), np.float32)
     LOG.info('trace.nbytes %.3f MB', trace.nbytes / 2**20)
+    target = NumbaTarget()
     args = []
     for j, (speed, coupling) in enumerate(itertools.product(speeds, couplings)):
         args.append(
-            (j, speed, coupling, nnode, lengths, nz, nnz, row, col, wnz)
+            (j, speed, coupling, nnode, lengths, nz, nnz, row, col, wnz, target)
         )
     from multiprocessing import Pool
     with Pool() as pool:
