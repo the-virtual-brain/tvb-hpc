@@ -1,15 +1,13 @@
 before_script:
   - pwd
   - whoami
-  - conda env list
-  - source activate tvb-hpc
+  - which python
+  - which pip
+  - conda install numpy scipy llvmlite numba scikit-learn
+  - pip install -r requirements.txt
 
 unittest:
   script:
     - python -m unittest tvb_hpc.tests
-
-examples:
-  script:
-    - python -m unittest tvb_hpc.examples
 
 # vim: sw=2 sts=2 et ai
