@@ -1,5 +1,6 @@
 before_script:
-  - echo "hi"
+  - conda env list
+  - source activate tvb-hpc
 
 unittest:
   script:
