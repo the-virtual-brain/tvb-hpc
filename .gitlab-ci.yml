@@ -1,8 +1,9 @@
 before_script:
   - pwd
   - whoami
-  - conda env list
-  - source activate tvb-hpc
+  - which python
+  - which pip
+  - pip install -U -r requirements.txt
 
 unittest:
   script:
