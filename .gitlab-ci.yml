@@ -16,7 +16,7 @@ info:
 build_env:
   stage: build
   script:
-    - conda install numpy scipy llvmlite numba scikit-learn
+    - conda install numpy scipy llvmlite numba scikit-learn matplotlib
     - pip install -r requirements.txt
     - python setup.py install
 

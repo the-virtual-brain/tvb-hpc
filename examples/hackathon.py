@@ -107,6 +107,7 @@ def run():
         for j in range(n_work_items):
             fc = np.corrcoef(tavg_[:, :, j].T)
             err[i, j] = ((fc[r, c] - weights[r, c])**2).sum()
+    plot_err(err)
     # look at 2nd 2s window (converges quickly)
     err_ = err[-1].reshape((speeds.size, couplings.size))
     # change on fc-sc metric wrt. speed & coupling strength
@@ -115,6 +116,13 @@ def run():
     LOG.info('derr_speed=%f, derr_coupl=%f', derr_speed, derr_coupl)
     assert derr_speed > 350.0
     assert derr_coupl < -500.0
+
+
+def plot_err(err):
+    import pylab as pl
+    pl.imshow(err)
+    pl.savefig('examples/hackathon.png')
+
 
 if __name__ == '__main__':
     run()
