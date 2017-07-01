@@ -83,9 +83,12 @@ class BaseModel(BaseKernel):
             param[:, i] = self.const[psym.name]
         return arrs
 
+    # need to suspend kernel domain. but, can't batch w/o an initial domain
+    # real issue that we want to spatialize parameters
     def kernel_domains(self) -> str:
         return "{ [i_node]: 0 <= i_node < nnode }"
 
+    # another is that we need to manage var names
     def kernel_dtypes(self):
         dtypes = {'nnode,i_time,ntime': np.uintc}
         for key in 'state input param drift diffs obsrv'.split():
