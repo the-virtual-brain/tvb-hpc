@@ -17,7 +17,6 @@ import os.path
 import numpy as np
 import logging
 import time
-import loopy as lp
 import pymbolic as pm
 from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
