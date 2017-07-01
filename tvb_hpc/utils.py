@@ -23,13 +23,14 @@ from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 from pymbolic.mapper import IdentityMapper
 from sympy.parsing.sympy_parser import parse_expr
+from .numba import NumbaTarget
 
 
 here = os.path.dirname(os.path.abspath(__file__))
 include_dir = os.path.normpath(os.path.join(here, '..', 'include'))
 
 
-default_target = lp.target.numba.NumbaTarget
+default_target = NumbaTarget
 
 
 def can_bcast(n, m):
