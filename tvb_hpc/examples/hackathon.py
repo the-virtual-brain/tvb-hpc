@@ -29,7 +29,7 @@ def make_knl():
     cfun.param['a'] = pm.parse('a')
     scm = scheme.EulerStep(osc.dt)
     # create kernel
-    return transforms.network_time_step(osc, cfun, scm)
+    return transforms.network_time_step(osc, cfun, scm), osc
 
 
 def make_data():
