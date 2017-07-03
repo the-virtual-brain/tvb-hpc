@@ -51,11 +51,6 @@ example_hackathon:
     paths:
       - hackathon.png
 
-example_add_loops:
-  stage: test
-  script:
-    - python -m tvb_hpc.examples.add_loops
-
 wheel:
   stage: package
   script:
