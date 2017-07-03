@@ -70,6 +70,73 @@ class TestUtils(TestCase):
         self.assertEqual(str(expr), 'a + b[i, j]*pre_syn[i, j]')
 
 
+class TestCl(TestCase):
+
+    def setUp(self):
+        try:
+            import pyopencl as cl
+            self.ctx = cl.create_some_context(interactive=False)
+            self.cq = cl.CommandQueue(self.ctx)
+        except Exception as exc:
+            raise unittest.SkipTest(
+                'unable to create CL queue (%r)' % (exc, ))
+        super().setUp()
+
+    def test_copy(self):
+        knl = lp.make_kernel('{:}', 'a = b')
+        knl = lp.to_batched(knl, 16, 'a b'.split(), 'i', sequential=False)
+        knl = lp.add_and_infer_dtypes(knl, {'a,b': 'f'})
+        import pyopencl.array as ca
+        a = ca.zeros(self.cq, (16, ), 'f')
+        b = ca.zeros(self.cq, (16, ), 'f')
+        b[:] = np.r_[:16].astype('f')
+        knl(self.cq, a=a, b=b)
+        np.testing.assert_allclose(a.get(), b.get())
+
+    def test_add_loops(self):
+        kernel = """
+        <> dx = a * x + b * y
+        <> dy = c * x + d * y
+        xn = x + dt * dx {nosync=*}
+        yn = y + dt * dy {nosync=*}
+        """
+        state = 'x y xn yn'.split()
+        knl = lp.make_kernel("{:}", kernel)
+        knl = lp.add_and_infer_dtypes(knl, {'a,b,c,d,x,y,dt,xn,yn': 'f'})
+        knl = lp.to_batched(knl, 'nt', state, 'it')
+        knl = lp.to_batched(knl, 'na', state + ['a'], 'ia')
+        knl = lp.to_batched(knl, 'nb', state + ['b'], 'ib')
+        knl = lp.tag_inames(knl, [('ia', 'g.0'), ('ib', 'l.0')], force=True)
+        # now run it with pyopencl
+        import pyopencl as cl
+        import pyopencl.array as ca
+        import numpy as np
+        ctx = cl.create_some_context(interactive=False)
+        cq = cl.CommandQueue(ctx)
+        a = ca.Array(cq, (10,), 'f')
+        b = ca.Array(cq, (10,), 'f')
+        a_ = ca.Array(cq, (10, 10, 5), 'f')
+        b_ = ca.Array(cq, (10, 10, 5), 'f')
+        x = ca.Array(cq, (10, 10, 5), 'f')
+        y = ca.Array(cq, (10, 10, 5), 'f')
+        xn = ca.Array(cq, (10, 10, 5), 'f')
+        yn = ca.Array(cq, (10, 10, 5), 'f')
+        a[:], b[:] = np.random.rand(2, 10).astype('f')
+        c, d, dt = [np.float32(_) for _ in (0.5, 0.6, 0.1)]
+        x[:], y[:], xn[:], yn[:] = np.random.rand(4, 10, 10, 5).astype('f')
+        a_[:] = np.tile(a.get()[:, None], (10, 1, 5)).astype('f')
+        b_[:] = np.tile(b.get()[:, None, None], (1, 10, 5)).astype('f')
+        knl(cq,
+            na=np.int32(a.size),
+            nb=np.int32(b.size),
+            nt=np.int32(x.shape[-1]),
+            a=a, b=b, c=c, d=d, x=x, y=y, dt=dt, xn=xn, yn=yn)
+        np.testing.assert_allclose(
+            xn.get(), (x + dt * (a_ * x + b_ * y)).get())
+        np.testing.assert_allclose(
+            yn.get(), (y + dt * (c * x + d * y)).get())
+
+
 class TestLoopTransforms(TestCase):
     """
     These are more tests to check that our use of Loopy is correct.
