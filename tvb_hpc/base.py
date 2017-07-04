@@ -31,8 +31,7 @@ class BaseKernel:
         data = self.kernel_data()
         knl = make_kernel(domains, body, data, target=target)
         knl = make_reduction_inames_unique(knl)
-        fmt = 'tvb_kernel_%s' % (self.__class__.__name__,)
-        knl.name = fmt
+        knl.name = self.__class__.__name__
         if typed:
             dtypes = self.kernel_dtypes()
             knl = add_and_infer_dtypes(knl, dtypes)
@@ -40,7 +39,7 @@ class BaseKernel:
 
     def kernel_domains(self) -> str:
         "Return loop domains of kernel."
-        return ''
+        return self.domains
 
     def kernel_data(self) -> List[str]:
         "Return arguments / data to kernel."
@@ -50,8 +49,8 @@ class BaseKernel:
 
     def kernel_dtypes(self) -> Dict[str, dtype]:
         "Return map of identifiers to Numpy dtypes."
-        return {}
+        return self.dtypes
 
     def kernel_isns(self) -> Isns:
         "Return list of loopy instructions."
-        return []
+        return [_[4:] for _ in self.instructions.split('\n')]
