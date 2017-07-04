@@ -132,7 +132,7 @@ class TestCl(TestCase):
             nt=np.int32(x.shape[-1]),
             a=a, b=b, c=c, d=d, x=x, y=y, dt=dt, xn=xn, yn=yn)
         np.testing.assert_allclose(
-            xn.get(), (x + dt * (a_ * x + b_ * y)).get())
+            xn.get(), (x + dt * (a_ * x + b_ * y)).get(), 1e-6, 1e-6)
         np.testing.assert_allclose(
             yn.get(), (y + dt * (c * x + d * y)).get())
 
