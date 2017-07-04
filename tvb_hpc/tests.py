@@ -139,7 +139,7 @@ class TestCl(BaseTestCl):
         np.testing.assert_allclose(
             xn.get(), (x + dt * (a_ * x + b_ * y)).get(), 1e-6, 1e-6)
         np.testing.assert_allclose(
-            yn.get(), (y + dt * (c * x + d * y)).get())
+            yn.get(), (y + dt * (c * x + d * y)).get(), 1e-6, 1e-6)
 
 
 class TestLoopTransforms(TestCase):
@@ -406,13 +406,15 @@ class TestHackathon(TestCase):
 
 class WorkspaceTestsMixIn:
     def test_copy(self):
-        knl = lp.make_kernel('{:}', 'a = b + c', target=self.target)
+        knl = lp.make_kernel('{:}', 'a = b + c + x', target=self.target)
         knl = lp.to_batched(knl, 'm', ['a', 'b'], 'i')
         knl = lp.to_batched(knl, 'n', ['a', 'c'], 'j')
-        knl = lp.add_and_infer_dtypes(knl, {'a,b,c': 'f'})
-        wspc = self.make_workspace(knl, m=10, n=5)
+        knl = lp.add_and_infer_dtypes(knl, {'a,b,c,x': 'f'})
+        wspc = self.make_workspace(knl, m=10, n=5, x=3.5)
         self.assertEqual(wspc.data['a'].shape, (5, 10))
         self.assertEqual(wspc.data['b'].shape, (10, ))
+        self.assertEqual(wspc.data['x'].shape, ())
+        self.assertEqual(wspc.data['x'].dtype, np.float32)
 
 
 class TestWorkspaceNumba(TestCase, WorkspaceTestsMixIn):

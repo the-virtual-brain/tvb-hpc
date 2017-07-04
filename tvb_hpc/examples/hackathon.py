@@ -45,11 +45,8 @@ def run_one(args):
     state, input, param, drift, diffs, _ = osc.prep_arrays(nnode)
     obsrv = np.zeros((lnz.max() + 3 + 4000, nnode, 2), np.float32)
     trace = np.zeros((400, nnode), np.float32)
-    import pyopencl as cl
-    ctx = cl.create_some_context()
-    cq = cl.CommandQueue(ctx)
     for i in range(trace.shape[0]):
-        knl(cq, nstep=10, nnode=nnode, ntime=obsrv.shape[0],
+        knl(nstep=10, nnode=nnode, ntime=obsrv.shape[0],
             state=state, input=input, param=param,
             drift=drift, diffs=diffs, obsrv=obsrv, nnz=nnz,
             delays=lnz, row=row, col=col, weights=wnz,
@@ -59,6 +56,8 @@ def run_one(args):
 
 
 def run():
+    from ..numba import NumbaTarget
+    utils.default_target = NumbaTarget
     nnode, lengths, nnz, row, col, wnz, nz, weights = make_data()
     # choose param space
     nc, ns = 8, 8
@@ -66,17 +65,8 @@ def run():
     speeds = np.logspace(0.0, 2.0, ns)
     trace = np.zeros((nc * ns, 400) + (nnode, ), np.float32)
     LOG.info('trace.nbytes %.3f MB', trace.nbytes / 2**20)
-    args = []
     for j, (speed, coupl) in enumerate(itertools.product(speeds, couplings)):
-        args.append(
-            (j, speed, coupl, nnode, lengths, nz, nnz, row, col, wnz)
-        )
-    if False:
-        from multiprocessing import Pool
-        with Pool() as pool:
-            trace = np.array(pool.map(run_one, args))
-    else:
-        trace = np.array([run_one(_) for _ in args])
+        run_one((j, speed, coupl, nnode, lengths, nz, nnz, row, col, wnz))
 
     # check correctness
     n_work_items = nc * ns
@@ -100,4 +90,4 @@ def run():
 
 
 if __name__ == '__main__':
-    make_knl()
+    run()

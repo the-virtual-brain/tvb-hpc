@@ -98,8 +98,7 @@ class BaseModel(BaseKernel):
     def kernel_data(self):
         data = super().kernel_data()
         # loopy can't infer bound on first dim of obsrv
-        nobs = min(len(self.input_sym), len(self.obsrv_sym))
-        shape = pm.var('ntime'), pm.var('nnode'), nobs
+        shape = pm.var('ntime'), pm.var('nnode'), len(self.obsrv_sym)
         data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
         return data
 

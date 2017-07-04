@@ -162,7 +162,7 @@ class Network(BaseKernel):
     def kernel_data(self):
         data = super().kernel_data()
         # loopy can't infer bound on first dim of obsrv
-        shape = pm.var('ntime'), pm.var('nnode'), len(self.cfun.io)
+        shape = pm.var('ntime'), pm.var('nnode'), len(self.model.obsrv_sym)
         data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
         # nor that of nnz length vectors
         nnz_shape = pm.var('nnz'),

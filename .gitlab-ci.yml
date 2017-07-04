@@ -47,9 +47,7 @@ example_hackathon:
   stage: test
   script:
     - python -m tvb_hpc.examples.hackathon
-  artifacts:
-    paths:
-      - hackathon.png
+  allow_failure: true
 
 wheel:
   stage: package
