@@ -10,6 +10,7 @@ LOG = logging.getLogger('tvb_hpc')
 class NumbaTarget(base_numba.NumbaTarget):
 
     def __init__(self, *args, **kwargs):
+        self.no_jit = kwargs.pop('no_jit', False)
         with warnings.catch_warnings():
             warnings.simplefilter('ignore')
             super().__init__(*args, **kwargs)
@@ -19,10 +20,12 @@ class NumbaTarget(base_numba.NumbaTarget):
 
     def get_kernel_executor(self, knl, *args, **kwargs):
         code, _ = lp.generate_code(knl)
-        if False:
+        if self.no_jit:
             code = '\n'.join([
                 line for line in code.split('\n')
                 if line != '@_lpy_numba.jit'])
+            for i, line in enumerate(code.split('\n')):
+                print(i+1, line)
         LOG.debug(code)
         ns = {}
         exec(code, ns)

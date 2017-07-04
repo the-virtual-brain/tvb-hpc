@@ -447,5 +447,27 @@ class TestMetrics(TestCase):
         from tvb_hpc.metric import BatchCov
         bcov = BatchCov()
         knl = bcov.kernel(NumbaTarget())
-        print(knl)
-        print(lp.generate_code(knl)[0])
+        self.assertTrue(lp.generate_code(knl))
+
+
+class TestRmap(TestCase):
+
+    def test_rmap_to_avg(self):
+        from tvb_hpc.network import RMapToAvg
+        knl = RMapToAvg().kernel(NumbaTarget())
+        i = np.r_[:16].reshape((-1, 1))
+        rmap = i // 4
+        node = i.astype('f')
+        roi = np.zeros((4, 1), 'f')
+        knl(nroi=4, nvar=1, nnode=16, rmap=rmap, node=node, roi=roi)
+        np.testing.assert_allclose(roi[:, 0], node.reshape((4, 4)).sum(axis=1))
+
+    def test_rmap_from_avg(self):
+        from tvb_hpc.network import RMapFromAvg
+        knl = RMapFromAvg().kernel(NumbaTarget())
+        i = np.r_[:16].reshape((-1, 1))
+        rmap = i // 4
+        node = np.zeros((16, 1), 'f')
+        roi = np.r_[:4].reshape((4, 1)).astype('f')
+        knl(nroi=4, nvar=1, nnode=16, rmap=rmap, node=node, roi=roi)
+        np.testing.assert_allclose(rmap, node)

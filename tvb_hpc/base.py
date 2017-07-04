@@ -8,6 +8,8 @@ Base classes.
 
 from typing import List, Dict
 from numpy import dtype
+import pymbolic as pm
+import loopy as lp
 from loopy import (
     TargetBase, LoopKernel, make_kernel, add_and_infer_dtypes,
     make_reduction_inames_unique, generate_code)
@@ -45,7 +47,13 @@ class BaseKernel:
         "Return arguments / data to kernel."
         # normalize wrt. key set like ['n,out', 'foo,bar']
         csk = ','.join(self.kernel_dtypes().keys())
-        return [key for key in csk.split(',')]
+        data = [key for key in csk.split(',')]
+        if hasattr(self, 'extra_data_shape'):
+            for name, shape in self.extra_data_shape.items():
+                shape = tuple(pm.parse(_) for _ in shape.split(','))
+                arg = lp.GlobalArg(name, shape=shape)
+                data[data.index(name)] = arg
+        return data
 
     def kernel_dtypes(self) -> Dict[str, dtype]:
         "Return map of identifiers to Numpy dtypes."

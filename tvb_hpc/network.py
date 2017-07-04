@@ -169,3 +169,34 @@ class Network(BaseKernel):
         for key in 'col delays weights'.split():
             data[data.index(key)] = lp.GlobalArg(key, shape=nnz_shape)
         return data
+
+
+class RegionMappingMix:
+    domains = '{[i,j,k]: 0<=i<nroi and 0<=j<nvar and 0<=k<nnode}'
+    dtypes = {'roi,node': 'f', 'rmap,nroi,nvar,nnode': 'i'}
+
+
+class RMapToAvg(RegionMappingMix, BaseKernel):
+    # loopy can't infer bounds on node from the kernel code
+    extra_data_shape = {'node': 'nnode,nvar'}
+    instructions = """
+    for j
+        for i
+            roi[i, j] = 0  {id=zero}
+        end
+        for k
+            roi[rmap[k], j] = roi[rmap[k], j] + node[k, j] {dep=zero}
+        end
+    end
+    """
+
+
+class RMapFromAvg(RegionMappingMix, BaseKernel):
+    extra_data_shape = {'roi': 'nroi,nvar'}
+    instructions = """
+    for k
+        for j
+            node[k, j] = roi[rmap[k], j]
+        end
+    end
+    """
