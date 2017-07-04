@@ -18,18 +18,18 @@ import numpy as np
 import logging
 import time
 import pymbolic as pm
+import loopy as lp
 from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 from pymbolic.mapper import IdentityMapper
 from sympy.parsing.sympy_parser import parse_expr
-from .numba import NumbaTarget
 
 
 here = os.path.dirname(os.path.abspath(__file__))
 include_dir = os.path.normpath(os.path.join(here, '..', 'include'))
 
 
-default_target = NumbaTarget
+default_target = lp.target.pyopencl.PyOpenCLTarget
 
 
 def can_bcast(n, m):

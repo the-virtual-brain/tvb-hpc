@@ -10,7 +10,7 @@ from typing import List, Dict
 from numpy import dtype
 from loopy import (
     TargetBase, LoopKernel, make_kernel, add_and_infer_dtypes,
-    make_reduction_inames_unique, )
+    make_reduction_inames_unique, generate_code)
 
 
 # list of Loopy instructions
@@ -18,6 +18,11 @@ Isns = List[str]
 
 
 class BaseKernel:
+
+    def code(self, *args, **kwargs):
+        knl = self.kernel(*args, **kwargs)
+        code, _ = generate_code(knl)
+        return code
 
     def kernel(self, target: TargetBase, typed: bool=True) -> LoopKernel:
         "Build and return loop kernel."

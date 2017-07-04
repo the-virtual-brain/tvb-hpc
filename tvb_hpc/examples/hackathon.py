@@ -30,16 +30,6 @@ def make_knl():
     scm = scheme.EulerStep(osc.dt)
     # create kernel
     knl = transforms.network_time_step(osc, cfun, scm)
-    import loopy as lp
-    # TODO need method to get varying & uniform variables..
-    knl1 = lp.to_batched(knl,
-                         'na',
-                         ['a', 'state', 'input', 'obsrv'],
-                         'i_a',
-                         sequential=False)
-    knl1 = lp.tag_inames(knl1, [('i_a', 'l.0')])
-    print(knl1)
-    print(lp.generate_code_v2(knl1)[0])
     return knl, osc
 
 
