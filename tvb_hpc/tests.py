@@ -32,6 +32,7 @@ from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
 from .numba import NumbaTarget
 from .utils import getLogger, VarSubst
+from .workspace import Workspace, CLWorkspace
 
 
 LOG = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ class TestUtils(TestCase):
         self.assertEqual(str(expr), 'a + b[i, j]*pre_syn[i, j]')
 
 
-class TestCl(TestCase):
+class BaseTestCl(TestCase):
 
     def setUp(self):
         try:
@@ -80,7 +81,11 @@ class TestCl(TestCase):
         except Exception as exc:
             raise unittest.SkipTest(
                 'unable to create CL queue (%r)' % (exc, ))
+        self.target = lp.target.pyopencl.PyOpenCLTarget()
         super().setUp()
+
+
+class TestCl(BaseTestCl):
 
     def test_copy(self):
         knl = lp.make_kernel('{:}', 'a = b')
@@ -393,3 +398,30 @@ class TestScheme(TestCase):
 
     def test_em_dt_var(self):
         self._test_scheme(EulerMaryuyamaStep(pm.var('dt')))
+
+
+class TestHackathon(TestCase):
+    pass
+
+
+class WorkspaceTestsMixIn:
+    def test_copy(self):
+        knl = lp.make_kernel('{:}', 'a = b + c', target=self.target)
+        knl = lp.to_batched(knl, 'm', ['a', 'b'], 'i')
+        knl = lp.to_batched(knl, 'n', ['a', 'c'], 'j')
+        knl = lp.add_and_infer_dtypes(knl, {'a,b,c': 'f'})
+        wspc = self.make_workspace(knl, m=10, n=5)
+        self.assertEqual(wspc.data['a'].shape, (5, 10))
+        self.assertEqual(wspc.data['b'].shape, (10, ))
+
+
+class TestWorkspaceNumba(TestCase, WorkspaceTestsMixIn):
+    target = NumbaTarget()
+
+    def make_workspace(self, *args, **kwargs):
+        return Workspace(*args, **kwargs)
+
+
+class TestWorkspaceCL(BaseTestCl, WorkspaceTestsMixIn):
+    def make_workspace(self, *args, **kwargs):
+        return CLWorkspace(self.cq, *args, **kwargs)

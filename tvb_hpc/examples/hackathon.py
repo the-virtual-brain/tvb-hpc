@@ -29,7 +29,18 @@ def make_knl():
     cfun.param['a'] = pm.parse('a')
     scm = scheme.EulerStep(osc.dt)
     # create kernel
-    return transforms.network_time_step(osc, cfun, scm), osc
+    knl = transforms.network_time_step(osc, cfun, scm)
+    import loopy as lp
+    # TODO need method to get varying & uniform variables..
+    knl1 = lp.to_batched(knl,
+                         'na',
+                         ['a', 'state', 'input', 'obsrv'],
+                         'i_a',
+                         sequential=False)
+    knl1 = lp.tag_inames(knl1, [('i_a', 'l.0')])
+    print(knl1)
+    print(lp.generate_code_v2(knl1)[0])
+    return knl, osc
 
 
 def make_data():
@@ -44,9 +55,14 @@ def run_one(args):
     state, input, param, drift, diffs, _ = osc.prep_arrays(nnode)
     obsrv = np.zeros((lnz.max() + 3 + 4000, nnode, 2), np.float32)
     trace = np.zeros((400, nnode), np.float32)
+    import pyopencl as cl
+    ctx = cl.create_some_context()
+    cq = cl.CommandQueue(ctx)
     for i in range(trace.shape[0]):
-        knl(10, nnode, obsrv.shape[0], state, input, param,
-            drift, diffs, obsrv, nnz, lnz, row, col, wnz,
+        knl(cq, nstep=10, nnode=nnode, ntime=obsrv.shape[0],
+            state=state, input=input, param=param,
+            drift=drift, diffs=diffs, obsrv=obsrv, nnz=nnz,
+            delays=lnz, row=row, col=col, weights=wnz,
             a=coupling, i_step_0=i * 10)
         trace[i] = obsrv[i * 10:(i + 1) * 10, :, 0].sum(axis=0)
     return trace
@@ -83,7 +99,6 @@ def run():
         for j in range(n_work_items):
             fc = np.corrcoef(tavg_[:, :, j].T)
             err[i, j] = ((fc[r, c] - weights[r, c])**2).sum()
-    plot_err(err)
     # look at 2nd 2s window (converges quickly)
     err_ = err[-1].reshape((speeds.size, couplings.size))
     # change on fc-sc metric wrt. speed & coupling strength
@@ -94,13 +109,5 @@ def run():
     assert derr_coupl < -500.0
 
 
-def plot_err(err):
-    import matplotlib as mpl
-    mpl.use('Agg')
-    import pylab as pl
-    pl.imshow(err)
-    pl.savefig('hackathon.png')
-
-
 if __name__ == '__main__':
-    run()
+    make_knl()
