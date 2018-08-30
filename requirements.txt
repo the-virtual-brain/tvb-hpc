@@ -1,3 +1,7 @@
+numpy
+scipy
+llvmlite
+numba
 sympy
 flake8
 git+https://github.com/maedoc/inducer-f2py
@@ -6,7 +10,5 @@ git+https://github.com/inducer/genpy.git
 git+https://github.com/inducer/islpy.git
 git+https://github.com/inducer/pymbolic.git
 git+https://github.com/inducer/loopy
-llvmlite
-numba
 yapf
 mypy
