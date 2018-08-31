@@ -23,7 +23,6 @@ build_image:
 build_env:
   stage: build
   script:
-    - conda install numpy scipy llvmlite numba scikit-learn matplotlib cudatoolkit
     - pip install -r requirements.txt
     - python setup.py install
 
