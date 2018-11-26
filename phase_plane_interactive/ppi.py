@@ -2,6 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 
+TRAJ_STEPS = 4096
+
 class Oscillator:
 
     def __init__(self, eta=0.07674, gamma=1.21, epsilon=12.3):
@@ -25,6 +27,7 @@ class ODEintAdapter:
     def dfun(self, state, t):
         return model.dfun(state)
 
+
 model = Oscillator()
 model_ode = ODEintAdapter(model)
 
@@ -33,7 +36,6 @@ y2 = np.linspace(-2.0, 2.0, 20)
 
 Y1, Y2 = np.meshgrid(y1, y2)
 
-t = 0
 
 u, v = np.zeros(Y1.shape), np.zeros(Y2.shape)
 
@@ -47,19 +49,25 @@ for i in range(NI):
         u[i,j] = yprime[0]
         v[i,j] = yprime[1]
      
+fig, ax = plt.subplots()
 
-Q = plt.quiver(Y1, Y2, u, v, color='r')
+Q = ax.quiver(Y1, Y2, u, v, color='r')
+
+def plot_trajectory(x0, model):
+    tspan = np.linspace(0, 200, TRAJ_STEPS)
+    ys = odeint(model.dfun, x0, tspan)
+    ax.plot(ys[:,0], ys[:,1], 'b-') # path
+    ax.plot([ys[0,0]], [ys[0,1]], 'o') # start
+    ax.plot([ys[-1,0]], [ys[-1,1]], 's') # end
 
 
-for y20 in [0, 0.5, 1, 1.5, 2, 2.5]:
-    tspan = np.linspace(0, 50, 200)
-    y0 = [0.0, y20]
-    ys = odeint(model_ode.dfun, y0, tspan)
-    plt.plot(ys[:,0], ys[:,1], 'b-') # path
-    plt.plot([ys[0,0]], [ys[0,1]], 'o') # start
-    plt.plot([ys[-1,0]], [ys[-1,1]], 's') # end
+plot_trajectory([2.,0.], model_ode)
 
+def onclick(event):
+    plot_trajectory([event.xdata,event.ydata], model_ode)
+    plt.draw()
 
+cid = fig.canvas.mpl_connect('button_press_event', onclick)
 
 plt.xlabel('$y_1$')
 plt.ylabel('$y_2$')
