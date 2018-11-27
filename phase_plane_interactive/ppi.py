@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
+from matplotlib.widgets import Button
 
 TRAJ_STEPS = 4096
 
@@ -70,33 +71,40 @@ if __name__ == '__main__':
             v[i,j] = yprime[1]
          
     fig, ax = plt.subplots()
-
+    plt.subplots_adjust(bottom=0.2)
     
 
-    def plot_trajectory(x0, model):
+    def clear(event):
+        ax.clear()
 	Q = ax.quiver(Y1, Y2, u, v, color='r')
+        ax.set_xlabel('$y_1$')
+        ax.set_ylabel('$y_2$')
+	ax.set_xlim(-2.0,2.0)
+        ax.set_ylim(-2.0,2.0)
+        plt.draw()
+
+    def plot_trajectory(x0, model):
         tspan = np.linspace(0, 200, TRAJ_STEPS)
         ys = odeint(model.dfun, x0, tspan)
         ax.plot(ys[:,0], ys[:,1], 'b-') # path
         ax.plot([ys[0,0]], [ys[0,1]], 'o') # start
         ax.plot([ys[-1,0]], [ys[-1,1]], 's') # end
-        ax.set_xlim(-2.0,2.0)
-        ax.set_ylim(-2.0,2.0)
-
 
     def onclick(event):
-        ax.clear()
         plot_trajectory([event.xdata,event.ydata], model_ode)
         plt.draw()
-        plt.show()
 
-    plot_trajectory([0.0,0.0], model_ode)
-
-
+    clear([0.0, 0.0])
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-
+    
     plt.xlabel('$y_1$')
     plt.ylabel('$y_2$')
     plt.xlim([-2, 2])
     plt.ylim([-2, 2])
+
+
+    axclear = plt.axes([0.8, 0.02, 0.1, 0.075])
+    bclear = Button(axclear, 'Clear')
+    bclear.on_clicked(clear)
+
     plt.show()
