@@ -66,10 +66,9 @@ __global__ void integrate(/*{{{*/
     for (unsigned int t = i_step; t < (i_step + n_step); t++)
     {
 
-        for (unsigned int i_node = threadIdx.y; i_node < n_node; i_node+=blockDim.y)
+        for (unsigned int i_node = 0; i_node < n_node; i_node++)
         {
-            if (i_node >= n_node) continue;
-
+            
             float theta_i = state(t % NH, i_node);
             unsigned int i_n = i_node * n_node;
             float sum = 0.0f;
