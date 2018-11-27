@@ -71,19 +71,27 @@ if __name__ == '__main__':
          
     fig, ax = plt.subplots()
 
-    Q = ax.quiver(Y1, Y2, u, v, color='r')
+    
 
     def plot_trajectory(x0, model):
+	Q = ax.quiver(Y1, Y2, u, v, color='r')
         tspan = np.linspace(0, 200, TRAJ_STEPS)
         ys = odeint(model.dfun, x0, tspan)
         ax.plot(ys[:,0], ys[:,1], 'b-') # path
         ax.plot([ys[0,0]], [ys[0,1]], 'o') # start
         ax.plot([ys[-1,0]], [ys[-1,1]], 's') # end
+        ax.set_xlim(-2.0,2.0)
+        ax.set_ylim(-2.0,2.0)
 
 
     def onclick(event):
+        ax.clear()
         plot_trajectory([event.xdata,event.ydata], model_ode)
         plt.draw()
+        plt.show()
+
+    plot_trajectory([0.0,0.0], model_ode)
+
 
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
 
