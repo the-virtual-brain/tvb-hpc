@@ -5,6 +5,6 @@ template = Template(filename='template.py')
 print(template.render(  name='Generic2D', 
                         const=G2DO.const,
                         limit=G2DO.limit, 
-                        sv=G2DO.state.split(),
+                        sv=G2DO.state,
                         drift=G2DO.drift, 
                         input=G2DO.input.split() ) )

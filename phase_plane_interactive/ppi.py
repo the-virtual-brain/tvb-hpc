@@ -8,7 +8,7 @@ TRAJ_STEPS = 4096
 
 class G2DO:
     "Generic nonlinear 2-D (phase plane) oscillator."
-    state = 'W V'
+    state = 'W', 'V'
     limit = (-5, 5), (-5, 5)
     input = 'c_0'
     param = 'a'
@@ -76,10 +76,10 @@ if __name__ == '__main__':
 
     def clear(event):
         ax.clear()
-	Q = ax.quiver(Y1, Y2, u, v, color='r')
+        Q = ax.quiver(Y1, Y2, u, v, color='r')
         ax.set_xlabel('$y_1$')
         ax.set_ylabel('$y_2$')
-	ax.set_xlim(-2.0,2.0)
+        ax.set_xlim(-2.0,2.0)
         ax.set_ylim(-2.0,2.0)
         plt.draw()
 
