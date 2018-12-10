@@ -10,7 +10,7 @@ ${c}=${val}${'' if loop.last else ', '}\
         self.${c} = ${c}
         % endfor
 
-    def dfun(self,state_variables):
+    def dfun(self,state_variables, *args, **kwargs):
         <% 
         sv_csl = ", ".join(sv) 
         %> 

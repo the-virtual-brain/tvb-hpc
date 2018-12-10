@@ -46,10 +46,10 @@ def dfuns_to_c(dfuns):
 if __name__=='__main__':
 
 
-    from ppi import G2DO
+    from models import G2DO
     from mako.template import Template
 
-    template = Template(filename='cuda_model.cu')
+    template = Template(filename='template.cu')
 
     print(template.render(  svar=G2DO.state,const=G2DO.const, cvar=G2DO.input,
                             dfuns=dfuns_to_c(G2DO.drift)))
