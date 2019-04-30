@@ -1,4 +1,4 @@
-#     Copyright 2017 TVB-HPC contributors
+#     Copyright 2018 TVB-HPC contributors
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -11,6 +11,8 @@
 #     WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #     See the License for the specific language governing permissions and
 #     limitations under the License.
+
+from .base import BaseKernel
 
 
 class Covar:
@@ -64,6 +66,46 @@ __kernel void update_cov(int i_sample,
     }
 }
 """
+
+
+class BatchCov(BaseKernel):
+    domains = '{[i,j,t]: 0<=i<n and 0<=j<n and 0<t<m}'
+    dtypes = {'cov,x,u': 'f', 'm,n': 'i'}
+    instructions = """
+    for i
+        u[i] = sum(t, x[t, i])
+    end
+
+    for i
+        for j
+            cov[j, i] = sum(t, (x[t, i] - u[i]) * (x[t, j] - u[j]))
+        end
+    end
+    """
+
+
+class OnlineCov(BaseKernel):
+    domains = '{[i,j]: 0<=i<n and 0<=j<n}'
+    dtypes = {'cov,x,u0,u1': 'f', 't,n': 'i'}
+    instructions = """
+    if (t == 0)
+        for i
+            u0[i] = x[i]
+        end
+    end
+
+    for i
+        u1[i] = u0[i] + (x[i] - u0[i]) / t
+    end
+
+    for i
+        <> dui = x[i] - u0[i]
+        for j
+            <> duj = x[j] - u1[j]
+            cov[j, i] = cov[j, i] + duj * dui
+        end
+    end
+    """
 
 
 class CovToCorr:

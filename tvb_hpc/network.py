@@ -1,4 +1,4 @@
-#     Copyright 2017 TVB-HPC contributors
+#     Copyright 2018 TVB-HPC contributors
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ For the moment, they are not yet implemented.
 """
 
 import numpy as np
+from scipy import sparse
 import loopy as lp
 import pymbolic as pm
 from .base import BaseKernel
@@ -34,6 +35,62 @@ from .utils import getLogger, subst_vars
 
 
 LOG = getLogger(__name__)
+
+
+class Connectivity:
+    """
+    Data class, managing sparse connectivity
+
+    """
+
+    # TODO params like normalization mode, etc.
+    # TODO abstraction on data munging, mapping into kernel workspace
+    #      needs a lot of thought
+    def __init__(self,
+                 nnode: int,
+                 nz: int,
+                 nnz: np.ndarray,
+                 col: np.ndarray,
+                 row: np.ndarray,
+                 wnz: np.ndarray,
+                 lnz: np.ndarray):
+        self.nnode = nnode
+        self.nz = nz
+        self.nnz = nnz
+        self.col = col
+        self.row = row
+        self.wnz = wnz
+        self.lnz = lnz
+
+    @classmethod
+    def from_dense(cls, weights, lengths):
+        nnode = weights.shape[0]
+        nz = ~(weights == 0)
+        nnz = nz.sum()
+        wnz = weights[nz]
+        lnz = lengths[nz]
+        sw = sparse.csr_matrix(weights)
+        col = sw.indices.astype(np.uintc)
+        row = sw.indptr.astype(np.uintc)
+        obj = cls(nnode, nz, nnz, col, row, wnz, lnz)
+        obj.weights = weights
+        obj.lengths = lengths
+        return obj
+
+    @classmethod
+    def from_npz(cls,
+                 fname,
+                 weights_key='weights',
+                 lengths_key='lengths'
+                 ):
+        npz = np.load(fname)
+        weights = npz[weights_key]
+        lengths = npz[lengths_key]
+        return cls.from_dense(weights, lengths)
+
+    @classmethod
+    def hcp0(cls):
+        return cls.from_npz('data/hcp0.npz')
 
 
 class Network(BaseKernel):
@@ -105,10 +162,41 @@ class Network(BaseKernel):
     def kernel_data(self):
         data = super().kernel_data()
         # loopy can't infer bound on first dim of obsrv
-        shape = pm.var('ntime'), pm.var('nnode'), len(self.cfun.io)
+        shape = pm.var('ntime'), pm.var('nnode'), len(self.model.obsrv_sym)
         data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
         # nor that of nnz length vectors
         nnz_shape = pm.var('nnz'),
         for key in 'col delays weights'.split():
             data[data.index(key)] = lp.GlobalArg(key, shape=nnz_shape)
         return data
+
+
+class RegionMappingMix:
+    domains = '{[i,j,k]: 0<=i<nroi and 0<=j<nvar and 0<=k<nnode}'
+    dtypes = {'roi,node': 'f', 'rmap,nroi,nvar,nnode': 'i'}
+
+
+class RMapToAvg(RegionMappingMix, BaseKernel):
+    # loopy can't infer bounds on node from the kernel code
+    extra_data_shape = {'node': 'nnode,nvar'}
+    instructions = """
+    for j
+        for i
+            roi[i, j] = 0  {id=zero}
+        end
+        for k
+            roi[rmap[k], j] = roi[rmap[k], j] + node[k, j] {dep=zero}
+        end
+    end
+    """
+
+
+class RMapFromAvg(RegionMappingMix, BaseKernel):
+    extra_data_shape = {'roi': 'nroi,nvar'}
+    instructions = """
+    for k
+        for j
+            node[k, j] = roi[rmap[k], j]
+        end
+    end
+    """

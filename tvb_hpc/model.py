@@ -1,4 +1,4 @@
-#     Copyright 2017 TVB-HPC contributors
+#     Copyright 2018 TVB-HPC contributors
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -83,9 +83,12 @@ class BaseModel(BaseKernel):
             param[:, i] = self.const[psym.name]
         return arrs
 
+    # need to suspend kernel domain. but, can't batch w/o an initial domain
+    # real issue that we want to spatialize parameters
     def kernel_domains(self) -> str:
         return "{ [i_node]: 0 <= i_node < nnode }"
 
+    # another is that we need to manage var names
     def kernel_dtypes(self):
         dtypes = {'nnode,i_time,ntime': np.uintc}
         for key in 'state input param drift diffs obsrv'.split():
@@ -95,8 +98,7 @@ class BaseModel(BaseKernel):
     def kernel_data(self):
         data = super().kernel_data()
         # loopy can't infer bound on first dim of obsrv
-        nobs = min(len(self.input_sym), len(self.obsrv_sym))
-        shape = pm.var('ntime'), pm.var('nnode'), nobs
+        shape = pm.var('ntime'), pm.var('nnode'), len(self.obsrv_sym)
         data[data.index('obsrv')] = lp.GlobalArg('obsrv', shape=shape)
         return data
 

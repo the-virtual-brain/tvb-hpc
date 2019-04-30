@@ -3,26 +3,23 @@
 This is a Python package for generating code for parameter sweeps and Bayesian
 inversion.
 
-Get the Docker image
-```
-docker pull maedoc/tvb-hpc
-```
+## Quickstart
 
-and run the tests
 ```
-docker run --rm -it -v ./:/root/hpc python -m unittest tvb_hpc.tests
+git clone https://gitlab.thevirtualbrain.org/tvb/hpc tvb-hpc
+cd tvb-hpc
+python -m venv env
+. env/bin/activate
+pip install -r requirements.txt
+python -m unittest tvb_hpc.tests
 ```
-(on Windows, replace `./` by `%CD%`.)
 
 Get hacking with the [`examples`](examples) or [tests](tvb_hpc/tests.py).
 
-## TODO
+## Targets
 
-- ensure par sweeps etc built as domains
-- rng
-- make high level usage easier (tavg, bold, gain, fcd, etc)
-- test on CUDA
-- parallel numba
-- simple SALib usage?
-- chunking of state & vectorization?
-- reach cuda hackathon performance numbers
+By default the requirements.txt file will have Numba installed, which
+is an easy target to use, but other targets are straightforward to use
+
+- `C` - ensure GCC or Clang are installed
+- `OpenCL` - `pip install pyopencl`

@@ -1,4 +1,4 @@
-#     Copyright 2017 TVB-HPC contributors
+#     Copyright 2018 TVB-HPC contributors
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ import numpy as np
 import logging
 import time
 import pymbolic as pm
+import loopy as lp
 from pymbolic import parse
 from pymbolic.mapper.stringifier import SimplifyingSortingStringifyMapper
 from pymbolic.mapper import IdentityMapper
@@ -26,6 +27,9 @@ from sympy.parsing.sympy_parser import parse_expr
 
 here = os.path.dirname(os.path.abspath(__file__))
 include_dir = os.path.normpath(os.path.join(here, '..', 'include'))
+
+
+default_target = lp.target.pyopencl.PyOpenCLTarget
 
 
 def can_bcast(n, m):

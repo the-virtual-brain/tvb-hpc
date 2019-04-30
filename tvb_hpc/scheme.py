@@ -1,4 +1,4 @@
-#     Copyright 2017 TVB-HPC contributors
+#     Copyright 2018 TVB-HPC contributors
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -48,7 +48,11 @@ def euler_maruyama_logp(x, f, g, xn=None, dt=None, step=euler):
     return -(xn - mu) ** 2 / (2 * sd ** 2)
 
 
-class EulerStep(BaseKernel):
+class TimeStepScheme(BaseKernel):
+    pass
+
+
+class EulerStep(TimeStepScheme):
 
     # TODO merge with model dfun kernel to do multiple steps
 

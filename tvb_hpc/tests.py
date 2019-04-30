@@ -1,4 +1,4 @@
-#     Copyright 2017 TVB-HPC contributors
+#     Copyright 2018 TVB-HPC contributors
 #
 #     Licensed under the Apache License, Version 2.0 (the "License");
 #     you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ from .scheme import euler_maruyama_logp, EulerStep, EulerMaryuyamaStep
 # from .harness import SimpleTimeStep
 from .numba import NumbaTarget
 from .utils import getLogger, VarSubst
+from .workspace import Workspace, CLWorkspace
 
 
 LOG = logging.getLogger(__name__)
@@ -68,6 +69,82 @@ class TestUtils(TestCase):
         subst = VarSubst(b=pm.parse('b[i, j]'))
         expr = subst(pm.parse('a + b * pre_syn[i, j]'))
         self.assertEqual(str(expr), 'a + b[i, j]*pre_syn[i, j]')
+
+
+class BaseTestCl(TestCase):
+
+    def setUp(self):
+        try:
+            import pyopencl as cl
+            self.ctx = cl.create_some_context(interactive=False)
+            self.cq = cl.CommandQueue(self.ctx)
+        except Exception as exc:
+            raise unittest.SkipTest(
+                'unable to create CL queue (%r)' % (exc, ))
+        self.target = lp.target.pyopencl.PyOpenCLTarget()
+        super().setUp()
+
+
+class TestCl(BaseTestCl):
+
+    def test_copy(self):
+        knl = lp.make_kernel('{:}', 'a = b')
+        knl = lp.to_batched(knl, 16, 'a b'.split(), 'i', sequential=False)
+        knl = lp.add_and_infer_dtypes(knl, {'a,b': 'f'})
+        import pyopencl.array as ca
+        a = ca.zeros(self.cq, (16, ), 'f')
+        b = ca.zeros(self.cq, (16, ), 'f')
+        b[:] = np.r_[:16].astype('f')
+        knl(self.cq, a=a, b=b)
+        np.testing.assert_allclose(a.get(), b.get())
+
+    def test_add_loops(self):
+        # build kernel
+        kernel = """
+        <> dx = a * x + b * y
+        <> dy = c * x + d * y
+        xn = x + dt * dx {nosync=*}
+        yn = y + dt * dy {nosync=*}
+        """
+        state = 'x y xn yn'.split()
+        knl = lp.make_kernel("{:}", kernel)
+        knl = lp.add_and_infer_dtypes(knl, {'a,b,c,d,x,y,dt,xn,yn': 'f'})
+        knl = lp.to_batched(knl, 'nt', state, 'it')
+        knl = lp.to_batched(knl, 'na', state + ['a'], 'ia')
+        knl = lp.to_batched(knl, 'nb', state + ['b'], 'ib')
+        knl = lp.tag_inames(knl, [('ia', 'g.0'), ('ib', 'l.0')], force=True)
+        # setup pyopencl
+        import pyopencl as cl
+        import pyopencl.array as ca
+        import numpy as np
+        ctx = cl.create_some_context(interactive=False)
+        cq = cl.CommandQueue(ctx)
+        # workspace
+        a = ca.Array(cq, (10,), 'f')
+        b = ca.Array(cq, (10,), 'f')
+        x = ca.Array(cq, (10, 10, 5), 'f')
+        y = ca.Array(cq, (10, 10, 5), 'f')
+        xn = ca.Array(cq, (10, 10, 5), 'f')
+        yn = ca.Array(cq, (10, 10, 5), 'f')
+        a[:], b[:] = np.random.rand(2, 10).astype('f')
+        c, d, dt = [np.float32(_) for _ in (0.5, 0.6, 0.1)]
+        x[:], y[:], xn[:], yn[:] = np.random.rand(4, 10, 10, 5).astype('f')
+        # execute
+        knl(cq,
+            na=np.int32(a.size),
+            nb=np.int32(b.size),
+            nt=np.int32(x.shape[-1]),
+            a=a, b=b, c=c, d=d, x=x, y=y, dt=dt, xn=xn, yn=yn)
+        # cl arr doesn't broadcast
+        a_ = ca.Array(cq, (10, 10, 5), 'f')
+        b_ = ca.Array(cq, (10, 10, 5), 'f')
+        a_[:] = np.tile(a.get()[:, None], (10, 1, 5)).astype('f')
+        b_[:] = np.tile(b.get()[:, None, None], (1, 10, 5)).astype('f')
+        # check
+        np.testing.assert_allclose(
+            xn.get(), (x + dt * (a_ * x + b_ * y)).get(), 1e-6, 1e-6)
+        np.testing.assert_allclose(
+            yn.get(), (y + dt * (c * x + d * y)).get(), 1e-6, 1e-6)
 
 
 class TestLoopTransforms(TestCase):
@@ -326,3 +403,71 @@ class TestScheme(TestCase):
 
     def test_em_dt_var(self):
         self._test_scheme(EulerMaryuyamaStep(pm.var('dt')))
+
+
+class TestHackathon(TestCase):
+    pass
+
+
+class WorkspaceTestsMixIn:
+    def test_copy(self):
+        knl = lp.make_kernel('{:}', 'a = b + c + x', target=self.target)
+        knl = lp.to_batched(knl, 'm', ['a', 'b'], 'i')
+        knl = lp.to_batched(knl, 'n', ['a', 'c'], 'j')
+        knl = lp.add_and_infer_dtypes(knl, {'a,b,c,x': 'f'})
+        wspc = self.make_workspace(knl, m=10, n=5, x=3.5)
+        self.assertEqual(wspc.data['a'].shape, (5, 10))
+        self.assertEqual(wspc.data['b'].shape, (10, ))
+        self.assertEqual(wspc.data['x'].shape, ())
+        self.assertEqual(wspc.data['x'].dtype, np.float32)
+
+
+class TestWorkspaceNumba(TestCase, WorkspaceTestsMixIn):
+    target = NumbaTarget()
+
+    def make_workspace(self, *args, **kwargs):
+        return Workspace(*args, **kwargs)
+
+
+class TestWorkspaceCL(BaseTestCl, WorkspaceTestsMixIn):
+    def make_workspace(self, *args, **kwargs):
+        return CLWorkspace(self.cq, *args, **kwargs)
+
+
+class TestMetrics(TestCase):
+
+    def test_ocov(self):
+        from tvb_hpc.metric import OnlineCov
+        ocov = OnlineCov()
+        knl = ocov.kernel(NumbaTarget())
+        _ = lp.generate_code(knl)
+        self.assertTrue(_)
+
+    def test_bcov(self):
+        from tvb_hpc.metric import BatchCov
+        bcov = BatchCov()
+        knl = bcov.kernel(NumbaTarget())
+        self.assertTrue(lp.generate_code(knl))
+
+
+class TestRmap(TestCase):
+
+    def test_rmap_to_avg(self):
+        from tvb_hpc.network import RMapToAvg
+        knl = RMapToAvg().kernel(NumbaTarget())
+        i = np.r_[:16].reshape((-1, 1))
+        rmap = i // 4
+        node = i.astype('f')
+        roi = np.zeros((4, 1), 'f')
+        knl(nroi=4, nvar=1, nnode=16, rmap=rmap, node=node, roi=roi)
+        np.testing.assert_allclose(roi[:, 0], node.reshape((4, 4)).sum(axis=1))
+
+    def test_rmap_from_avg(self):
+        from tvb_hpc.network import RMapFromAvg
+        knl = RMapFromAvg().kernel(NumbaTarget())
+        i = np.r_[:16].reshape((-1, 1))
+        rmap = i // 4
+        node = np.zeros((16, 1), 'f')
+        roi = np.r_[:4].reshape((4, 1)).astype('f')
+        knl(nroi=4, nvar=1, nnode=16, rmap=rmap, node=node, roi=roi)
+        np.testing.assert_allclose(rmap, node)
