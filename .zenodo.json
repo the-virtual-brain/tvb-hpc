@@ -1,0 +1,32 @@
+{
+    "description": "<p>This pre-release encloses the initial framework, examples and tests related to the development of the DSL and the automatic code generation for TVB-HPC using templates.</p>", 
+    "license": "other-open", 
+    "title": "the-virtual-brain/tvb-hpc: v0.1-alpha", 
+    "version": "v0.1-alpha", 
+    "upload_type": "software", 
+    "publication_date": "2019-04-30", 
+    "creators": [
+        {
+            "name": "Marmaduke Woodman"
+        }, 
+        {
+            "name": "Sandra Diaz Pier"
+        }, 
+        {
+            "name": "Jan Fousek"
+        }
+    ], 
+    "access_right": "open", 
+    "related_identifiers": [
+        {
+            "scheme": "url", 
+            "identifier": "https://github.com/the-virtual-brain/tvb-hpc/tree/v0.1-alpha", 
+            "relation": "isSupplementTo"
+        }, 
+        {
+            "scheme": "doi", 
+            "identifier": "10.5281/zenodo.2654803", 
+            "relation": "isVersionOf"
+        }
+    ]
+}
