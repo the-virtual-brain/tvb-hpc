@@ -3,10 +3,11 @@
 import xml.etree.ElementTree as xe
 import sys
 # from lems.model.model import Model
-from lems.api import Model
+# from lems.api import Model
 import inspect
 import filecmp
-
+sys.path.insert(0, '/home/michiel/Documents/TVB/dsl_datafitting/lems/')
+from model.model import Model
 i=0
 
 def build_constants():
@@ -112,7 +113,7 @@ def comparefiles():
 
 if __name__ == '__main__':
 
-    fp_xml = '../NeuroMl/RateBased_kura.xml'
+    fp_xml = '../NeuroML/RateBased_kura.xml'
     fp_templ = '../models/CUDA/kuramoto_network_template.c'
     fp_cuda = '../models/CUDA/rateB_kuramoto.c'
     fp_golden = '../models/CUDA/kuramoto_network.c'
@@ -127,7 +128,13 @@ if __name__ == '__main__':
     modelist=list()
     modelist.append(model.component_types['Kuramoto'])
 
-    print(inspect.getmembers(modelist[0]))
+
+
+    # print(inspect.getmembers(modelist[0]))
+    print(vars(modelist[0].dynamics.derived_variables['COUPLING_FUNCTION']))
+
+    a = modelist[0].dynamics.derived_variables['COUPLING_FUNCTION']
+    print(a.__dict__)
 
     for num, line in enumerate(datatoread,1):
         datatowrite.append(line)
