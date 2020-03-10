@@ -778,7 +778,7 @@ class Model(LEMSBase):
 
         for dw in ct.simulation.data_writers:
             try:
-                path = '.'
+                path = ''
                 if fc.texts[dw.path] and fc.texts[dw.path].value:
                     path = fc.texts[dw.path].value
 
@@ -791,7 +791,7 @@ class Model(LEMSBase):
 
         for ew in ct.simulation.event_writers:
             try:
-                path = '.'
+                path = ''
                 if fc.texts[ew.path] and fc.texts[ew.path].value:
                     path = fc.texts[ew.path].value
 

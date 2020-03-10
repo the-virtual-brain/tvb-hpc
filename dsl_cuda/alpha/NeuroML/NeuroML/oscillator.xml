@@ -1,19 +1,23 @@
 <Lems
       xmlns="http://www.neuroml.org/lems/0.7.4"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-      xsi:schemaLocation="http://www.neuroml.org/lems/0.7.4 ../../LEMS/Schemas/LEMS/LEMS_v0.7.4.xsd"
+      xsi:schemaLocation="http://www.neuroml.org/lems/0.7.4 ../../lems/Schemas/LEMS/LEMS_v0.7.4.xsd"
       description="A number of ComponentTypes for rate based/population models.
                     Base type of any cell/population which has a (dimensionless) rate _R.
                     Generic nonlinear 2-D (phase plane) oscillator.">
 
-    <ComponentType name="Oscillator_2D"
-                   description="Rate based 2D oscillator for TVB"
+    <ComponentType name="2d_oscillator"
+                   description="drift equations"
                    value="">
+
+        <Parameter name="global_coupling" dimension='float'/>
 
         <Requirement name="MODEL_LIMIT" dimension="(-5, 5), (-5, 5)"/> <!-- put helping functions in util, select wrapping functions.  -->
 
 <!--        Look at vector implementation for multi heterogenous nodes.-->
 
+        <Constant name="I" symbol="NArray"
+                      dimension="lo=-5.0, hi=5.0, step=0.01" value="0.0" description="Baseline shift of the cubic nullcline"/>
         <Constant name="tau" symbol="NArray" value="1.0" dimension="lo=1.0, hi=5.0, step=0.01"
                   description="A time-scale hierarchy can be introduced for the state variables :math:`V` and :math:`W`. Default parameter is 1, which means no time-scale hierarchy."/>
         <Constant name="I" symbol="NArray" dimension="lo=-5.0, hi=5.0, step=0.01" value="0.0" description="Baseline shift of the cubic nullcline"/>
@@ -29,26 +33,17 @@
         <Constant name="gamma" symbol="NArray" dimension="lo=-1.0, hi=1.0, step=0.1" value="1.0" description="Constant parameter to reproduce FHN dynamics where excitatory input currents are negative.
 It scales both I and the long range coupling term.."/>
 
-        <!-- Parameters will be assumed to be swept. sweep data will be matched by order of entry -->
-        <Parameter name="global_coupling" dimension="float" />
-        <Parameter name="global_speed" dimension="float" />
-
-        <!-- TODO: Define the observables -->
-        <Exposure name="V" dimension="sin(theta_i)"/>
 
         <Dynamics>
-            <StateVariable name="V" dimension="-2.0, 4.0" exposure="V"/>
-            <StateVariable name="W" dimension="-6.0, 6.0"/>
+            <StateVariable name="V" dimension="[-2.0, 4.0]" exposure="V"/>
+            <StateVariable name="W" dimension="[-6.0, 6.0]"/>
 
-<!--            <DerivedVariable name="coupling_value" exposure="c_0" value="0.0" reduce="add"/>-->
-            <DerivedVariable name="nsig" exposure="float" value="sqrt(dt) * sqrt(2.0 * 1e-3)" reduce="add"/>
-            <DerivedVariable name="rec_speed_dt" exposure="float" value="1.0f / global_speed / (dt)" reduce="add"/>
-<!--            <DerivedVariable name="G" exposure="float" value="params" reduce="add"/>-->
-            <DerivedVariable name="lc_0" exposure="float" value="0.0"/>
+            <DerivedVariable name="coupling_value" exposure="c_0" value="0.0" reduce="add"/>
 
-            <TimeDerivative variable="dV" exposure="dV" value="d * tau * (alpha * W - f * powf(V, 3) + e * powf(V, 2) + g * V + gamma * I + gamma * c_0 + lc_0 * V)"/>
-            <TimeDerivative variable="dW" exposure="dW" value="d * (a + b * V + c * powf(V, 2) - beta * W) / tau"/>
+            <TimeDerivative variable="dV" exposure="dV" value="d * tau * (alpha * W - f * V**3 + e * V**2 + g * V + gamma * I + gamma * c_0 + lc_0)" select="noiseON"/>
+            <TimeDerivative variable="dW" exposure="dW" value="d * (a + b * V + c * V**2 - beta * W) / tau" select="noiseON"/>
         </Dynamics>
+
 
         <!-- Exposures are used for observables, for the name enter variable to be observed (usually states)
         and for dimension enter the reduction functionality-->
@@ -64,17 +59,14 @@ It scales both I and the long range coupling term.."/>
         <Constant name="a" symbol="NArray" dimension="lo=0.0, hi=10., step=0.1" value="0.1" description="Rescales the connection strength."/>
 
 <!--        variables for pre synaptic function-->
-        <Parameter name="V" dimension=''/>
-        <Parameter name="V_j" dimension=''/>
+        <Parameter name="x_i" dimension=''/>
+        <Parameter name="x_j" dimension=''/>
 
 <!--        variables for post synaptic function-->
-        <Requirement name="wij" dimension=''/>
+        <Requirement name="gx" dimension=''/>
 
-        <Function name="pre" value="sin(V_j - V)" description = "pre synaptic function for coupling activity"/>
-        <Function name="post" value="wij" description = "post synaptic function for coupling activity"/>
-
-        <!-- Handle local coupling result, full expression is c_0 *= 'value'. Name option is hardcoded -->
-        <DerivedParameter name="c_0" value="global_coupling * global_speed"/>
+        <Function name="pre" value="x_j - x_i" description = "pre synaptic function for coupling activity"/>
+        <Function name="post" value="a * gx" description = "post synaptic function for coupling activity"/>
 
     </ComponentType>
 
@@ -130,9 +122,7 @@ state variables."/>
             <Constant name="b" symbol="Attr" dimension="equations.TemporalApplicableEquation" value="0.0"
             description="A function evaluated on the state-variables, the result of which enters as the diffusion coefficient."/>
 
-    </ComponentType>
-
-
+        </ComponentType>
 
 </Lems>
 
