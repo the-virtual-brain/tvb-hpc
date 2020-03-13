@@ -12,7 +12,7 @@ Execute './runthings cuda Modelname' to start the parameter sweep based simulati
     
 # The CUDA memory model specification
 ![](GPUmemindexspedDiagram.pdf)
-#+html: <p align="center"><img src="GPUmemindexspedDiagram.pdf" /></p>
+<p align="center"><img src="GPUmemindexspedDiagram.pdf" /></p>
 
 # Files
 * dsl_cuda/LEMS2CUDA.py   				: python script for initiating model code generation
