@@ -14,40 +14,39 @@
         <Parameter name="global_coupling" dimension='float'/>
         <Parameter name="global_speed" dimension='float'/>
 
+        <DerivedParameter name="rec_n" expression="1.0f / n_node" value="None"/>
+        <DerivedParameter name="rec_speed_dt" expression="1.0f / global_speed / (dt)" value="None"/>
+        <DerivedParameter name="nsig" expression="sqrt(dt) * sqrt(2.0 * 1e-5)" value="None"/>
+
 <!--        <Requirement name="MODEL_LIMIT" dimension="2_pi"/> &lt;!&ndash; put helping functions in util, select wrapping functions.  &ndash;&gt;-->
         
-        <Exposure name="V" default="sin(V)" choices=""/>
+        <Exposure name="V" default="" choices="sin(V)"/>
 
         <Dynamics>
             <!-- Use PI to select the PI wrapper (ie Kuramoto) -->
             <StateVariable name="V" default="-2, 1" boundaries="PI"/>
 
-            <DerivedVariable name="rec_n" expression="1.0f / n_node" />
-            <DerivedVariable name="rec_speed_dt" expression="1.0f / global_speed / (dt)" />
-            <DerivedVariable name="nsig" expression="sqrt(dt) * sqrt(2.0 * 1e-5)" />
-
-            <TimeDerivative name="dV" expression="omega * c_0"/>
+            <TimeDerivative name="V" expression="omega + c_0"/>
         </Dynamics>
 
     </ComponentType>
 
     <ComponentType name="coupling_function">
 
-        <Constant name="a" dimension="lo=0.0, hi=10., step=0.1" default="0.1" description="Rescales the connection strength."/>
+        <Constant name="a" dimension="" default="1" description="Rescales the connection strength."/>
 
 <!--        variables for pre synaptic function-->
-        <Parameter name="V" dimension=''/>
-        <Parameter name="V_j" dimension=''/>
+        <Parameter name="V_j" dimension='0'/>
 
 <!--        variables for post synaptic function-->
 <!--        <Requirement name="wij" dimension=''/>-->
         <Dynamics>
-            <DerivedVariable name="pre" value="sin(V_j - V)" description = "pre synaptic function for coupling activity"/>
-            <DerivedVariable name="post" value="a" description = "post synaptic function for coupling activity"/>
+            <DerivedVariable name="pre" expression="sin(V_j - V)" description = "pre synaptic function for coupling activity"/>
+            <DerivedVariable name="post" expression="a" description = "post synaptic function for coupling activity"/>
         </Dynamics>
 
         <!-- Handle local coupling result, full expression is c_0 *= 'value'. Name option is hardcoded -->
-        <DerivedParameter name="c_0" value="global_coupling * rec_n"/>
+        <DerivedParameter name="c_0" expression="global_coupling * rec_n * coupling" value="None"/>
 
     </ComponentType>
 

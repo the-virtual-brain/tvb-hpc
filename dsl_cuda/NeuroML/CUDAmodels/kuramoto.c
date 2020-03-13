@@ -55,16 +55,16 @@ __global__ void Kuramoto(
     const float omega = 60.0 * 2.0 * M_PI_F / 1e3;
 
     // coupling constants, coupling itself is hardcoded in kernel
-    const float a = 0.1;
+    const float a = 1;
 
     // coupling parameters
     float c_0 = 0.0;
 
+    // derived parameters
+    const float rec_n = 1.0f / n_node;
+    const float rec_speed_dt = 1.0f / global_speed / (dt);
+    const float nsig = sqrt(dt) * sqrt(2.0 * 1e-5);
 
-    // the dynamic derived variables declarations
-    float rec_n = 0.0;
-    float rec_speed_dt = 0.0;
-    float nsig = 0.0;
 
 
     curandState crndst;
@@ -100,38 +100,30 @@ __global__ void Kuramoto(
                 unsigned int dij = lengths[i_n + j_node] * rec_speed_dt;
 
                 //***// Get the state of node j which is delayed by dij
-                float V = state(((t - dij + nh) % nh), j_node +  * n_node);
-                float V_j = state(((t - dij + nh) % nh), j_node +  * n_node);
+                float V_j = state(((t - dij + nh) % nh), j_node + 0 * n_node);
 
                 // Sum it all together using the coupling function. Kuramoto coupling: (postsyn * presyn) == ((a) * (sin(xj - xi))) 
-                coupling += None * None;
+                coupling += wij * a * sin(V_j - V);
 
             } // j_node */
 
             // rec_n is used for the scaling over nodes
-            c_0 = None;
-
-            // the dynamic derived variables
-            rec_n = 1.0f / n_node;
-            rec_speed_dt = 1.0f / global_speed / (dt);
-            nsig = sqrt(dt) * sqrt(2.0 * 1e-5);
+            c_0 = global_coupling * rec_n * coupling;
 
             // This is dynamics step and the update in the state of the node
-            dV = omega * c_0;
+            V += dt * (omega + c_0);
 
             // Add noise (if noise components are present in model), integrate with stochastic forward euler and wrap it up
-            V += dt * (nsig * curand_normal2(&crndst).x + dV);
+            V += nsig * curand_normal2(&crndst).x;
 
             // Wrap it within the limits of the model
-            wrap_it_PI(V);
+            V = wrap_it_PI(V);
 
             // Update the state
             state((t + 1) % nh, i_node + 0 * n_node) = V;
 
             // Update the observable only for the last timestep
-            if (t == (i_step + n_step - 1)){
-                tavg(i_node + 0 * n_node) = ;
-            }
+                tavg(i_node + 0 * n_node) = sin(V);
 
             // sync across warps executing nodes for single sim, before going on to next time step
             __syncthreads();

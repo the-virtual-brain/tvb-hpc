@@ -162,7 +162,7 @@ __global__ void ${modelname}(
                          coupling[ml].dynamics.derived_variables['post'].expression != 'None'):
                     ## % for cdp in (coupling[ml].derived_parameters):
 
-                coupling += ${coupling[ml].dynamics.derived_variables['post'].expression} * ${coupling[ml].dynamics.derived_variables['pre'].expression};
+                coupling += wij * ${coupling[ml].dynamics.derived_variables['post'].expression} * ${coupling[ml].dynamics.derived_variables['pre'].expression};
 
                     ## %endfor
                     % endif /
@@ -174,7 +174,7 @@ __global__ void ${modelname}(
                 % for cdp in (coupling[m].derived_parameters):
             ${cdp.name} = ${cdp.expression};
                 % endfor
-            % endfor /
+            % endfor \
 
             % if dynamics.derived_variables:
             // the dynamic derived variables
@@ -198,26 +198,26 @@ __global__ void ${modelname}(
 
             // This is dynamics step and the update in the state of the node
             % for i, tim_der in enumerate(dynamics.time_derivatives):
-            ${tim_der.name} = ${tim_der.expression};
+            ${tim_der.name} += dt * (${tim_der.expression});
             % endfor
 
             % if noisepresent:
             // Add noise (if noise components are present in model), integrate with stochastic forward euler and wrap it up
             % for ds, td in zip(dynamics.state_variables, dynamics.time_derivatives):
-            ${ds.name} += dt * (nsig * curand_normal2(&crndst).x + ${td.name});
+            ${ds.name} += nsig * curand_normal2(&crndst).x;
             % endfor /
-            % else:
-            % for ds, td in zip(dynamics.state_variables, dynamics.time_derivatives):
-            ${ds.name} += dt * ${td.name});
-            % endfor /
+            ##% else:
+            ##% for ds, td in zip(dynamics.state_variables, dynamics.time_derivatives):
+            ##${ds.name} += dt a * ${td.name});
+            ##% endfor /
             % endif
 
             // Wrap it within the limits of the model
             % for state_var in (dynamics.state_variables):
                 % if state_var.boundaries == 'PI':
-            wrap_it_${state_var.boundaries}(${state_var.name});
+            ${state_var.name} = wrap_it_${state_var.boundaries}(${state_var.name});
                 % else:
-            wrap_it_${state_var.name}(${state_var.name});
+            ${state_var.name} = wrap_it_${state_var.name}(${state_var.name});
                 % endif
             % endfor /
 
@@ -227,11 +227,11 @@ __global__ void ${modelname}(
             % endfor /
 
             // Update the observable only for the last timestep
-            if (t == (i_step + n_step - 1)){
+            ##if (t == (i_step + n_step - 1)){
                 % for i, expo in enumerate(expolist):
                 tavg(i_node + ${i} * n_node) = ${expo};
                 % endfor /
-            }
+            ##}
 
             // sync across warps executing nodes for single sim, before going on to next time step
             __syncthreads();

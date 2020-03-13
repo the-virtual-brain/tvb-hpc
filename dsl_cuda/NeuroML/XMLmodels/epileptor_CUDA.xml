@@ -14,19 +14,19 @@
         <Constant name="b" domain="" default="3.0" description="Coefficient of the squared term in the first state-variable."/>
         <Constant name="c" domain="" default="1.0" description="Additive coefficient for the second state-variable x_{2}, called :math:`y_{0}` in Jirsa paper."/>
         <Constant name="d" domain="" default="5.0" description="Coefficient of the squared term in the second state-variable x_{2}."/>
-        <Constant name="r" domain="lo=0.0, hi=0.001, step=0.00005" default="0.00035" description="Temporal scaling in the slow state-variable, called :math:`1\\tau_{0}` in Jirsa paper (see class Epileptor)."/>
+        <Constant name="r" domain="" default="0.00035" description="Temporal scaling in the slow state-variable, called :math:`1\\tau_{0}` in Jirsa paper (see class Epileptor)."/>
         <Constant name="s" domain="" default="4.0" description="Linear coefficient in the third state variable"/>
-        <Constant name="x0" domain="lo=-3.0, hi=-1.0, step=0.1" default="-1.6" description="Epileptogenicity parameter."/>
-        <Constant name="Iext" domain="lo=1.5, hi=5.0, step=0.1" default="3.1" description="External input current to the first state-variable."/>
-        <Constant name="slope" domain="lo=-16.0, hi=6.0, step=0.1" default="0." description="Linear coefficient in the first state-variable."/>
-        <Constant name="Iext2" domain="lo=0.0, hi=1.0, step=0.05" default="3.1" description="External input current to the first state-variable."/>
+        <Constant name="x0" domain="" default="-1.6" description="Epileptogenicity parameter."/>
+        <Constant name="Iext" domain="" default="3.1" description="External input current to the first state-variable."/>
+        <Constant name="slope" domain="" default="0." description="Linear coefficient in the first state-variable."/>
+        <Constant name="Iext2" domain="" default="3.1" description="External input current to the first state-variable."/>
         <Constant name="tau" domain="" default="10.0" description="Temporal scaling coefficient in fifth state variable."/>
         <Constant name="aa" domain="" default="6.0" description="Linear coefficient in fifth state variable."/>
         <Constant name="bb" domain="" default="2.0" description="Linear coefficient of lowpass excitatory coupling in fourth state variable."/>
-        <Constant name="Kvf" domain="lo=0.0, hi=4.0, step=0.5" default="0.0" description="Coupling scaling on a very fast time scale."/>
-        <Constant name="Kf" domain="lo=0.0, hi=4.0, step=0.5" default="0.0" description="Correspond to the coupling scaling on a fast time scale."/>
-        <Constant name="Ks" domain="lo=-4.0, hi=4.0, step=0.1" default="0.0" description="Permittivity coupling, that is from the fast time scale toward the slow time scale."/>
-        <Constant name="tt" domain="lo=0.001, hi=1.0, step=0.001" default="1.0" description="Time scaling of the whole system to the system in real time."/>
+        <Constant name="Kvf" domain="" default="0.0" description="Coupling scaling on a very fast time scale."/>
+        <Constant name="Kf" domain="" default="0.0" description="Correspond to the coupling scaling on a fast time scale."/>
+        <Constant name="Ks" domain="" default="0.0" description="Permittivity coupling, that is from the fast time scale toward the slow time scale."/>
+        <Constant name="tt" domain="" default="1.0" description="Time scaling of the whole system to the system in real time."/>
         <Constant name="modification" domain="" default="1.0" description="When modification is True, then use nonlinear influence on z. The default default is False, i.e., linear influence."/>
 
         <!-- Parameters will be assumed to be swept. sweep data will be matched by order of entry -->
