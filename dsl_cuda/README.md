@@ -11,7 +11,7 @@ Execute './runthings cuda Modelname' to start the parameter sweep based simulati
     .. moduleauthor:: Michiel. A. van der Vlag <m.van.der.vlag@fz-juelich.de>
     
 # The CUDA memory model specification
-![alt text](http://dsl_cuda/GPUmemindexspedDiagram.pdf)
+![](GPUmemindexspedDiagram.pdf)
 
 
 # Files
