@@ -1,0 +1,34 @@
+<Lems
+      xmlns="http://www.neuroml.org/lems/0.7.4"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.neuroml.org/lems/0.7.4 ../../lems/Schemas/LEMS/LEMS_v0.7.4.xsd"
+      description="A number of ComponentTypes for rate based/population models">
+
+    <ComponentType name="Kuramoto"
+                   description="Base type of any cell/population which has a (dimensionless) rate _R."
+                   value="none">
+
+        <Parameter name="global_coupling" dimension='float'/>
+        <Parameter name="global_speed" dimension='float'/>
+
+        <Requirement name="MODEL_LIMIT" dimension="2_pi"/> <!-- put helping functions in util, select wrapping functions.  -->
+
+        <Constant name="rec_n" dimension="none" value="1.0f / n_node" />
+        <Constant name="rec_speed_dt" dimension="1/distance" value="1.0f / global_speed / (dt)" />
+        <Constant name="omega" dimension="MHz" value="60.0 * 2.0 * M_PI_F / 1e3" />
+        <Constant name="sig" dimension="none" value="sqrt(dt) * sqrt(2.0 * 1e-5)" />
+        
+        <Exposure name="OBSERV_OUTPUT" dimension="sin(theta_i)"/>
+
+        <Dynamics>
+            <StateVariable name="MODEL_STATE" dimension="theta_i"/>
+
+            <DerivedVariable name="COUPLING_FUNCTION" exposure="coupling_value" value="wij * sin(theta_j - theta_i)" reduce="add"/>
+            <DerivedVariable name="MODEL_DYNAMICS" exposure="dynamics1" value="(omega + global_coupling * rec_n * coupling_value)" select="noiseON"/>
+
+            <TimeDerivative variable="INTEGRATION_SCHEME" value="dt"/>
+        </Dynamics>
+
+    </ComponentType>
+
+</Lems>
