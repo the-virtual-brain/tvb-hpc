@@ -116,7 +116,7 @@ if __name__ == '__main__':
     fp_xml = '../NeuroML/RateBased_kura.xml'
     fp_templ = '../models/CUDA/kuramoto_network_template.c'
     fp_cuda = '../models/CUDA/rateB_kuramoto.c'
-    fp_golden = '../models/CUDA/kuramoto_network.c'
+    fp_golden = '../models/CUDA/kuramotoref.c'
 
     datatowrite=[]
     with open(fp_templ, 'r') as c:

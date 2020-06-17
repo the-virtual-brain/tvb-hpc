@@ -5,7 +5,7 @@ import filecmp
 class TestEqualFiles(unittest.TestCase):
     def test_something(self):
         fp_cuda = '../models/CUDA/rateB_kuramoto.c'
-        fp_golden = '../models/CUDA/kuramoto_network.c'
+        fp_golden = '../models/CUDA/kuramotoref.c'
         self.assertTrue(filecmp.cmp(fp_golden, fp_cuda, shallow=False))
 
 

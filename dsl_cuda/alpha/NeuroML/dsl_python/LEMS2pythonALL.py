@@ -16,7 +16,7 @@ if True:
     fp_xml = '../NeuroML/' + modelname.lower() + '.xml'
     # fp_templ = '../models/CUDA/kuramoto_network_template.c'
     # fp_cuda = '../models/CUDA/rateB_kuramoto.c'
-    # fp_golden = '../models/CUDA/kuramoto_network.c'
+    # fp_golden = '../models/CUDA/kuramotoref.c'
 
     model = Model()
     model.import_from_file(fp_xml)
