@@ -14,7 +14,7 @@ MarkupSafe==1.0
 more-itertools==4.3.0
 mpmath==1.0.0
 numba==0.39.0
-numpy==1.15.1
+numpy==1.22.0
 pluggy==0.7.1
 py==1.6.0
 pycparser==2.18
