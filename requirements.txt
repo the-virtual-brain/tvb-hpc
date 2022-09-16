@@ -9,7 +9,7 @@ genpy==2016.1.3
 islpy==2018.2
 llvmlite==0.24.0
 loo.py==2017.2
-Mako==1.0.7
+Mako==1.2.2
 MarkupSafe==1.0
 more-itertools==4.3.0
 mpmath==1.0.0
